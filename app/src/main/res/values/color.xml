@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <color name="colorPrimary">#3F51B5</color>
+    <color name="colorPrimaryDark">#303F9F</color>
+    <color name="colorAccent">#FF4081</color>
+    <color name="colorTextPrimary">#ffffff</color>
+    <color name="colorDialogBackground">#989393</color>
+    <color name="colorButton">#434343</color>
+    <color name="colorSplashBackground">#757474</color>
+    <color name="colorTitleDivider">#109ef0</color>
+    <color name="colorUnfilledField">#fc0303</color>
+    <color name="colorCardBackground">#c6c6c6</color>
+    <color name="colorListDivider">#989191</color>
+    <color name="colorListContainerBackground">#5988b5</color>
+    <!--color name="colorListContainerBackground">#3F51B5</color-->
+    <color name="colorDetailsContainerBackground">#989191</color>
+    <color name="colorSnackbarFreeTrial">#ec660d</color>
+    <color name="colorSnackbarGreen">#44801d</color>
+    <color name="colorFreeTrialDisabledPreference">#6f6b6b</color>
+    <!--color name="colorFreeTrialDisabledPreference">#878585</color-->
+    <color name="colorFreeTrialDisabledDrawerList">#434343</color>
+
+</resources>

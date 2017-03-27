@@ -1,0 +1,112 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/colorDialogBackground"
+    android:minWidth="@dimen/min_width_dialog"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/height_dialog_title"
+        android:background="@color/colorPrimary"
+        android:gravity="center"
+        android:text="@string/rate_us"
+        android:textAppearance="?android:attr/textAppearance"
+        android:textColor="@color/colorAccent"
+        android:textSize="@dimen/text_size_dialog_title"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="@color/colorTitleDivider" />
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:background="@color/colorButton"
+        android:paddingBottom="1dp">
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:background="@color/colorDialogBackground"
+            android:gravity="center"
+            android:text="@string/like_the_app"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/text_size_dialog_content_title"
+            android:textStyle="bold" />
+    </FrameLayout>
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:text="@string/rate_us_5_stars"
+        android:textColor="@android:color/white"
+        android:textSize="@dimen/text_size_dialog_favourites_content" />
+
+    <!-- layout dialog buttons -->
+
+    <RatingBar
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/ratingBar"
+        android:layout_gravity="center_horizontal"
+        android:layout_margin="5dp"
+        android:numStars="5"
+        android:rating="5"
+        android:isIndicator="true"
+        android:progressTint="#e9b020" />
+
+    <CheckBox
+        android:id="@+id/checkBox_dontShowAgain"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="start"
+        android:layout_margin="10dp"
+        android:checked="false"
+        android:text="@string/dont_show_again"
+        android:textColor="@color/colorButton"
+        android:textSize="@dimen/text_size_dialog_content_title" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/height_button"
+        android:layout_marginBottom="@dimen/margin_button"
+        android:layout_marginLeft="@dimen/margin_button"
+        android:layout_marginRight="@dimen/margin_button"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/button_notNow"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="@dimen/margin_button"
+            android:layout_marginRight="@dimen/margin_button"
+            android:layout_weight="1"
+            android:background="@color/colorButton"
+            android:gravity="center"
+            android:text="@string/not_now"
+            android:textAppearance="?android:attr/textAppearanceButton"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/button_rateUs"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/colorButton"
+            android:gravity="center"
+            android:text="@string/rate_us"
+            android:textAppearance="?android:attr/textAppearanceButton"
+            android:textColor="@android:color/white" />
+    </LinearLayout>
+
+</LinearLayout>

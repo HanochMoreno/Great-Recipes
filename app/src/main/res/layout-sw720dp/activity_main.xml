@@ -1,0 +1,223 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorListContainerBackground"
+    android:orientation="vertical"
+    tools:context=".MainActivity">
+
+    <include
+        android:id="@+id/toolbar"
+        layout="@layout/toolbar" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="20dp">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:id="@+id/layout_myRecipesLists"
+                android:padding="40dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:padding="20dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/btn_lists"
+                    android:id="@+id/imageView_recipesLists" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center|top"
+                    android:minLines="2"
+                    android:paddingTop="5dp"
+                    android:text="@string/my_recipes_lists"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="25sp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:id="@+id/layout_mealPlanner"
+                android:padding="40dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:padding="20dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/btn_plan_meal"
+                    android:id="@+id/imageView_mealPlanner" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center|top"
+                    android:minLines="2"
+                    android:paddingTop="5dp"
+                    android:text="@string/plan_a_meal"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="25sp" />
+            </LinearLayout>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:id="@+id/layout_onlineSearch"
+                android:padding="40dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:padding="20dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/btn_online_search"
+                    android:id="@+id/imageView_onlineSearch" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center|top"
+                    android:minLines="2"
+                    android:paddingTop="5dp"
+                    android:text="@string/search_recipe_online"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="25sp" />
+
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:id="@+id/layout_addRecipeManually"
+                android:padding="40dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:padding="20dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/btn_add_manually"
+                    android:id="@+id/imageView_addOwnRecipe" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center|top"
+                    android:minLines="2"
+                    android:paddingTop="5dp"
+                    android:text="@string/add_your_own_recipe"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="25sp" />
+            </LinearLayout>
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1">
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:id="@+id/layout_settings"
+                android:padding="40dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:padding="20dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/btn_settings"
+                    android:id="@+id/imageView_settings" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center|top"
+                    android:minLines="2"
+                    android:paddingTop="5dp"
+                    android:text="@string/settings"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="25sp" />
+            </LinearLayout>
+
+            <LinearLayout
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:orientation="vertical"
+                android:id="@+id/layout_login"
+                android:padding="40dp">
+
+                <ImageView
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_gravity="center"
+                    android:layout_weight="1"
+                    android:padding="20dp"
+                    android:scaleType="fitCenter"
+                    android:src="@drawable/btn_login"
+                    android:id="@+id/imageView_login" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center"
+                    android:gravity="center|top"
+                    android:minLines="2"
+                    android:paddingTop="5dp"
+                    android:text="@string/login"
+                    android:textColor="@color/colorTextPrimary"
+                    android:textSize="25sp" />
+
+            </LinearLayout>
+
+        </TableRow>
+
+    </LinearLayout>
+
+</LinearLayout>

@@ -1,0 +1,20 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:paddingBottom="3dp">
+
+    <TextView
+        android:paddingLeft="10dp"
+        android:paddingStart="10dp"
+        android:id="@+id/textViewName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:textColor="@color/colorPrimary"
+        android:textSize="20sp"
+        android:gravity="bottom"
+        android:text="@string/diet_prefs"
+        android:background="#948e8e"
+        android:paddingTop="3dp"
+        android:paddingBottom="3dp" />
+
+</FrameLayout>

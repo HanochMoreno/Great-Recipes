@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<preference-headers xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <header
+        android:fragment="com.hanoch.greatrecipes.view.PreferencesGeneralFragment"
+        android:icon="@mipmap/ic_prefs_general"
+        android:title="@string/general" />
+    <header
+        android:fragment="com.hanoch.greatrecipes.view.PreferencesListsFragment"
+        android:icon="@mipmap/ic_prefs_lists"
+        android:title="@string/lists" />
+    <header
+        android:fragment="com.hanoch.greatrecipes.view.PreferencesFiltersFragment"
+        android:icon="@mipmap/ic_prefs_filters"
+        android:title="@string/filters_title" />
+
+</preference-headers>

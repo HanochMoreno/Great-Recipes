@@ -1,0 +1,67 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/layout_listItemContainer"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/height_list_item_recipe"
+    android:background="@android:color/transparent">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:background="@android:color/black"
+        android:orientation="horizontal"
+        android:weightSum="1">
+        <!--android:background="@drawable/background_black"-->
+
+        <FrameLayout
+            android:id="@+id/layout_image"
+            android:layout_width="@dimen/height_list_item_recipe"
+            android:layout_height="match_parent"
+            android:background="@android:color/black"
+            android:paddingBottom="2dp"
+            android:paddingTop="2dp">
+
+            <ImageView
+                android:id="@+id/imageView_itemImage"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:background="@color/colorCardBackground"
+                android:scaleType="fitXY" />
+
+            <TextView
+                android:id="@+id/textView_noImageAvailable"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:gravity="center"
+                android:minLines="2"
+                android:text="@string/no_image_available"
+                android:textSize="@dimen/text_size_list_item_recipe_no_image_available" />
+
+            <ImageView
+                android:id="@+id/imageView_checkedIcon"
+                android:layout_width="50dp"
+                android:layout_height="50dp"
+                android:layout_gravity="center"
+                android:src="@drawable/ic_checked"
+                tools:visibility="visible"
+                android:visibility="invisible" />
+        </FrameLayout>
+
+        <TextView
+            android:id="@+id/textView_itemTitle"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:gravity="top|start|center"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp"
+            tools:text="Recipe Title\nRecipe Title\nRecipe Title\nRecipe Title"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/text_size_list_item_recipe_name" />
+
+    </LinearLayout>
+
+</FrameLayout>

@@ -1,0 +1,19 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.hanoch.greatrecipes.view.RecipeReviewFragment">
+
+    <include layout="@layout/fragment_edit_recipe"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/floatingButton_getInstructions"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="@dimen/margin_floating_button"
+        android:clickable="true"
+        android:src="@drawable/btn_flt_get_instructions" />
+
+</FrameLayout>

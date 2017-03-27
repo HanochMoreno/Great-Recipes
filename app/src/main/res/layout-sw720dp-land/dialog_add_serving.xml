@@ -1,0 +1,155 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:background="@color/colorDialogBackground">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:gravity="center"
+        android:orientation="vertical"
+        android:layout_marginBottom="4dp">
+
+        <TextView
+            android:id="@+id/textView_dialogTitle"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:textSize="20sp"
+            android:gravity="center"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="@color/colorAccent"
+            android:background="@color/colorPrimary"
+            android:text="Dialog Title"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="#109ef0" />
+
+    </LinearLayout>
+
+    <RadioGroup
+        android:layout_width="match_parent"
+        android:layout_height="100dp"
+        android:orientation="vertical"
+        android:id="@+id/radioGroup_searchSelector">
+
+        <RadioButton
+            android:layout_marginLeft="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:text="@string/yes_go_to_my_lists"
+            android:id="@+id/radioButton_fromLists"
+            android:checked="true"
+            android:textSize="15sp"
+            android:layout_weight="1" />
+
+        <RadioButton
+            android:layout_marginLeft="10dp"
+            android:layout_marginStart="10dp"
+            android:layout_width="wrap_content"
+            android:layout_height="0dp"
+            android:text="@string/no_perform_online_search"
+            android:id="@+id/radioButton_searchOnline"
+            android:checked="false"
+            android:textSize="15sp"
+            android:layout_weight="1" />
+    </RadioGroup>
+
+    <!-- layout dialog content -->
+
+    <LinearLayout
+        android:id="@+id/layout_dialogContent"
+        android:orientation="vertical"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="#109ef0" />
+
+        <LinearLayout
+            android:orientation="horizontal"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:paddingLeft="15dp"
+            android:paddingRight="15dp"
+            android:paddingTop="5dp"
+            android:id="@+id/layout_servingType">
+
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:text="@string/choose_serving_type"
+                android:id="@+id/textView_selectedType"
+                android:textSize="20sp"
+                android:layout_weight="1"
+                android:layout_gravity="center"
+                android:textColor="@color/colorPrimary"
+                android:gravity="center|start" />
+
+            <ImageView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:id="@+id/button_chooseServingType"
+                android:src="@mipmap/btn_open_categories_chooser"
+                android:layout_gravity="start"
+                android:paddingTop="8dp"
+                android:paddingBottom="8dp" />
+
+        </LinearLayout>
+
+    </LinearLayout>
+
+    <!-- layout dialog buttons -->
+
+    <GridView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:id="@+id/gridView_servingTypesList"
+        android:numColumns="4"
+        android:layout_margin="10dp"
+        android:verticalSpacing="6dp"
+        android:layout_gravity="center"
+        android:columnWidth="170dp" />
+
+    <LinearLayout
+        android:id="@+id/layout_dialogButtons"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_margin="1dp"
+        android:orientation="horizontal" >
+
+        <Button
+            android:id="@+id/button_cancel"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#434343"
+            android:gravity="center"
+            android:text="@string/cancel"
+            android:textAppearance="?android:attr/textAppearanceButton"
+            android:textColor="@android:color/white"
+            android:layout_marginEnd="1dp"
+            android:layout_marginRight="1dp" />
+
+        <Button
+            android:id="@+id/button_search"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="#434343"
+            android:gravity="center"
+            android:text="@string/go"
+            android:textAppearance="?android:attr/textAppearanceButton"
+            android:textColor="@android:color/white" />
+
+    </LinearLayout>
+
+</LinearLayout>

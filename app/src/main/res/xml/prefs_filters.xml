@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/filters_preferences">
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_vegan"
+            android:key="Vegan"
+            android:title="@string/vegan" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_vegetarian"
+            android:key="Vegetarian"
+            android:title="@string/vegetarian" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_paleo"
+            android:key="Paleo"
+            android:title="@string/paleo" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_dairy_free"
+            android:key="Dairy-free"
+            android:title="@string/dairy_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_egg_free"
+            android:key="Egg-free"
+            android:title="@string/egg_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_gluten_free"
+            android:key="Gluten-free"
+            android:title="@string/gluten_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_peanut_free"
+            android:key="Peanut-free"
+            android:title="@string/peanut_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_seafood_free"
+            android:key="Seafood-free"
+            android:title="@string/seafood_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_sesame_free"
+            android:key="Sesame-free"
+            android:title="@string/sesame_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_soy_free"
+            android:key="Soy-free"
+            android:title="@string/soy_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_tree_nut_free"
+            android:key="Tree-nut-free"
+            android:title="@string/treenut_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_wheat_free"
+            android:key="Wheat-free"
+            android:title="@string/wheat_free" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

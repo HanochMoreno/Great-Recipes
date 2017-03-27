@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<resources>
+
+    <string-array name="maxOnlineSearchResultsEntries">
+
+        <item>10 (ברירת מחדל)</item>
+        <item>20</item>
+        <item>30</item>
+
+    </string-array>
+
+    <string-array name="maxOnlineSearchResultsValues">
+
+        <item>10</item>
+        <item>20</item>
+        <item>30</item>
+
+    </string-array>
+
+    <string-array name="mainMenuDisplayEntries">
+
+        <item>צבעונית (ברירת מחדל)</item>
+        <item>פשוטה</item>
+
+    </string-array>
+
+    <string-array name="mainMenuDisplayValues">
+
+        <item>Colorful</item>
+        <item>Simple</item>
+
+    </string-array>
+
+</resources>

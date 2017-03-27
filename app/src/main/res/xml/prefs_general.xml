@@ -1,0 +1,45 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:key="categoryGeneral"
+        android:title="@string/general_preferences">
+
+        <Preference
+            android:icon="@mipmap/ic_prefs_premium"
+            android:key="premiumAccess"
+            android:title="@string/upgrade_to_premium"
+            android:summary="@string/unlock_all_features" />
+
+        <EditTextPreference
+            android:icon="@mipmap/ic_prefs_username"
+            android:defaultValue="New User"
+            android:dialogTitle="@string/please_enter_user_name"
+            android:key="userName"
+            android:title="@string/change_user_name" />
+
+        <ListPreference
+            android:icon="@mipmap/ic_prefs_main_menu"
+            android:defaultValue="Colorful"
+            android:dialogTitle="@string/set_main_menu_display"
+            android:entries="@array/mainMenuDisplayEntries"
+            android:entryValues="@array/mainMenuDisplayValues"
+            android:key="mainMenuDisplay"
+            android:title="@string/main_menu_display" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_prefs_vibration"
+            android:defaultValue="true"
+            android:key="vibration"
+            android:summary="@string/activate_vibration_with_warnings"
+            android:title="@string/vibration" />
+
+        <Preference
+            android:icon="@mipmap/ic_prefs_contact_us"
+            android:key="contactUs"
+            android:summary="@string/send_us_mail"
+            android:title="@string/contact_us" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

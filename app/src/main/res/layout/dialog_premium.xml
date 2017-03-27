@@ -1,0 +1,93 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/colorDialogBackground"
+    android:longClickable="false"
+    android:minWidth="@dimen/min_width_dialog"
+    android:orientation="vertical">
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/height_dialog_title"
+        android:background="@color/colorPrimary"
+        android:gravity="center"
+        android:text="@string/get_premium_access"
+        android:textAppearance="?android:attr/textAppearance"
+        android:textColor="@color/colorAccent"
+        android:textSize="@dimen/text_size_dialog_title"
+        android:textStyle="bold" />
+
+    <View
+        android:layout_width="match_parent"
+        android:layout_height="2dp"
+        android:background="@color/colorTitleDivider" />
+
+    <FrameLayout
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="10dp"
+        android:layout_marginTop="10dp"
+        android:background="@color/colorButton"
+        android:paddingBottom="1dp">
+
+        <TextView
+            android:id="@+id/textView_limitationsTitle"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_gravity="center"
+            android:background="@color/colorDialogBackground"
+            android:gravity="center"
+            android:textColor="@android:color/white"
+            android:textSize="@dimen/text_size_dialog_content_title"
+            android:textStyle="bold"
+            tools:text="Limitations Title" />
+
+    </FrameLayout>
+
+    <!-- layout dialog buttons -->
+
+    <ListView
+        android:id="@+id/listView"
+        android:layout_width="wrap_content"
+        android:layout_height="0dp"
+        android:layout_weight="1" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="@dimen/height_button"
+        android:layout_marginBottom="@dimen/margin_button"
+        android:layout_marginLeft="@dimen/margin_button"
+        android:layout_marginRight="@dimen/margin_button"
+        android:layout_marginTop="10dp"
+        android:orientation="horizontal">
+
+        <Button
+            android:id="@+id/button_notNow"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_marginEnd="@dimen/margin_button"
+            android:layout_marginRight="@dimen/margin_button"
+            android:layout_weight="1"
+            android:background="@color/colorButton"
+            android:gravity="center"
+            android:text="@string/not_now"
+            android:textAppearance="?android:attr/textAppearanceButton"
+            android:textColor="@android:color/white" />
+
+        <Button
+            android:id="@+id/button_upgrade"
+            android:layout_width="0dp"
+            android:layout_height="match_parent"
+            android:layout_weight="1"
+            android:background="@color/colorButton"
+            android:gravity="center"
+            android:text="@string/upgrade"
+            android:textAppearance="?android:attr/textAppearanceButton"
+            android:textColor="@android:color/white" />
+
+    </LinearLayout>
+
+</LinearLayout>

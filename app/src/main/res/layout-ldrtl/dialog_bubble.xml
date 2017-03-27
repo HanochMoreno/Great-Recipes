@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:background="@color/colorListContainerBackground"
+    android:id="@+id/layout_bubble">
+
+    <TextView
+        android:layout_width="@dimen/width_bubble"
+        android:layout_height="wrap_content"
+        tools:text="לחץ כאן כדי להתחיל לעשות משהו"
+        android:layout_gravity="bottom|end"
+        android:textSize="@dimen/text_size_bubble"
+        android:id="@+id/textView_dialogBubble"
+        android:layout_marginRight="@dimen/margin_end_bubble"
+        android:layout_marginEnd="@dimen/margin_end_bubble"
+        android:layout_marginBottom="@dimen/margin_bottom_bubble"
+        android:background="@drawable/dialog_balloon_rectangle_rtl2"
+        android:paddingBottom="55dp"
+        android:paddingLeft="@dimen/padding_bubble_text"
+        android:paddingTop="@dimen/padding_bubble_text"
+        android:paddingRight="@dimen/padding_bubble_text"
+        android:gravity="bottom" />
+</FrameLayout>

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Weights -->
+    <integer name="weight_splash_text_part_app_logo">1</integer>
+    <integer name="weight_splash_text_part_app_name">1</integer>
+    <!--<integer name="weight_splash_text_part_progress_bar">1</integer>-->
+    <!--<integer name="weight_splash_text_part">1</integer>-->
+    <!--<integer name="weight_splash_image_part">1</integer>-->
+
+</resources>

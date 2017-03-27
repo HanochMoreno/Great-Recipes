@@ -1,0 +1,149 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:padding="@dimen/margin_card_category_chooser">
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/height_card_category">
+
+            <include
+                android:id="@+id/cardView_desserts"
+                layout="@layout/listitem_category_chooser"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_margin="@dimen/margin_card_category_chooser" />
+
+            <include
+                android:id="@+id/cardView_breads"
+                layout="@layout/listitem_category_chooser"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_margin="@dimen/margin_card_category_chooser" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/height_card_category">
+
+            <include
+                android:id="@+id/cardView_beverages"
+                layout="@layout/listitem_category_chooser"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_margin="@dimen/margin_card_category_chooser" />
+
+            <include
+                android:id="@+id/cardView_breakfast"
+                layout="@layout/listitem_category_chooser"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_margin="@dimen/margin_card_category_chooser" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/height_card_category">
+
+            <include
+                android:id="@+id/cardView_cocktails"
+                layout="@layout/listitem_category_chooser"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_margin="@dimen/margin_card_category_chooser" />
+
+            <include
+                android:id="@+id/cardView_sauces"
+                layout="@layout/listitem_category_chooser"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_margin="@dimen/margin_card_category_chooser" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/height_card_category">
+
+            <include
+                android:id="@+id/cardView_appetizers"
+                layout="@layout/listitem_category_chooser"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_margin="@dimen/margin_card_category_chooser" />
+
+            <include
+                android:id="@+id/cardView_lunch"
+                layout="@layout/listitem_category_chooser"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_margin="@dimen/margin_card_category_chooser" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/height_card_category">
+
+            <include
+                android:id="@+id/cardView_mainDishes"
+                layout="@layout/listitem_category_chooser"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_margin="@dimen/margin_card_category_chooser" />
+
+            <include
+                android:id="@+id/cardView_salads"
+                layout="@layout/listitem_category_chooser"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_margin="@dimen/margin_card_category_chooser" />
+
+        </TableRow>
+
+        <TableRow
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/height_card_category">
+
+            <include
+                android:id="@+id/cardView_sideDishes"
+                layout="@layout/listitem_category_chooser"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_margin="@dimen/margin_card_category_chooser" />
+
+            <include
+                android:id="@+id/cardView_soups"
+                layout="@layout/listitem_category_chooser"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1"
+                android:layout_margin="@dimen/margin_card_category_chooser" />
+
+        </TableRow>
+
+    </LinearLayout>
+
+</ScrollView>

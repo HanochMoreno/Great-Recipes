@@ -1,0 +1,53 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@color/colorSplashBackground"
+    android:orientation="vertical"
+    tools:context=".SplashActivity">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_gravity="center"
+        android:layout_weight="@integer/weight_splash_text_part"
+        android:orientation="vertical"
+        android:padding="@dimen/padding_splash_text_part">
+
+        <ImageView
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_marginBottom="@dimen/margin_bottom_splash_app_logo"
+            android:layout_weight="@integer/weight_splash_text_part_app_logo"
+            android:padding="@dimen/padding_splash_app_logo"
+            android:src="@drawable/app_logo" />
+
+        <TextView
+            android:id="@+id/textView_greatRecipes"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="@integer/weight_splash_text_part_app_name"
+            android:gravity="center|top"
+            android:text="@string/app_name"
+            android:textSize="@dimen/text_size_splash_app_name" />
+
+        <ProgressBar
+            android:id="@+id/progressBar"
+            style="?android:attr/progressBarStyleHorizontal"
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_gravity="center_horizontal"
+            android:layout_weight="@integer/weight_splash_text_part_progress_bar"
+            android:paddingLeft="@dimen/padding_splash_progress_bar_sides"
+            android:paddingRight="@dimen/padding_splash_progress_bar_sides" />
+    </LinearLayout>
+
+    <ImageView
+        android:id="@+id/imageView_splashImage"
+        android:layout_width="match_parent"
+        android:layout_height="0dp"
+        android:layout_weight="@integer/weight_splash_image_part"
+        android:scaleType="centerCrop"
+        android:src="@drawable/app_image" />
+
+</LinearLayout>

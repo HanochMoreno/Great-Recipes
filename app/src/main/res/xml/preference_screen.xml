@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory android:title="@string/general_preferences">
+
+        <EditTextPreference
+            android:icon="@mipmap/ic_prefs_username"
+            android:defaultValue="New User"
+            android:dialogTitle="@string/please_enter_user_name"
+            android:key="userName"
+            android:title="@string/change_user_name" />
+
+        <ListPreference
+            android:icon="@mipmap/ic_prefs_main_menu"
+            android:defaultValue="Colorful"
+            android:dialogTitle="@string/set_main_menu_display"
+            android:entries="@array/mainMenuDisplayEntries"
+            android:entryValues="@array/mainMenuDisplayValues"
+            android:key="mainMenuDisplay"
+            android:title="@string/main_menu_display" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_prefs_vibration"
+            android:defaultValue="true"
+            android:key="vibration"
+            android:summary="@string/activate_vibration_with_warnings"
+            android:title="@string/vibration" />
+
+        <Preference
+            android:icon="@mipmap/ic_prefs_contact_us"
+            android:key="contactUs"
+            android:summary="@string/send_us_mail"
+            android:title="@string/contact_us" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/recipes_lists_preferences">
+
+        <Preference
+            android:icon="@mipmap/ic_prefs_delete_recipes"
+            android:key="deleteAll"
+            android:summary="@string/the_operation_is_irreversible"
+            android:title="@string/delete_all_the_recipes_lists" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/online_search_preferences">
+
+        <ListPreference
+            android:icon="@mipmap/ic_prefs_search_results"
+            android:defaultValue="10"
+            android:dialogTitle="@string/set_max_online_search_results"
+            android:entries="@array/maxOnlineSearchResultsEntries"
+            android:entryValues="@array/maxOnlineSearchResultsValues"
+            android:key="maxOnlineSearchResults"
+            android:title="@string/max_online_search_results" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory android:title="@string/filters_preferences">
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_vegan"
+            android:key="Vegan"
+            android:title="@string/vegan" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_vegetarian"
+            android:key="Vegetarian"
+            android:title="@string/vegetarian" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_paleo"
+            android:key="Paleo"
+            android:title="@string/paleo" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_dairy_free"
+            android:key="Dairy-free"
+            android:title="@string/dairy_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_egg_free"
+            android:key="Egg-free"
+            android:title="@string/egg_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_gluten_free"
+            android:key="Gluten-free"
+            android:title="@string/gluten_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_peanut_free"
+            android:key="Peanut-free"
+            android:title="@string/peanut_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_seafood_free"
+            android:key="Seafood-free"
+            android:title="@string/seafood_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_sesame_free"
+            android:key="Sesame-free"
+            android:title="@string/sesame_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_soy_free"
+            android:key="Soy-free"
+            android:title="@string/soy_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_tree_nut_free"
+            android:key="Tree-nut-free"
+            android:title="@string/treenut_free" />
+
+        <CheckBoxPreference
+            android:icon="@mipmap/ic_filter_wheat_free"
+            android:key="Wheat-free"
+            android:title="@string/wheat_free" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

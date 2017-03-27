@@ -1,0 +1,617 @@
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/scrollView"
+
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.hanoch.greatrecipes.view.EditRecipeFragment">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:orientation="vertical"
+        android:paddingRight="@dimen/padding_fragment_recipe_review_cards_part_sides"
+        android:paddingLeft="@dimen/padding_fragment_recipe_review_cards_part_sides">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="@dimen/height_fragment_recipe_review_recipe_image"
+            android:orientation="horizontal">
+
+            <android.support.v7.widget.CardView
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                android:layout_weight="1"
+                card_view:cardBackgroundColor="@color/colorCardBackground"
+                card_view:cardCornerRadius="15dp"
+                card_view:cardElevation="5dp"
+                android:layout_marginRight="10dp"
+                android:layout_marginEnd="10dp"
+                android:layout_marginBottom="10dp"
+                android:layout_marginTop="10dp">
+
+                <ImageView
+                    android:id="@+id/imageView_recipeImage"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:layout_gravity="center"
+                    android:background="@color/colorCardBackground"
+                    android:scaleType="fitXY" />
+
+                <ImageView
+                    android:id="@+id/imageView_favourite"
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:layout_margin="20dp"
+                    android:src="@mipmap/ic_favourite" />
+
+                <ImageView
+                    android:id="@+id/imageView_choosePicture"
+                    android:layout_width="100dp"
+                    android:layout_height="100dp"
+                    android:layout_gravity="center"
+                    android:src="@drawable/btn_choose_picture" />
+
+                <ImageView
+                    android:id="@+id/imageView_deleteImage"
+                    android:layout_width="60dp"
+                    android:layout_height="60dp"
+                    android:layout_gravity="end|bottom"
+                    android:layout_margin="10dp"
+                    android:src="@drawable/ic_remove_image" />
+
+                <TextView
+                    android:layout_width="wrap_content"
+                    android:layout_height="wrap_content"
+                    android:text="@string/no_image_available"
+                    android:id="@+id/textView_noImageAvailable"
+                    android:layout_gravity="center"
+                    android:textSize="30sp" />
+
+            </android.support.v7.widget.CardView>
+
+            <LinearLayout
+                android:orientation="vertical"
+                android:layout_width="0dp"
+                android:layout_height="match_parent"
+                android:layout_weight="1">
+
+                <EditText
+                    android:id="@+id/editText_recipeTitle"
+                    android:layout_width="match_parent"
+                    android:layout_height="0dp"
+                    android:layout_weight="1"
+                    android:background="@drawable/shape_title_text_background"
+                    android:gravity="center"
+                    android:hint="@string/recipe_title"
+                    android:padding="10dp"
+                    android:singleLine="false"
+                    android:textColor="#ffffff"
+                    android:textColorHint="@color/colorUnfilledField"
+                    android:textSize="@dimen/text_size_fragment_recipe_review_recipe_title"
+                    android:textStyle="bold"
+                    android:layout_marginTop="10dp"
+                    android:layout_marginBottom="10dp" />
+
+                <TextView
+                    android:id="@+id/textView_recipeAuthor"
+                    android:layout_width="match_parent"
+                    android:layout_height="wrap_content"
+                    android:layout_gravity="center_horizontal"
+                    android:gravity="center"
+                    android:text="@string/no_info"
+                    android:singleLine="false"
+                    android:textColor="@android:color/white"
+                    android:textSize="15sp"
+                    android:textStyle="bold"
+                    android:padding="10dp"
+                    android:background="@drawable/shape_title_text_background"
+                    android:minLines="2"
+                    android:layout_marginBottom="10dp" />
+                
+            </LinearLayout>
+
+        </LinearLayout>
+
+        <LinearLayout
+            android:orientation="vertical"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:orientation="horizontal">
+
+                <android.support.v7.widget.CardView
+                    android:id="@+id/cardView_yield"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    card_view:cardBackgroundColor="@color/colorCardBackground"
+                    card_view:cardCornerRadius="15dp"
+                    card_view:cardElevation="5dp"
+                    android:layout_marginEnd="10dp"
+                    android:layout_marginRight="10dp"
+                    android:layout_marginBottom="10dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/height_fragment_recipe_review_card_title"
+                            android:layout_gravity="center|top"
+                            android:background="@drawable/shape_card_api19_version"
+                            android:gravity="start"
+                            android:orientation="horizontal"
+                            android:paddingEnd="10dp"
+                            android:paddingLeft="10dp"
+                            android:paddingRight="10dp"
+                            android:paddingStart="10dp">
+
+                            <ImageView
+                                android:layout_width="@dimen/height_fragment_recipe_review_card_title_icon"
+                                android:layout_height="@dimen/height_fragment_recipe_review_card_title_icon"
+                                android:layout_gravity="start|center"
+                                android:layout_marginEnd="10dp"
+                                android:layout_marginRight="10dp"
+                                android:background="@drawable/shape_title_icon_background"
+                                android:padding="8dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/ic_diners" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_gravity="center"
+                                android:gravity="center|start"
+                                android:text="@string/yield"
+                                android:textColor="#000000"
+                                android:textSize="@dimen/text_size_fragment_recipe_review_card_title"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/textView_servings"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/height_fragment_recipe_review_card_title"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:text="@string/no_info"
+                            android:textColor="#fc0303"
+                            android:textSize="@dimen/text_size_fragment_recipe_review_card_content" />
+
+                    </LinearLayout>
+
+                </android.support.v7.widget.CardView>
+
+                <android.support.v7.widget.CardView
+                    android:id="@+id/cardView_totalTime"
+                    android:layout_width="0dp"
+                    android:layout_height="match_parent"
+                    android:layout_weight="1"
+                    card_view:cardBackgroundColor="@color/colorCardBackground"
+                    card_view:cardCornerRadius="15dp"
+                    card_view:cardElevation="5dp"
+                    android:layout_marginBottom="10dp">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="match_parent"
+                        android:orientation="vertical">
+
+                        <LinearLayout
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/height_fragment_recipe_review_card_title"
+                            android:layout_gravity="center|top"
+                            android:background="@drawable/shape_card_api19_version"
+                            android:gravity="start"
+                            android:orientation="horizontal"
+                            android:paddingEnd="10dp"
+                            android:paddingLeft="10dp"
+                            android:paddingRight="10dp"
+                            android:paddingStart="10dp">
+
+                            <ImageView
+                                android:layout_width="@dimen/height_fragment_recipe_review_card_title_icon"
+                                android:layout_height="@dimen/height_fragment_recipe_review_card_title_icon"
+                                android:layout_gravity="center"
+                                android:layout_marginEnd="10dp"
+                                android:layout_marginRight="10dp"
+                                android:background="@drawable/shape_title_icon_background"
+                                android:padding="8dp"
+                                android:scaleType="fitCenter"
+                                android:src="@drawable/ic_total_time" />
+
+                            <TextView
+                                android:layout_width="match_parent"
+                                android:layout_height="match_parent"
+                                android:layout_gravity="center"
+                                android:gravity="center|start"
+                                android:text="@string/time"
+                                android:textColor="#000000"
+                                android:textSize="@dimen/text_size_fragment_recipe_review_card_title"
+                                android:textStyle="bold" />
+
+                        </LinearLayout>
+
+                        <TextView
+                            android:id="@+id/textView_totalTime"
+                            android:layout_width="match_parent"
+                            android:layout_height="@dimen/height_fragment_recipe_review_card_title"
+                            android:layout_gravity="center"
+                            android:gravity="center"
+                            android:text="@string/no_info"
+                            android:textColor="#fc0303"
+                            android:textSize="@dimen/text_size_fragment_recipe_review_card_content" />
+
+                    </LinearLayout>
+
+
+                </android.support.v7.widget.CardView>
+
+            </LinearLayout>
+
+            <android.support.v7.widget.CardView
+                android:id="@+id/cardView_ingredients"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                card_view:cardBackgroundColor="@color/colorCardBackground"
+                card_view:cardCornerRadius="15dp"
+                card_view:cardElevation="5dp"
+                android:layout_marginBottom="10dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/height_fragment_recipe_review_card_title"
+                        android:background="@drawable/shape_card_api19_version"
+                        android:orientation="horizontal"
+                        android:paddingEnd="10dp"
+                        android:paddingLeft="10dp"
+                        android:paddingRight="10dp"
+                        android:paddingStart="10dp">
+
+                        <ImageView
+                            android:layout_width="@dimen/height_fragment_recipe_review_card_title_icon"
+                            android:layout_height="@dimen/height_fragment_recipe_review_card_title_icon"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="10dp"
+                            android:layout_marginRight="10dp"
+                            android:background="@drawable/shape_title_icon_background"
+                            android:padding="8dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_ingredients" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center"
+                            android:layout_weight="1"
+                            android:gravity="center|start"
+                            android:text="@string/ingredients"
+                            android:textColor="#000000"
+                            android:textSize="@dimen/text_size_fragment_recipe_review_card_title"
+                            android:textStyle="bold" />
+
+                        <ImageView
+                            android:id="@+id/button_addIngredient"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:padding="8dp"
+                            android:scaleType="fitEnd"
+                            android:src="@mipmap/btn_add_categories_chooser" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/layout_ingredientsList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:minHeight="@dimen/height_fragment_recipe_review_card_title"
+                        android:orientation="vertical" />
+
+                </LinearLayout>
+
+            </android.support.v7.widget.CardView>
+
+            <android.support.v7.widget.CardView
+                android:id="@+id/cardView_energy"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                card_view:cardBackgroundColor="@color/colorCardBackground"
+                card_view:cardCornerRadius="15dp"
+                card_view:cardElevation="5dp"
+                android:layout_marginBottom="10dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/height_fragment_recipe_review_card_title"
+                        android:layout_gravity="center|top"
+                        android:background="@drawable/shape_card_api19_version"
+                        android:gravity="start"
+                        android:orientation="horizontal"
+                        android:paddingEnd="10dp"
+                        android:paddingLeft="10dp"
+                        android:paddingRight="10dp"
+                        android:paddingStart="10dp">
+
+                        <ImageView
+                            android:layout_width="@dimen/height_fragment_recipe_review_card_title_icon"
+                            android:layout_height="@dimen/height_fragment_recipe_review_card_title_icon"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="10dp"
+                            android:layout_marginRight="10dp"
+                            android:background="@drawable/shape_title_icon_background"
+                            android:padding="8dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_calories" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center"
+                            android:gravity="center|start"
+                            android:text="@string/energy"
+                            android:textColor="@android:color/black"
+                            android:textSize="@dimen/text_size_fragment_recipe_review_card_title"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <TextView
+                        android:id="@+id/textView_totalCalories"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="start|center"
+                        android:layout_marginLeft="15dp"
+                        android:layout_marginRight="15dp"
+                        android:gravity="center|start"
+                        android:minHeight="@dimen/height_fragment_recipe_review_card_title"
+                        android:text="@string/no_info"
+                        android:textColor="@android:color/black"
+                        android:textSize="@dimen/text_size_fragment_recipe_review_card_content" />
+
+                </LinearLayout>
+
+            </android.support.v7.widget.CardView>
+
+            <android.support.v7.widget.CardView
+                android:id="@+id/cardView_instructions"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                card_view:cardBackgroundColor="@color/colorCardBackground"
+                card_view:cardCornerRadius="15dp"
+                card_view:cardElevation="5dp"
+                android:layout_marginBottom="10dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/height_fragment_recipe_review_card_title"
+                        android:layout_gravity="center|top"
+                        android:background="@drawable/shape_card_api19_version"
+                        android:gravity="start"
+                        android:orientation="horizontal"
+                        android:paddingEnd="10dp"
+                        android:paddingLeft="10dp"
+                        android:paddingRight="10dp"
+                        android:paddingStart="10dp">
+
+                        <ImageView
+                            android:layout_width="@dimen/height_fragment_recipe_review_card_title_icon"
+                            android:layout_height="@dimen/height_fragment_recipe_review_card_title_icon"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="10dp"
+                            android:layout_marginRight="10dp"
+                            android:background="@drawable/shape_title_icon_background"
+                            android:padding="8dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_instructions" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center"
+                            android:gravity="center|start"
+                            android:text="@string/instructions"
+                            android:textColor="#000000"
+                            android:textSize="@dimen/text_size_fragment_recipe_review_card_title"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <EditText
+                        android:lineSpacingExtra="3dp"
+                        android:id="@+id/editText_instructions"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center"
+                        android:hint="@string/enter_the_instructions"
+                        android:inputType="textImeMultiLine|textMultiLine"
+                        android:minHeight="@dimen/height_fragment_recipe_review_card_title"
+                        android:textColor="#000000"
+                        android:textColorHint="#fc0303"
+                        android:textSize="@dimen/text_size_fragment_recipe_review_card_content"
+                        android:background="@android:color/transparent"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"
+                        android:paddingTop="16dp"
+                        android:paddingBottom="16dp" />
+
+                </LinearLayout>
+
+            </android.support.v7.widget.CardView>
+
+            <android.support.v7.widget.CardView
+                android:layout_marginBottom="10dp"
+                android:id="@+id/cardView_categories"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                card_view:cardBackgroundColor="@color/colorCardBackground"
+                card_view:cardCornerRadius="15dp"
+                card_view:cardElevation="5dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/height_fragment_recipe_review_card_title"
+                        android:layout_gravity="center|top"
+                        android:background="@drawable/shape_card_api19_version"
+                        android:gravity="start"
+                        android:orientation="horizontal"
+                        android:paddingEnd="10dp"
+                        android:paddingLeft="10dp"
+                        android:paddingRight="10dp"
+                        android:paddingStart="10dp">
+
+                        <ImageView
+                            android:layout_width="@dimen/height_fragment_recipe_review_card_title_icon"
+                            android:layout_height="@dimen/height_fragment_recipe_review_card_title_icon"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="10dp"
+                            android:layout_marginRight="10dp"
+                            android:background="@drawable/shape_title_icon_background"
+                            android:padding="8dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_categories" />
+
+                        <TextView
+                            android:layout_width="0dp"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center"
+                            android:layout_weight="1"
+                            android:gravity="center|start"
+                            android:text="@string/categories"
+                            android:textColor="#000000"
+                            android:textSize="@dimen/text_size_fragment_recipe_review_card_title"
+                            android:textStyle="bold" />
+
+                        <ImageView
+                            android:id="@+id/button_addCategory"
+                            android:layout_width="wrap_content"
+                            android:layout_height="match_parent"
+                            android:padding="8dp"
+                            android:scaleType="fitEnd"
+                            android:src="@mipmap/btn_add_categories_chooser" />
+
+                    </LinearLayout>
+
+                    <LinearLayout
+                        android:id="@+id/layout_categoriesList"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:layout_gravity="center_horizontal"
+                        android:minHeight="@dimen/height_fragment_recipe_review_card_title"
+                        android:orientation="vertical" />
+
+                </LinearLayout>
+
+            </android.support.v7.widget.CardView>
+
+            <android.support.v7.widget.CardView
+                android:id="@+id/cardView_notes"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:layout_gravity="center"
+                card_view:cardBackgroundColor="@color/colorCardBackground"
+                android:layout_marginBottom="10dp"
+                card_view:cardCornerRadius="15dp"
+                card_view:cardElevation="5dp">
+
+                <LinearLayout
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    android:orientation="vertical">
+
+                    <LinearLayout
+                        android:layout_width="match_parent"
+                        android:layout_height="@dimen/height_fragment_recipe_review_card_title"
+                        android:layout_gravity="center|top"
+                        android:background="@drawable/shape_card_api19_version"
+                        android:gravity="start"
+                        android:orientation="horizontal"
+                        android:paddingEnd="10dp"
+                        android:paddingLeft="10dp"
+                        android:paddingRight="10dp"
+                        android:paddingStart="10dp">
+
+                        <ImageView
+                            android:layout_width="@dimen/height_fragment_recipe_review_card_title_icon"
+                            android:layout_height="@dimen/height_fragment_recipe_review_card_title_icon"
+                            android:layout_gravity="center"
+                            android:layout_marginEnd="10dp"
+                            android:layout_marginRight="10dp"
+                            android:background="@drawable/shape_title_icon_background"
+                            android:padding="12dp"
+                            android:scaleType="fitCenter"
+                            android:src="@drawable/ic_notes" />
+
+                        <TextView
+                            android:layout_width="match_parent"
+                            android:layout_height="match_parent"
+                            android:layout_gravity="center"
+                            android:gravity="center|start"
+                            android:text="@string/notes"
+                            android:textColor="#000000"
+                            android:textSize="@dimen/text_size_fragment_recipe_review_card_title"
+                            android:textStyle="bold" />
+
+                    </LinearLayout>
+
+                    <EditText
+                        android:id="@+id/editText_privateNotes"
+                        android:layout_width="match_parent"
+                        android:layout_height="wrap_content"
+                        android:lineSpacingExtra="3dp"
+                        android:layout_gravity="center"
+                        android:hint="@string/enter_your_notes"
+                        android:inputType="textImeMultiLine|textMultiLine"
+                        android:minHeight="@dimen/height_fragment_recipe_review_card_title"
+                        android:textColor="#000000"
+                        android:textColorHint="#fc0303"
+                        android:textSize="@dimen/text_size_fragment_recipe_review_card_content"
+                        android:background="@android:color/transparent"
+                        android:paddingLeft="14dp"
+                        android:paddingRight="14dp"
+                        android:paddingTop="16dp"
+                        android:paddingBottom="16dp" />
+
+                </LinearLayout>
+
+            </android.support.v7.widget.CardView>
+        </LinearLayout>
+
+    </LinearLayout>
+
+</ScrollView>
+

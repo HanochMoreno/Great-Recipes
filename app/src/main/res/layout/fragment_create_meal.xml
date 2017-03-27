@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent">
+
+    <include
+        android:id="@+id/layout_dialogBubble"
+        layout="@layout/dialog_bubble"/>
+
+    <ListView
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:id="@+id/listView_servingsList"
+        android:choiceMode="multipleChoice"
+        android:dividerHeight="3dp"
+        android:divider="@android:color/transparent"
+        android:footerDividersEnabled="false" />
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/floatingButton_addServing"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="25dp"
+        android:clickable="true"
+        android:src="@drawable/btn_flt_add" />
+
+</FrameLayout>

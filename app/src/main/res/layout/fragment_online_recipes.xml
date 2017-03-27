@@ -1,0 +1,28 @@
+<FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:gravity="center"
+    tools:context="com.hanoch.greatrecipes.view.ListOnlineFragment">
+
+    <include
+        android:id="@+id/layout_dialogBubble"
+        layout="@layout/dialog_bubble"/>
+
+    <ListView
+        android:id="@+id/listView_recipesList"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_horizontal"
+        android:dividerHeight="2dp"/>
+
+    <android.support.design.widget.FloatingActionButton
+        android:id="@+id/floatingButton_addOnlineRecipe"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="end|bottom"
+        android:layout_margin="25dp"
+        android:clickable="true"
+        android:src="@drawable/btn_flt_add" />
+
+</FrameLayout>

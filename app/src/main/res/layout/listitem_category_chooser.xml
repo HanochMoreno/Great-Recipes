@@ -1,0 +1,69 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<android.support.v7.widget.CardView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:card_view="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:id="@+id/cardView_selectedCategory"
+    android:layout_width="match_parent"
+    android:layout_height="@dimen/height_card_category"
+    android:layout_gravity="center"
+    card_view:cardBackgroundColor="#c6c6c6"
+    card_view:cardCornerRadius="15dp"
+    card_view:cardElevation="5dp">
+
+    <ImageView
+        android:id="@+id/imageView_categoryImage"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        tools:src = "@drawable/cat_condiments_and_sauces"
+        android:scaleType="centerCrop" />
+
+    <ImageView
+        android:id="@+id/imageView_checkedIcon"
+        android:layout_width="50dp"
+        android:layout_height="50dp"
+        android:layout_gravity="center"
+        android:src="@drawable/ic_checked"
+        tools:visibility="visible"
+        android:visibility="invisible" />
+
+    <TextView
+        android:id="@+id/textView_categoryName"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_margin="5dp"
+        android:layout_weight="3"
+        android:background="@drawable/shape_title_text_background"
+        android:gravity="center|start|top"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        tools:text="Category Name"
+        android:textColor="@android:color/white"
+        android:textSize="@dimen/text_size_category_name" />
+
+    <TextView
+        android:layout_gravity="center|start|bottom"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        tools:text="Category Original Name"
+        android:visibility="gone"
+        tools:visibility="visible"
+        android:id="@+id/textView_categoryOriginalName" />
+
+    <TextView
+        android:id="@+id/textView_premium"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_margin="5dp"
+        android:gravity="center"
+        android:paddingLeft="5dp"
+        android:paddingRight="5dp"
+        android:text="@string/premium"
+        android:textColor="@color/colorPrimary"
+        android:textSize="@dimen/text_size_premium"
+        android:textStyle="bold"
+        tools:visibility="visible"
+        android:visibility="gone" />
+
+</android.support.v7.widget.CardView>
