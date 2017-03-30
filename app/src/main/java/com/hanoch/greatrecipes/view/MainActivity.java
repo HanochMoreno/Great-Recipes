@@ -568,7 +568,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         int width = metrics.widthPixels;
         //int height = metrics.heightPixels;
 
-//        if (!isAPhone()
         if (getResources().getBoolean(R.bool.isTablet)
                 && !(getResources().getBoolean(R.bool.isSmallTablet))
                 && getResources().getConfiguration().orientation == Configuration.ORIENTATION_LANDSCAPE) {

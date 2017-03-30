@@ -198,7 +198,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
         mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
 
-//        if (isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // Tablet:
 
@@ -338,7 +337,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
         outState.putStringArrayList("drawerCheckedItemsPositionList", drawerCheckedItemsPositionList);
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
 
             int layout_logoVisibility = layout_logo.getVisibility();
@@ -788,7 +786,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         FragmentTransaction ft = fm.beginTransaction();
         Fragment recipeReviewFragment = RecipeReviewFragment.newInstance(resultId, resultYummlyId, extra_serving);
 
-//        if (isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // tablet
 
@@ -834,7 +831,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
         AppHelper.hide_keyboard_from(this, getCurrentFocus());
 
-//        if (isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // Tablet
 
@@ -869,7 +865,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         Fragment webViewFragment = WebViewFragment.newInstance(url);
         ft.setCustomAnimations(R.anim.slide_in_bottom, R.anim.slide_out_bottom, R.anim.slide_in_up, R.anim.slide_out_up);
 
-//        if (isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // tablet
 
@@ -933,7 +928,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
             fm.popBackStack();
 
-//            if (isAPhone()) {
             if (!getResources().getBoolean(R.bool.isTablet)) {
 
                 // Hide the hamburger icon in phones
@@ -959,7 +953,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         if (recipeReviewFragment != null) {
             // Internet error - a "blank" recipe is displayed ("No info." in all fields)
 
-//            if (isAPhone()) {
             if (getResources().getBoolean(R.bool.isTablet)) {
 
                 AppHelper.animateViewFadingIn(this, layout_logo, 500, 500);

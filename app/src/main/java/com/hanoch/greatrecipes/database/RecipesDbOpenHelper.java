@@ -3,7 +3,6 @@ package com.hanoch.greatrecipes.database;
 import android.content.Context;
 import android.database.sqlite.SQLiteDatabase;
 import android.database.sqlite.SQLiteOpenHelper;
-import android.net.Uri;
 
 
 public class RecipesDbOpenHelper extends SQLiteOpenHelper {

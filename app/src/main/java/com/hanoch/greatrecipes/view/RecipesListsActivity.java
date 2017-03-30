@@ -131,7 +131,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
         extra_serving = prevIntent.getStringExtra(AppConsts.Extras.EXTRA_SERVING);
         FragmentManager fm = getSupportFragmentManager();
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // Tablet:
 
@@ -176,7 +175,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
     protected void onResume() {
         super.onResume();
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
 
             /*View v = findViewById(R.id.layout_7inTablet);
@@ -235,7 +233,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
             outState.putBoolean("currentCheckboxState", checkBox.isChecked());
         }
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             int layout_logoVisibility = layout_logo.getVisibility();
             outState.putInt("layout_logoVisibility", layout_logoVisibility);
@@ -418,7 +415,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
         tabChanged = false;
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // tablet
 
@@ -511,7 +507,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
             toolbar.setTitle(toolbarTitle);
 
             ForTablet:
-//            if (!isAPhone()) {
             if (getResources().getBoolean(R.bool.isTablet)) {
                 // Tablet only
 
@@ -537,7 +532,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
             if (checkedItemsId.size() == 1) {
                 // First item was checked
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
                     if (layout_logo.getVisibility() == View.VISIBLE) {
                         AppHelper.animateViewFadingOut(this, layout_logo, 500, 0);
@@ -557,7 +551,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
             if (checkedItemsId.isEmpty()) {
                 // The last checked item was unchecked
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
 
                     FragmentManager fm = getSupportFragmentManager();
@@ -583,7 +576,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 toolbarTitle = checkedItemsId.size() + " " + getString(R.string.selected);
                 toolbar.setTitle(toolbarTitle);
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
                     // Tablet only
 
@@ -719,7 +711,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
                     }
                 }
 
-//                if (isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
                     // tablet
 
@@ -808,7 +799,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
     public void onCancelLoginButtonClicked() {
         // in edit recipe fragment
 
-//        if (isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
 
             FragmentManager fm = getSupportFragmentManager();
@@ -1286,7 +1276,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
         if (toolbar_delete.isVisible()) {
             // The user renounced selecting recipes to delete
 
-//            if (!isAPhone()) {
             if (getResources().getBoolean(R.bool.isTablet)) {
                 // Tablet only
 
@@ -1457,7 +1446,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
                     recipeReviewFragment = RecipeReviewFragment.newInstance(mRecipeId, null, null);
                     ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_up);
 
-//                    if (!isAPhone()) {
                     if (getResources().getBoolean(R.bool.isTablet)) {
                         ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
                     } else {
@@ -1517,7 +1505,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
             checkedItemsId.clear();
         }
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // Tablet only
 
@@ -1597,7 +1584,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
                     checkedItemsId.clear();
                 }
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
                     // Tablet only
 

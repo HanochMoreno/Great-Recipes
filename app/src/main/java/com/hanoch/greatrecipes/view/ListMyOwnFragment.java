@@ -181,7 +181,6 @@ public class ListMyOwnFragment extends MyFragment
 
             mListListener.onRecipeClick(this, id);
 
-//            if (!isAPhone()) {
             if (getResources().getBoolean(R.bool.isTablet)) {
 
                 // Tablet only
@@ -230,7 +229,6 @@ public class ListMyOwnFragment extends MyFragment
                 AppHelper.animateUncheckedRecipe(view, getContext());
                 checkedItemsIdList.remove(id + "");
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
 
                     if (checkedItemsIdList.isEmpty()) {
@@ -269,7 +267,6 @@ public class ListMyOwnFragment extends MyFragment
                 // Unchecked item was checked
                 // (at least 1 item was already checked)
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
 
                     AppHelper.setSelectedRecipe(view, getContext());
@@ -301,7 +298,6 @@ public class ListMyOwnFragment extends MyFragment
             return false;
         }
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
 
             // Tablet only
@@ -349,7 +345,6 @@ public class ListMyOwnFragment extends MyFragment
 
                 mListListener.onAddNewRecipeClick(this, AppConsts.RecipeOrigin.ADDED_MANUALLY);
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
 
                     floatingButton_addRecipe.setEnabled(false);
@@ -426,7 +421,6 @@ public class ListMyOwnFragment extends MyFragment
     public void backToDefaultDisplay(boolean includeAnimation) {
         // Activated by the activity after closing the toolbar menu
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
 
             // Tablet only

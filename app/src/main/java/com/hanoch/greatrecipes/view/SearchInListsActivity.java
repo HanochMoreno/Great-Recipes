@@ -175,7 +175,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
 
             int layout_logoVisibility = layout_logo.getVisibility();
@@ -229,7 +228,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
     protected void onResume() {
         super.onResume();
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
 
             /*View v = findViewById(R.id.layout_7inTablet);
@@ -300,7 +298,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
         Fragment recipeReviewFragment;
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // tablet
 
@@ -366,7 +363,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
             toolbar.setTitle(toolbarTitle);
 
             ForTablet:
-//            if (!isAPhone()) {
             if (getResources().getBoolean(R.bool.isTablet)) {
                 // Tablet only
 
@@ -392,7 +388,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
             if (checkedItemsId.size() == 1) {
                 // First item was checked
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
 
                     if (layout_logo.getVisibility() == View.VISIBLE) {
@@ -413,7 +408,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
             if (checkedItemsId.isEmpty()) {
                 // The last checked item was unchecked
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
 
                     FragmentManager fm = getSupportFragmentManager();
@@ -439,7 +433,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 toolbarTitle = checkedItemsId.size() + " " + getString(R.string.selected);
                 toolbar.setTitle(toolbarTitle);
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
                     // Tablet only
 
@@ -479,7 +472,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
         Fragment webViewFragment = WebViewFragment.newInstance(url);
         ft.setCustomAnimations(R.anim.slide_in_bottom, R.anim.slide_out_bottom, R.anim.slide_in_up, R.anim.slide_out_up);
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // tablet
 
@@ -517,7 +509,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
         Fragment recipeReviewFragment = RecipeReviewFragment.newInstance(recipeId, null, extra_serving);
         ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_up);
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
         } else {
@@ -558,7 +549,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
         FragmentTransaction ft = fm.beginTransaction();
         Fragment categoriesChooserFragment = CategoriesChooserFragment.newInstance(categoriesList);
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             ft.replace(R.id.layout_detailsContainer, categoriesChooserFragment, AppConsts.Fragments.CATEGORIES_CHOOSER);
 
@@ -756,7 +746,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 //ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right, R.anim.slide_in_left, R.anim.slide_out_left);
                 ft.setCustomAnimations(R.anim.slide_in_bottom, R.anim.slide_out_right);
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
                     // tablet
 
@@ -984,7 +973,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
         if (toolbar_delete.isVisible()) {
             // The user renounced selecting recipes to delete
 
-//            if (!isAPhone()) {
             if (getResources().getBoolean(R.bool.isTablet)) {
                 // Tablet only
 
@@ -1014,7 +1002,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
             mRecipeId = AppConsts.NEW_RECIPE;
 
-//            if (!isAPhone()) {
             if (getResources().getBoolean(R.bool.isTablet)) {
                 // Tablet
 
@@ -1133,7 +1120,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 Fragment recipeReviewFragment = RecipeReviewFragment.newInstance(mRecipeId, null, null);
                 ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_up);
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
                     ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
                 } else {

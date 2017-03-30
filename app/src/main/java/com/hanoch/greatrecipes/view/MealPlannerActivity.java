@@ -106,7 +106,6 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         AppHelper.hideTheKeyboard(this);
 
-//        if (isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // Tablet:
 
@@ -193,7 +192,6 @@ public class MealPlannerActivity extends AppCompatActivity implements
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             int layout_logoVisibility = layout_logo.getVisibility();
             outState.putInt("layout_logoVisibility", layout_logoVisibility);
@@ -267,7 +265,6 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         Fragment recipeReviewFragment;
 
-//        if (isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // tablet
 
@@ -328,7 +325,6 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         if (selectedItemsId.size() == 1) {
 
-//            if (!isAPhone()) {
             if (getResources().getBoolean(R.bool.isTablet)) {
 
                 long recipeId = dbManager.queryServingObjectById(selectedItemsId.get(0)).getRecipeId();
@@ -493,7 +489,6 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         Fragment webViewFragment = WebViewFragment.newInstance(url);
 
-//        if (isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
 
             // phone
@@ -691,7 +686,6 @@ public class MealPlannerActivity extends AppCompatActivity implements
             Serving serving = new Serving(-1, recipeId, servingType, false, false);
             dbManager.addNewServing(serving);
 
-//            if (!isAPhone()) {
             if (getResources().getBoolean(R.bool.isTablet)) {
 
                 onRecipeClick(listFragment, recipeId);
@@ -741,7 +735,6 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
                 if (recipeReviewFragment != null) {
 
-//                    if (isAPhone()) {
                     if (getResources().getBoolean(R.bool.isTablet)) {
 
                         FragmentTransaction ft = fm.beginTransaction();
@@ -944,7 +937,6 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
                 } else {
                     // The user was just watching a recipe
-//                    if (isAPhone()) {
                     if (getResources().getBoolean(R.bool.isTablet)) {
 
                         FragmentTransaction ft = fm.beginTransaction();

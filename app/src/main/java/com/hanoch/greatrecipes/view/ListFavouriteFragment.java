@@ -157,7 +157,6 @@ public class ListFavouriteFragment extends MyFragment
 
         mListListener.onRecipeClick(this, id);
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // Tablet only
 
@@ -243,7 +242,6 @@ public class ListFavouriteFragment extends MyFragment
     @Override
     public void backToDefaultDisplay(boolean includeAnimation) {
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
             // Tablet only
 
@@ -325,18 +323,4 @@ public class ListFavouriteFragment extends MyFragment
         return AppConsts.ListType.FAVOURITES_RECIPES;
     }
 
-//-------------------------------------------------------------------------------------------------
-
-    /*private boolean isAPhone() {
-
-        View v = getActivity().findViewById(R.id.layout_detailsContainer);
-        if (v == null) {
-            // phone
-            return true;
-
-        } else {
-            // tablet
-            return false;
-        }
-    }*/
 }

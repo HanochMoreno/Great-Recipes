@@ -190,7 +190,6 @@ public class ListOnlineFragment extends MyFragment
 
             mListListener.onRecipeClick(this, id);
 
-//            if (!isAPhone()) {
             if (getResources().getBoolean(R.bool.isTablet)) {
 
                 // Tablet only
@@ -239,7 +238,6 @@ public class ListOnlineFragment extends MyFragment
                 AppHelper.animateUncheckedRecipe(view, getContext());
                 checkedItemsIdList.remove(id + "");
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
 
                     if (checkedItemsIdList.isEmpty()) {
@@ -278,7 +276,6 @@ public class ListOnlineFragment extends MyFragment
                 // Unchecked item was checked
                 // (at least 1 item was already checked)
 
-//                if (!isAPhone()) {
                 if (getResources().getBoolean(R.bool.isTablet)) {
 
                     AppHelper.setSelectedRecipe(view, getContext());
@@ -310,7 +307,6 @@ public class ListOnlineFragment extends MyFragment
             return false;
         }
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
 
             // Tablet only
@@ -352,7 +348,6 @@ public class ListOnlineFragment extends MyFragment
     @Override
     public void backToDefaultDisplay(boolean includeAnimation) {
 
-//        if (!isAPhone()) {
         if (getResources().getBoolean(R.bool.isTablet)) {
 
             // Tablet only
