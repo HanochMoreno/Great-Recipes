@@ -74,10 +74,10 @@ public class ServingTypesAdapter extends BaseAdapter {
         TextView textView_servingTypeName = (TextView) view.findViewById(R.id.textView_servingTypeName);
         ImageView imageView_servingTypeImage = (ImageView) view.findViewById(R.id.imageView_servingTypeImage);
 
-        String translatedServingTypeName = AppHelper.getTranslatedServingTypeName(context, servingType.getName());
+        String translatedServingTypeName = AppHelper.getTranslatedServingTypeName(context, servingType.name);
 
         textView_servingTypeName.setText(translatedServingTypeName);
-        imageView_servingTypeImage.setImageResource(servingType.getImageResourceId());
+        imageView_servingTypeImage.setImageResource(servingType.imageResourceId);
 
         if (!isPremium && !(position == 0 || position == 1) /*!isEnabled(position)*/) {
             // Free-trial only

@@ -327,7 +327,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
             if (getResources().getBoolean(R.bool.isTablet)) {
 
-                long recipeId = dbManager.queryServingObjectById(selectedItemsId.get(0)).getRecipeId();
+                long recipeId = dbManager.queryServingObjectById(selectedItemsId.get(0)).recipeId;
                 onRecipeClick(listFragment, recipeId);
             }
         }
@@ -404,7 +404,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
                     return;
                 }
 
-                servingType = servingTypesList.get(position).getName();
+                servingType = servingTypesList.get(position).name;
 
                 String translatedServingType = AppHelper.getTranslatedServingTypeName(MealPlannerActivity.this, servingType);
                 textView_servingType.setText(translatedServingType);

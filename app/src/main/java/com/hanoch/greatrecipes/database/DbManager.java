@@ -344,8 +344,8 @@ public class DbManager {
 
         ContentValues values = new ContentValues();
 
-        values.put(RecipesContract.MealPlanning.RECIPE_ID, serving.getRecipeId());
-        values.put(RecipesContract.MealPlanning.SERVING_TYPE, serving.getServingType());
+        values.put(RecipesContract.MealPlanning.RECIPE_ID, serving.recipeId);
+        values.put(RecipesContract.MealPlanning.SERVING_TYPE, serving.servingType);
 
         return context.getContentResolver().insert(contentUri, values);
     }

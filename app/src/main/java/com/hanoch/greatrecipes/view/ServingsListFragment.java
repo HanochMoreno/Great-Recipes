@@ -214,7 +214,7 @@ public class ServingsListFragment extends MyFragment implements
             }
 
         } else {
-            long recipeId = dbManager.queryServingObjectById(id).getRecipeId();
+            long recipeId = dbManager.queryServingObjectById(id).recipeId;
             mListListener.onRecipeClick(this, recipeId);
         }
     }
