@@ -339,7 +339,7 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
         }
 
         AppHelper.hideTheKeyboard(getActivity());
-        AppHelper.hide_keyboard_from(getContext(), view);
+        AppHelper.hideKeyboardFrom(getContext(), view);
 
         return view;
     }

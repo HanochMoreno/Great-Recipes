@@ -336,7 +336,7 @@ public class AppHelper {
 
 //-------------------------------------------------------------------------------------------------
 
-    public static void hide_keyboard_from(Context context, View view) {
+    public static void hideKeyboardFrom(Context context, View view) {
         InputMethodManager inputMethodManager = (InputMethodManager) context.getSystemService(Activity.INPUT_METHOD_SERVICE);
         if (view != null) {
             inputMethodManager.hideSoftInputFromWindow(view.getWindowToken(), 0);

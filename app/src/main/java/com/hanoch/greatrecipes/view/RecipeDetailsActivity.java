@@ -199,7 +199,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
         mRecipeId = recipeId;
 
-        AppHelper.hide_keyboard_from(this, getCurrentFocus());
+        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
 
         FragmentManager fm = getSupportFragmentManager();
 

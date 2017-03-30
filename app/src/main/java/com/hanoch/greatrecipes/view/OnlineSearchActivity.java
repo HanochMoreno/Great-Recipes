@@ -419,7 +419,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                         if (!englishLetters.contains(String.valueOf(mChar))) {
                             errorCharPoition = i;
 
-                            AppHelper.hide_keyboard_from(OnlineSearchActivity.this, getCurrentFocus());
+                            AppHelper.hideKeyboardFrom(OnlineSearchActivity.this, getCurrentFocus());
                         }
                     }
                     String oldQuery = "";
@@ -505,7 +505,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         if (mDrawerToggle.onOptionsItemSelected(item)) {
             // The user opened the filters drawer
 
-            AppHelper.hide_keyboard_from(this, getCurrentFocus());
+            AppHelper.hideKeyboardFrom(this, getCurrentFocus());
             AppHelper.hideTheKeyboard(this);
 
             return true;
@@ -829,7 +829,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         // This method is called by the recipeReviewFragment after finishing saving
         // a recipe to the user's 'Online List'
 
-        AppHelper.hide_keyboard_from(this, getCurrentFocus());
+        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
 
         if (getResources().getBoolean(R.bool.isTablet)) {
             // Tablet

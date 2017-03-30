@@ -154,7 +154,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-        AppHelper.hide_keyboard_from(getActivity(), getActivity().getCurrentFocus());
+        AppHelper.hideKeyboardFrom(getActivity(), getActivity().getCurrentFocus());
 
         RecipeSearchResult result = dbManager.queryResultObjectById(id);
         String recipeYummlyId = result.yummlyId;
@@ -210,7 +210,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
 
 //            searchBoxWrapper.setError(getString(R.string.at_least_2_chars_required));
 
-//            AppHelper.hide_keyboard_from(getContext(), editText_recipeSearch);
+//            AppHelper.hideKeyboardFrom(getContext(), editText_recipeSearch);
 
             return;
         }

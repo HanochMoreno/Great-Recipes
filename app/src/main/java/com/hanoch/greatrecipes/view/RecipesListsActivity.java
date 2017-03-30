@@ -117,9 +117,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
         toolbarTitle = activityToolbarTitle;
         toolbarColor = AppConsts.ToolbarColor.PRIMARY;
 
-        int currentApiVersion = android.os.Build.VERSION.SDK_INT;
-        if (currentApiVersion >= android.os.Build.VERSION_CODES.LOLLIPOP) {
-            // Do something for Lollipop and above versions
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.LOLLIPOP) {
             toolbar.setElevation(0);
         }
 
@@ -327,7 +325,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
         // Stop listening to TabChanged broadcasts
         // lbm.unregisterReceiver(tabChangedReceiver);
 
-        // Stop listening to TabChanged broadcasts
         bus.unregister(this);
     }
 
@@ -762,7 +759,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
         mRecipeId = recipeId;
 
-        AppHelper.hide_keyboard_from(this, getCurrentFocus());
+        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
 
         FragmentManager fm = getSupportFragmentManager();
 

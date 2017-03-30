@@ -11,8 +11,6 @@ public class MyFonts {
 
     private static final String TAG = "MyFont";
 
-    private Context context;
-
     private Typeface aliceFont;
     private Typeface motionPictureFont;
 
@@ -28,7 +26,6 @@ public class MyFonts {
 
     private MyFonts(Context context) {
         Log.d(TAG, "MyFonts was just created");
-        this.context = context;
         this.aliceFont = Typeface.createFromAsset(context.getAssets(), "fonts/Alice.ttf");
         this.motionPictureFont = Typeface.createFromAsset(context.getAssets(), "fonts/MotionPicture.ttf");
     }

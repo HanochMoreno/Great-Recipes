@@ -266,7 +266,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
     @Override
     public void onRecipeClick(MyFragment listFragment, long recipeId) {
 
-        AppHelper.hide_keyboard_from(this, getCurrentFocus());
+        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
 
         this.listFragment = listFragment;
 
@@ -499,7 +499,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
         mRecipeId = recipeId;
 
-        AppHelper.hide_keyboard_from(this, getCurrentFocus());
+        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
 
         getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
 

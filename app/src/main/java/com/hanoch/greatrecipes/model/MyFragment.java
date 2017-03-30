@@ -2,8 +2,6 @@ package com.hanoch.greatrecipes.model;
 
 import android.support.v4.app.Fragment;
 
-import java.io.Serializable;
-
 
 public abstract class MyFragment extends Fragment {
 
