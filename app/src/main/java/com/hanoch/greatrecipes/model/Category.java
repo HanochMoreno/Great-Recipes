@@ -13,42 +13,9 @@ public class Category {
         this.positionInList = positionInList;
         this.selected = selected;
     }
-
-    public String getName() {
-        return name;
-    }
-
-    public void setName(String name) {
-        this.name = name;
-    }
-
-    public int getImageResourceId() {
-        return imageResourceId;
-    }
-
-    public void setImageResourceId(int imageResourceId) {
-        this.imageResourceId = imageResourceId;
-    }
-
-    public int getPositionInList() {
-        return positionInList;
-    }
-
-    public void setPositionInList(int positionInList) {
-        this.positionInList = positionInList;
-    }
-
-    public boolean isSelected() {
-        return selected;
-    }
-
-    public void setSelected(boolean selected) {
-        this.selected = selected;
-    }
-
     public boolean equals(Category otherCategory) {
 
-        return (this.getName().equals(otherCategory.getName()));
+        return (this.name.equals(otherCategory.name));
     }
 
 }

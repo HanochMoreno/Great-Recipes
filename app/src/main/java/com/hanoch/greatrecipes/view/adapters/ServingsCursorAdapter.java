@@ -89,7 +89,7 @@ public class ServingsCursorAdapter extends CursorAdapter {
 
         dbManager = DbManager.getInstance(context);
 
-        holder.textView_recipeTitle.setText(dbManager.queryRecipeObjectById(recipeId).getTitle());
+        holder.textView_recipeTitle.setText(dbManager.queryRecipeObjectById(recipeId).title);
         holder.recipeId = recipeId;
 
         holder.id = id;

@@ -251,29 +251,29 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
 
                 recipe = dbManager.queryRecipeObjectById(mRecipeId);
 
-                recipeFavouriteIndex = recipe.getFavouriteIndex();
-                recipeTitle = recipe.getTitle();
-                recipeTotalTime = recipe.getTime();
-                recipeYield = recipe.getYield();
-                recipeAuthor = recipe.getAuthor();
-                ingredientsList = AppHelper.stringToListConverter(recipe.getIngredientsList());
-                categoriesList = AppHelper.stringToListConverter(recipe.getCategoriesList());
+                recipeFavouriteIndex = recipe.favouriteIndex;
+                recipeTitle = recipe.title;
+                recipeTotalTime = recipe.time;
+                recipeYield = recipe.yield;
+                recipeAuthor = recipe.author;
+                ingredientsList = AppHelper.stringToListConverter(recipe.ingredientsList);
+                categoriesList = AppHelper.stringToListConverter(recipe.categoriesList);
                 translatedCategories = AppHelper.getTranslatedCategoriesList(getContext(), categoriesList);
-                recipeOriginIndex = recipe.getOriginIndex();
+                recipeOriginIndex = recipe.originIndex;
 
                 switch (recipeOriginIndex) {
 
                     case AppConsts.RecipeOrigin.FROM_ONLINE_SEARCH:
 
-                        recipeTotalCalories = recipe.getEnergy();
-                        recipeUrl = recipe.getUrl();
+                        recipeTotalCalories = recipe.energy;
+                        recipeUrl = recipe.url;
 
                         break;
 
                     case AppConsts.RecipeOrigin.ADDED_MANUALLY:
 
-                        recipeInstructions = recipe.getInstructions();
-                        recipeNotes = recipe.getNotes();
+                        recipeInstructions = recipe.instructions;
+                        recipeNotes = recipe.notes;
 
                         break;
                 }
@@ -301,7 +301,7 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
 
                 RecipeSearchResult result = dbManager.queryResultObjectById(mRecipeId);
 
-                if (result.getAuthor() == null) {
+                if (result.author == null) {
                     // Download the rest of the result's details
 
                     tryToDownloadRecipeDetails();
@@ -309,15 +309,15 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
                 } else {
                     // This result has already been reviewed before, thus it exists in the database
 
-                    recipeTitle = result.getTitle();
-                    recipeAuthor = result.getAuthor();
-                    recipeTotalTime = result.getTime();
-                    recipeUrl = result.getSourceUrl();
-                    recipeYield = result.getYield();
-                    recipeTotalCalories = result.getEnergy();
+                    recipeTitle = result.title;
+                    recipeAuthor = result.author;
+                    recipeTotalTime = result.time;
+                    recipeUrl = result.sourceUrl;
+                    recipeYield = result.yield;
+                    recipeTotalCalories = result.energy;
 
-                    ingredientsList = AppHelper.stringToListConverter(result.getIngredients());
-                    categoriesList = AppHelper.stringToListConverter(result.getCategories());
+                    ingredientsList = AppHelper.stringToListConverter(result.ingredients);
+                    categoriesList = AppHelper.stringToListConverter(result.categories);
                     translatedCategories = AppHelper.getTranslatedCategoriesList(getContext(), categoriesList);
 
                     setRecipeDetailsView();
@@ -437,7 +437,7 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
             // Retry to download the recipe's image
 
             GetBitmapFromApi getBitmapFromApi = new GetBitmapFromApi(mRecipeId);
-            getBitmapFromApi.execute(result.getImageUrl());
+            getBitmapFromApi.execute(result.imageUrl);
         }
     }
 

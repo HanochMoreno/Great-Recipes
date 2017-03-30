@@ -114,15 +114,15 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
         for (int i = 0; i < allowedDietPrefsList.size(); i++) {
 
-            if (allowedDietPrefsList.get(i).isChosen()) {
-                drawerCheckedItemsPositionList.add(allowedDietPrefsList.get(i).getPositionInDrawer() + "");
+            if (allowedDietPrefsList.get(i).isChosen) {
+                drawerCheckedItemsPositionList.add(allowedDietPrefsList.get(i).positionInDrawer + "");
             }
         }
 
         for (int i = 0; i < allowedAllergiesPrefsList.size(); i++) {
 
-            if (allowedAllergiesPrefsList.get(i).isChosen()) {
-                drawerCheckedItemsPositionList.add(allowedAllergiesPrefsList.get(i).getPositionInDrawer() + "");
+            if (allowedAllergiesPrefsList.get(i).isChosen) {
+                drawerCheckedItemsPositionList.add(allowedAllergiesPrefsList.get(i).positionInDrawer + "");
             }
         }
 

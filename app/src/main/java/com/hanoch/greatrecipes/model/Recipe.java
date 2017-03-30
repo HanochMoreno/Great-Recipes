@@ -4,13 +4,13 @@ import com.hanoch.greatrecipes.AppConsts;
 
 public class Recipe{
 
-    private long id;
-    private String title;
-    private String author;
-    private int yield;
-    private String url;
-    private int energy;
-    private float rating;
+    public long id;
+    public String title;
+    public String author;
+    public int yield;
+    public String url;
+    public int energy;
+    public float rating;
 
     /**
      * Indicates the recipe favourite index. <br/>
@@ -18,17 +18,17 @@ public class Recipe{
      * 0= Not favourite <br/>
      * 1= favourite <br/>
      */
-    private int favouriteIndex;
+    public int favouriteIndex;
 
     /**
      * Private notes the user added.
      */
-    private String notes;
+    public String notes;
 
-    private int time;
-    private String categoriesList;
-    private String ingredientsList;
-    private String instructions;
+    public int time;
+    public String categoriesList;
+    public String ingredientsList;
+    public String instructions;
 
     /**
      * Indicates the origin of the recipe. <br/>
@@ -36,7 +36,7 @@ public class Recipe{
      * 0= added from the online search results <br/>
      * 1= added manually
      */
-    private int originIndex;
+    public int originIndex;
 
     //CTOR for recipe came from online search
     public Recipe(String title, String author, int yield, String url, String categoriesList,
@@ -94,107 +94,6 @@ public class Recipe{
         this.categoriesList = categoriesList;
         this.ingredientsList = ingredientsList;
         this.instructions = instructions;
-        this.originIndex = originIndex;
-    }
-
-    public long getId() {
-        return id;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-
-    public int getYield() {
-        return yield;
-    }
-
-    public String getUrl() {
-        return url;
-    }
-
-    public void setUrl(String url) {
-        this.url = url;
-    }
-
-    public int getEnergy() {
-        return energy;
-    }
-
-    public float getRating() {
-        return rating;
-    }
-
-    public void setRating(float rating) {
-        this.rating = rating;
-    }
-
-    public int getFavouriteIndex() {
-        return favouriteIndex;
-    }
-
-    public void setFavouriteIndex(int favouriteIndex) {
-        this.favouriteIndex = favouriteIndex;
-    }
-
-    public String getNotes() {
-        return notes;
-    }
-
-    public void setNotes(String notes) {
-        this.notes = notes;
-    }
-
-    public int getTime() {
-        return time;
-    }
-
-    public void setTime(int time) {
-        this.time = time;
-    }
-
-    public String getCategoriesList() {
-        return categoriesList;
-    }
-
-    public void setCategoriesList(String categoriesList) {
-        this.categoriesList = categoriesList;
-    }
-
-    public String getIngredientsList() {
-        return ingredientsList;
-    }
-
-    public void setIngredientsList(String ingredientsList) {
-        this.ingredientsList = ingredientsList;
-    }
-
-    public String getInstructions() {
-        return instructions;
-    }
-
-    public void setInstructions(String instructions) {
-        this.instructions = instructions;
-    }
-
-    public int getOriginIndex() {
-        return originIndex;
-    }
-
-    public void setOriginIndex(int originIndex) {
         this.originIndex = originIndex;
     }
 }

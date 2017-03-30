@@ -6,19 +6,19 @@ package com.hanoch.greatrecipes.model;
 
 public class RecipeSearchResult {
 
-    private long recipeId;
-    private String yummlyId;
-    private String title;
+    public long recipeId;
+    public String yummlyId;
+    public String title;
 
-    private String author;
-    private int yield;
-    private int time;
-    private String ingredients;
-    private int energy;
-    private String categories;
+    public String author;
+    public int yield;
+    public int time;
+    public String ingredients;
+    public int energy;
+    public String categories;
 
-    private String sourceUrl;
-    private String imageUrl;
+    public String sourceUrl;
+    public String imageUrl;
 
 
 //-------------------------------------------------------------------------------------------------
@@ -50,93 +50,4 @@ public class RecipeSearchResult {
         this.imageUrl = imageUrl;
     }
 
-//-------------------------------------------------------------------------------------------------
-
-    public long getRecipeId() {
-        return recipeId;
-    }
-
-    public void setRecipeId(long recipeId) {
-        this.recipeId = recipeId;
-    }
-
-    public String getYummlyId() {
-        return yummlyId;
-    }
-
-    public void setYummlyId(String yummlyId) {
-        this.yummlyId = yummlyId;
-    }
-
-    public String getTitle() {
-        return title;
-    }
-
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getImageUrl() {
-        return imageUrl;
-    }
-
-    public void setImageUrl(String imageUrl) {
-        this.imageUrl = imageUrl;
-    }
-
-    public String getAuthor() {
-        return author;
-    }
-
-    public void setAuthor(String author) {
-        this.author = author;
-    }
-
-    public int getYield() {
-        return yield;
-    }
-
-    public void setYield(int yield) {
-        this.yield = yield;
-    }
-
-    public int getTime() {
-        return time;
-    }
-
-    public void setTime(int time) {
-        this.time = time;
-    }
-
-    public String getIngredients() {
-        return ingredients;
-    }
-
-    public void setIngredients(String ingredients) {
-        this.ingredients = ingredients;
-    }
-
-    public int getEnergy() {
-        return energy;
-    }
-
-    public void setEnergy(int energy) {
-        this.energy = energy;
-    }
-
-    public String getCategories() {
-        return categories;
-    }
-
-    public void setCategories(String categories) {
-        this.categories = categories;
-    }
-
-    public String getSourceUrl() {
-        return sourceUrl;
-    }
-
-    public void setSourceUrl(String sourceUrl) {
-        this.sourceUrl = sourceUrl;
-    }
 }

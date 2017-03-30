@@ -623,7 +623,7 @@ public class AppHelper {
 
         for (int i = 0; i < dietList.length; i++) {
 
-            if (dietList[i].isChosen()) {
+            if (dietList[i].isChosen) {
                 allowedDietList.add(dietList[i]);
             }
         }
@@ -641,7 +641,7 @@ public class AppHelper {
 
         for (int i = 0; i < allergiesList.length; i++) {
 
-            if (allergiesList[i].isChosen()) {
+            if (allergiesList[i].isChosen) {
 
                 allowedAllergiesList.add(allergiesList[i]);
             }

@@ -450,14 +450,14 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
                 if (extra_serving == null) {
 
-                    if (recipe.getFavouriteIndex() == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
+                    if (recipe.favouriteIndex == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
                         toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
 
                     } else {
                         toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
                     }
 
-                    if (recipe.getOriginIndex() != AppConsts.RecipeOrigin.FROM_ONLINE_SEARCH) {
+                    if (recipe.originIndex != AppConsts.RecipeOrigin.FROM_ONLINE_SEARCH) {
                         toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
                     }
 
@@ -783,7 +783,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
         toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
 
-        if (recipe.getFavouriteIndex() == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
+        if (recipe.favouriteIndex == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
             toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
 
         } else {
@@ -1081,13 +1081,13 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 toolbarButtonsList = new ArrayList<>();
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
 
-                if (recipe.getOriginIndex() == AppConsts.RecipeOrigin.ADDED_MANUALLY) {
+                if (recipe.originIndex == AppConsts.RecipeOrigin.ADDED_MANUALLY) {
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
                 }
 
                 recipeReviewFragment.setFavouriteImage(AppConsts.FavouriteIndex.FAVOURITE);
 
-                recipe.setFavouriteIndex(AppConsts.FavouriteIndex.FAVOURITE);
+                recipe.favouriteIndex = AppConsts.FavouriteIndex.FAVOURITE;
                 dbManager.updateRecipe(recipe);
 
                 setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);
@@ -1100,7 +1100,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
                 recipe = dbManager.queryRecipeObjectById(mRecipeId);
 
-                recipe.setFavouriteIndex(AppConsts.FavouriteIndex.NOT_FAVOURITE);
+                recipe.favouriteIndex = AppConsts.FavouriteIndex.NOT_FAVOURITE;
                 dbManager.updateRecipe(recipe);
 
                 if (listFragment instanceof ListFavouriteFragment) {
@@ -1118,7 +1118,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                     toolbarButtonsList = new ArrayList<>();
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
 
-                    if (recipe.getOriginIndex() == AppConsts.RecipeOrigin.ADDED_MANUALLY) {
+                    if (recipe.originIndex == AppConsts.RecipeOrigin.ADDED_MANUALLY) {
                         toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
                     }
 
@@ -1351,7 +1351,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
                 if (checkedItemsId.isEmpty()) {
 
-                    if (recipe.getFavouriteIndex() == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
+                    if (recipe.favouriteIndex == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
                         toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
 
                     } else {
@@ -1458,7 +1458,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
                     ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
 
-                    if (recipe.getFavouriteIndex() == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
+                    if (recipe.favouriteIndex == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
                         toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
 
                     } else {

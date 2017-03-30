@@ -220,7 +220,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
         toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
 
-        if (recipe.getFavouriteIndex() == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
+        if (recipe.favouriteIndex == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
             toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
 
         } else {
@@ -314,11 +314,11 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
                         return true;
                     }
 
-                    if (recipe.getOriginIndex() == AppConsts.RecipeOrigin.ADDED_MANUALLY) {
+                    if (recipe.originIndex == AppConsts.RecipeOrigin.ADDED_MANUALLY) {
                         toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
                     }
 
-                    if (recipe.getFavouriteIndex() == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
+                    if (recipe.favouriteIndex == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
                         toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
 
                     } else {
@@ -442,13 +442,13 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
             case R.id.action_addToFavourites:
 
                 recipe = dbManager.queryRecipeObjectById(mRecipeId);
-                recipe.setFavouriteIndex(AppConsts.FavouriteIndex.FAVOURITE);
+                recipe.favouriteIndex = AppConsts.FavouriteIndex.FAVOURITE;
                 dbManager.updateRecipe(recipe);
 
                 toolbarButtonsList = new ArrayList<>();
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
 
-                if (recipe.getOriginIndex() != AppConsts.RecipeOrigin.FROM_ONLINE_SEARCH) {
+                if (recipe.originIndex != AppConsts.RecipeOrigin.FROM_ONLINE_SEARCH) {
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
                 }
 
@@ -461,13 +461,13 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
             case R.id.action_removeFromFavourites:
 
                 recipe = dbManager.queryRecipeObjectById(mRecipeId);
-                recipe.setFavouriteIndex(AppConsts.FavouriteIndex.NOT_FAVOURITE);
+                recipe.favouriteIndex = AppConsts.FavouriteIndex.NOT_FAVOURITE;
                 dbManager.updateRecipe(recipe);
 
                 toolbarButtonsList = new ArrayList<>();
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
 
-                if (recipe.getOriginIndex() != AppConsts.RecipeOrigin.FROM_ONLINE_SEARCH) {
+                if (recipe.originIndex != AppConsts.RecipeOrigin.FROM_ONLINE_SEARCH) {
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
                 }
 
@@ -591,7 +591,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
                 Recipe recipe = dbManager.queryRecipeObjectById(mRecipeId);
 
-                if (recipe.getFavouriteIndex() == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
+                if (recipe.favouriteIndex == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
 
                 } else {

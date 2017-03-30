@@ -45,19 +45,19 @@ public class DbManager {
 
         ContentValues values = new ContentValues();
 
-        values.put(RecipesContract.Recipes.TITLE, recipe.getTitle());
-        values.put(RecipesContract.Recipes.YIELD, recipe.getYield());
-        values.put(RecipesContract.Recipes.SRC_URL, recipe.getUrl());
-        values.put(RecipesContract.Recipes.ENERGY, recipe.getEnergy());
-        values.put(RecipesContract.Recipes.RATING, recipe.getRating());
-        values.put(RecipesContract.Recipes.AUTHOR, recipe.getAuthor());
-        values.put(RecipesContract.Recipes.FAVOURITE_INDEX, recipe.getFavouriteIndex());
-        values.put(RecipesContract.Recipes.NOTES, recipe.getNotes());
-        values.put(RecipesContract.Recipes.TIME, recipe.getTime());
-        values.put(RecipesContract.Recipes.CATEGORIES_LIST, recipe.getCategoriesList());
-        values.put(RecipesContract.Recipes.INGREDIENTS_LIST, recipe.getIngredientsList());
-        values.put(RecipesContract.Recipes.INSTRUCTIONS, recipe.getInstructions());
-        values.put(RecipesContract.Recipes.ORIGIN_INDEX, recipe.getOriginIndex());
+        values.put(RecipesContract.Recipes.TITLE, recipe.title);
+        values.put(RecipesContract.Recipes.YIELD, recipe.yield);
+        values.put(RecipesContract.Recipes.SRC_URL, recipe.url);
+        values.put(RecipesContract.Recipes.ENERGY, recipe.energy);
+        values.put(RecipesContract.Recipes.RATING, recipe.rating);
+        values.put(RecipesContract.Recipes.AUTHOR, recipe.author);
+        values.put(RecipesContract.Recipes.FAVOURITE_INDEX, recipe.favouriteIndex);
+        values.put(RecipesContract.Recipes.NOTES, recipe.notes);
+        values.put(RecipesContract.Recipes.TIME, recipe.time);
+        values.put(RecipesContract.Recipes.CATEGORIES_LIST, recipe.categoriesList);
+        values.put(RecipesContract.Recipes.INGREDIENTS_LIST, recipe.ingredientsList);
+        values.put(RecipesContract.Recipes.INSTRUCTIONS, recipe.instructions);
+        values.put(RecipesContract.Recipes.ORIGIN_INDEX, recipe.originIndex);
 
         return context.getContentResolver().insert(contentUri, values);
     }
@@ -70,9 +70,9 @@ public class DbManager {
 
         ContentValues values = new ContentValues();
 
-        values.put(RecipesContract.SearchResults.YUMMLY_ID, result.getYummlyId());
-        values.put(RecipesContract.SearchResults.TITLE, result.getTitle());
-        values.put(RecipesContract.SearchResults.IMAGE_URL, result.getImageUrl());
+        values.put(RecipesContract.SearchResults.YUMMLY_ID, result.yummlyId);
+        values.put(RecipesContract.SearchResults.TITLE, result.title);
+        values.put(RecipesContract.SearchResults.IMAGE_URL, result.imageUrl);
 
         return context.getContentResolver().insert(contentUri, values);
     }
@@ -84,20 +84,20 @@ public class DbManager {
         Uri contentUri = RecipesContract.SearchResults.CONTENT_URI;
 
         String selection = RecipesContract.SearchResults._ID + "=?";
-        String[] selectionArgs = {result.getRecipeId() + ""};
+        String[] selectionArgs = {result.recipeId + ""};
 
         ContentValues values = new ContentValues();
 
-        values.put(RecipesContract.SearchResults.TITLE, result.getTitle());
-        values.put(RecipesContract.SearchResults.YUMMLY_ID, result.getYummlyId());
-        values.put(RecipesContract.SearchResults.YIELD, result.getYield());
-        values.put(RecipesContract.SearchResults.SOURCE_URL, result.getSourceUrl());
-        values.put(RecipesContract.SearchResults.IMAGE_URL, result.getImageUrl());
-        values.put(RecipesContract.SearchResults.ENERGY, result.getEnergy());
-        values.put(RecipesContract.SearchResults.AUTHOR, result.getAuthor());
-        values.put(RecipesContract.SearchResults.TIME, result.getTime());
-        values.put(RecipesContract.SearchResults.CATEGORIES_LIST, result.getCategories());
-        values.put(RecipesContract.SearchResults.INGREDIENTS_LIST, result.getIngredients());
+        values.put(RecipesContract.SearchResults.TITLE, result.title);
+        values.put(RecipesContract.SearchResults.YUMMLY_ID, result.yummlyId);
+        values.put(RecipesContract.SearchResults.YIELD, result.yield);
+        values.put(RecipesContract.SearchResults.SOURCE_URL, result.sourceUrl);
+        values.put(RecipesContract.SearchResults.IMAGE_URL, result.imageUrl);
+        values.put(RecipesContract.SearchResults.ENERGY, result.energy);
+        values.put(RecipesContract.SearchResults.AUTHOR, result.author);
+        values.put(RecipesContract.SearchResults.TIME, result.time);
+        values.put(RecipesContract.SearchResults.CATEGORIES_LIST, result.categories);
+        values.put(RecipesContract.SearchResults.INGREDIENTS_LIST, result.ingredients);
 
         return context.getContentResolver().update(contentUri, values, selection, selectionArgs);
     }
@@ -192,23 +192,23 @@ public class DbManager {
         Uri contentUri = RecipesContract.Recipes.CONTENT_URI;
 
         String selection = RecipesContract.Recipes._ID + "=?";
-        String[] selectionArgs = {recipe.getId() + ""};
+        String[] selectionArgs = {recipe.id + ""};
 
         ContentValues values = new ContentValues();
 
-        values.put(RecipesContract.Recipes.TITLE, recipe.getTitle());
-        values.put(RecipesContract.Recipes.YIELD, recipe.getYield());
-        values.put(RecipesContract.Recipes.SRC_URL, recipe.getUrl());
-        values.put(RecipesContract.Recipes.ENERGY, recipe.getEnergy());
-        values.put(RecipesContract.Recipes.RATING, recipe.getRating());
-        values.put(RecipesContract.Recipes.AUTHOR, recipe.getAuthor());
-        values.put(RecipesContract.Recipes.FAVOURITE_INDEX, recipe.getFavouriteIndex());
-        values.put(RecipesContract.Recipes.NOTES, recipe.getNotes());
-        values.put(RecipesContract.Recipes.TIME, recipe.getTime());
-        values.put(RecipesContract.Recipes.CATEGORIES_LIST, recipe.getCategoriesList());
-        values.put(RecipesContract.Recipes.INGREDIENTS_LIST, recipe.getIngredientsList());
-        values.put(RecipesContract.Recipes.INSTRUCTIONS, recipe.getInstructions());
-        values.put(RecipesContract.Recipes.ORIGIN_INDEX, recipe.getOriginIndex());
+        values.put(RecipesContract.Recipes.TITLE, recipe.title);
+        values.put(RecipesContract.Recipes.YIELD, recipe.yield);
+        values.put(RecipesContract.Recipes.SRC_URL, recipe.url);
+        values.put(RecipesContract.Recipes.ENERGY, recipe.energy);
+        values.put(RecipesContract.Recipes.RATING, recipe.rating);
+        values.put(RecipesContract.Recipes.AUTHOR, recipe.author);
+        values.put(RecipesContract.Recipes.FAVOURITE_INDEX, recipe.favouriteIndex);
+        values.put(RecipesContract.Recipes.NOTES, recipe.notes);
+        values.put(RecipesContract.Recipes.TIME, recipe.time);
+        values.put(RecipesContract.Recipes.CATEGORIES_LIST, recipe.categoriesList);
+        values.put(RecipesContract.Recipes.INGREDIENTS_LIST, recipe.ingredientsList);
+        values.put(RecipesContract.Recipes.INSTRUCTIONS, recipe.instructions);
+        values.put(RecipesContract.Recipes.ORIGIN_INDEX, recipe.originIndex);
 
         return context.getContentResolver().update(contentUri, values, selection, selectionArgs);
     }

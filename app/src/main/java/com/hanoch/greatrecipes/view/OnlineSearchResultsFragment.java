@@ -157,7 +157,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
         AppHelper.hide_keyboard_from(getActivity(), getActivity().getCurrentFocus());
 
         RecipeSearchResult result = dbManager.queryResultObjectById(id);
-        String recipeYummlyId = result.getYummlyId();
+        String recipeYummlyId = result.yummlyId;
         mListener.onSearchResultClick(id, recipeYummlyId);
     }
 
@@ -248,7 +248,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
             if (!allowedDietList.isEmpty()) {
                 for (int i = 0; i < allowedDietList.size(); i++) {
                     queryString = queryString + allowedDietPrefix
-                            + URLEncoder.encode(allowedDietList.get(i).getSearchKeyName(), "utf-8");
+                            + URLEncoder.encode(allowedDietList.get(i).searchKeyName, "utf-8");
                 }
             }
 
@@ -256,7 +256,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
             if (!allowedAllergiesList.isEmpty()) {
                 for (int i = 0; i < allowedAllergiesList.size(); i++) {
                     queryString = queryString + allowedAllergiesPrefix
-                            + URLEncoder.encode(allowedAllergiesList.get(i).getSearchKeyName(), "utf-8");
+                            + URLEncoder.encode(allowedAllergiesList.get(i).searchKeyName, "utf-8");
                 }
             }
 

@@ -239,24 +239,24 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
 
                 Recipe recipe = dbManager.queryRecipeObjectById(mRecipeId);
 
-                author = recipe.getAuthor();
+                author = recipe.author;
 
-                favouriteIndex = recipe.getFavouriteIndex();
+                favouriteIndex = recipe.favouriteIndex;
 
-                editText_recipeTitle.setText(recipe.getTitle());
+                editText_recipeTitle.setText(recipe.title);
 
-                totalTimeInSeconds = recipe.getTime();
+                totalTimeInSeconds = recipe.time;
 
-                servings = recipe.getYield();
+                servings = recipe.yield;
 
-                editText_recipeInstructions.setText(recipe.getInstructions());
-                editText_notes.setText(recipe.getNotes());
+                editText_recipeInstructions.setText(recipe.instructions);
+                editText_notes.setText(recipe.notes);
 
-                String ingredientsStringList = recipe.getIngredientsList();
+                String ingredientsStringList = recipe.ingredientsList;
 
                 ingredientsList = AppHelper.stringToListConverter(ingredientsStringList);
 
-                String categoriesStringList = recipe.getCategoriesList();
+                String categoriesStringList = recipe.categoriesList;
 
                 categoriesList = AppHelper.stringToListConverter(categoriesStringList);
 
