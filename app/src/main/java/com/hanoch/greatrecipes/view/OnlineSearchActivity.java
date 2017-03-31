@@ -38,7 +38,6 @@ import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
-import com.hanoch.greatrecipes.google.IabHelperSingleton;
 import com.hanoch.greatrecipes.model.AllergensAndDietPrefItem;
 import com.hanoch.greatrecipes.model.ObjectDrawerItem;
 import com.hanoch.greatrecipes.utilities.MyFonts;

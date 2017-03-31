@@ -595,7 +595,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 //                if (!BuildConfig.DEBUG) {
 
-//                mIabHelper = IabHelperSinngleton.getInstance(MainActivity.this);
                 if (mIabHelper != null && iabHelperWasAlreadySetUpSuccessfully) {
 
                     purchasePremiumAccess();

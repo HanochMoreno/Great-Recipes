@@ -33,7 +33,7 @@ public class SkuDetails {
     private final String mJson;
 
     public SkuDetails(String jsonSkuDetails) throws JSONException {
-        this(IabHelperSingleton.ITEM_TYPE_INAPP, jsonSkuDetails);
+        this(IabHelperNonStatic.ITEM_TYPE_INAPP, jsonSkuDetails);
     }
 
     public SkuDetails(String itemType, String jsonSkuDetails) throws JSONException {
