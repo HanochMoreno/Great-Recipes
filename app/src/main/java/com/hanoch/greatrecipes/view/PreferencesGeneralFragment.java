@@ -291,6 +291,8 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
                 } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
                     // give user access to premium content
 
+                    AnalyticsHelper.sendEvent(PreferencesGeneralFragment.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "User purchased premium access");
+
                     SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
                     SharedPreferences.Editor editor = sp.edit();
 

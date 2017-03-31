@@ -20,6 +20,7 @@ import android.view.ViewGroup;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.R;
+import com.hanoch.greatrecipes.google.AnalyticsHelper;
 
 
 public class PreferencesActivity extends AppCompatActivity
@@ -142,6 +143,8 @@ public class PreferencesActivity extends AppCompatActivity
     public void onPremiumAccessPurchased() {
 
         Log.d(TAG, "Purchased was completed successfully");
+
+        AnalyticsHelper.sendEvent(PreferencesActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "User purchased premium access");
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sp.edit();

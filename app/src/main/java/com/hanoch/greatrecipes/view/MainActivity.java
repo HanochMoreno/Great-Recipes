@@ -719,6 +719,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
                     // give user access to premium content
 
+                    AnalyticsHelper.sendEvent(MainActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "User purchased premium access");
+
                     SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
                     SharedPreferences.Editor editor = sp.edit();
 
