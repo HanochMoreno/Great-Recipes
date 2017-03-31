@@ -61,7 +61,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     // compute your public key and store it in base64EncodedPublicKey
     private IabHelperNonStatic mIabHelper;
     private boolean iabHelperWasAlreadySetUpSuccessfully;
-    private Tracker mTracker;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -362,17 +361,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onResume();
 
         AnalyticsHelper.setScreenName(this);
-
-        /*
-        // Obtain the shared Tracker instance.
-        AnalyticsApplication application = (AnalyticsApplication) getApplication();
-        mTracker = application.getDefaultTracker();
-
-        String screenName = getClass().getSimpleName();
-        Log.i(TAG, "Setting screen name: " + screenName);
-        mTracker.setScreenName(screenName);
-        mTracker.send(new HitBuilders.ScreenViewBuilder().build());
-        */
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -674,11 +662,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             public void onClick(View v) {
 
                 AnalyticsHelper.sendEvent(MainActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "Not Now Button Clicked");
-
-                /*mTracker.send(new HitBuilders.EventBuilder()
-                        .setCategory(AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING)
-                        .setAction("Not Now Button Clicked")
-                        .build());*/
 
                 if (BuildConfig.DEBUG) {
                     SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
