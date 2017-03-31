@@ -64,8 +64,8 @@ public class RecipesListsActivity extends AppCompatActivity implements
     private CategoriesChooserFragment categoriesChooserFragment;
 
     private Toolbar toolbar;
-    private TabChangedReceiver tabChangedReceiver;
-    //private LocalBroadcastManager lbm;
+//    private TabChangedReceiver tabChangedReceiver;
+//    private LocalBroadcastManager lbm;
     private String extra_serving;
 
     private int currentlyShownList;

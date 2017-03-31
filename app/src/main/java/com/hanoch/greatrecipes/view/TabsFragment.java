@@ -1,16 +1,16 @@
 package com.hanoch.greatrecipes.view;
 
-import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.TabLayout;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.LocalBroadcastManager;
+//import android.content.Intent;
+//import android.support.v4.content.LocalBroadcastManager;
 import android.support.v4.view.ViewPager;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.hanoch.greatrecipes.AppConsts;
+//import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.model.MyBus;
 import com.hanoch.greatrecipes.model.TabChangedEvent;
@@ -21,7 +21,7 @@ public class TabsFragment extends Fragment {
 
     private static final String ARG_EXTRA_SERVING = "serving";
     private ViewPager viewPager;
-    private Intent broadcastIntent;
+//    private Intent broadcastIntent;
     private MyBus bus;
 
     public static TabsFragment newInstance(String extra_serving) {
@@ -82,7 +82,6 @@ public class TabsFragment extends Fragment {
 
             @Override
             public void onTabReselected(TabLayout.Tab tab) {
-
             }
         });
 
