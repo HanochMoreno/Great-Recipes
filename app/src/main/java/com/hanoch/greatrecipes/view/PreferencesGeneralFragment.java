@@ -174,7 +174,7 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
 
                 preference.setEnabled(false);
 
-                /*if (BuildConfig.DEBUG) {
+                if (BuildConfig.DEBUG) {
                     SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
                     SharedPreferences.Editor editor = sp.edit();
                     editor.putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, true);
@@ -190,7 +190,7 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
                     snack.show();
 
                     return true;
-                }*/
+                }
 
                 if (mIabHelper != null && iabHelperWasAlreadySetUpSuccessfully) {
 

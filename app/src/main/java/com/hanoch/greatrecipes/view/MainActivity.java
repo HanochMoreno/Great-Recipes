@@ -240,7 +240,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         if (isSuccessful) {
 
-            if (isPremium) {
+            if (isPremium || BuildConfig.DEBUG) {
                 editor.putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, true);
 
             } else {
