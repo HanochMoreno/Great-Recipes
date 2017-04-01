@@ -106,6 +106,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         AppHelper.hideTheKeyboard(this);
 
+        int containerResId;
         if (getResources().getBoolean(R.bool.isTablet)) {
             // Tablet:
 
@@ -114,36 +115,22 @@ public class MealPlannerActivity extends AppCompatActivity implements
             TextView textView_greatRecipes = (TextView) findViewById(R.id.textView_greatRecipes);
             textView_greatRecipes.setTypeface(MyFonts.getInstance(this).getMotionPictureFont());
 
-            // only add fragments if the state is null!
-            // if there's a state - they will be re-attached automatically
-            if (savedInstanceState == null) {
-
-                Fragment servingsListFragment = ServingsListFragment.newInstance();
-                FragmentManager fm = getSupportFragmentManager();
-                FragmentTransaction ft = fm.beginTransaction();
-
-                ft.add(R.id.layout_listContainer, servingsListFragment, AppConsts.Fragments.SERVINGS_LIST);
-                ft.commit();
-            }
+            containerResId = R.id.layout_listContainer;
 
         } else {
             // Phone
+            containerResId = R.id.layout_container;
+        }
 
-            if (savedInstanceState == null) {
-                // only add fragments if the state is null!
-                // if there's a state - they will be re-attached automatically
+        if (savedInstanceState == null) {
+            // only add fragments if the state is null!
+            // if there's a state - they will be re-attached automatically
 
-                // Creating OnlineSearchResultsFragment
-                Fragment servingsListFragment = ServingsListFragment.newInstance();
-
-                // Get manager:
-                FragmentManager fm = getSupportFragmentManager();
-
-                // Add it to the container:
-                FragmentTransaction ft = fm.beginTransaction();
-                ft.add(R.id.layout_container, servingsListFragment, AppConsts.Fragments.SERVINGS_LIST);
-                ft.commit();
-            }
+            Fragment servingsListFragment = ServingsListFragment.newInstance();
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
+            ft.add(containerResId, servingsListFragment, AppConsts.Fragments.SERVINGS_LIST);
+            ft.commit();
         }
     }
 

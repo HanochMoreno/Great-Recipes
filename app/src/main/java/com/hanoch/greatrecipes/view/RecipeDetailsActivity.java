@@ -56,7 +56,6 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
     private MenuItem toolbar_closeWebView;
 
     private ArrayList<ObjectAnimator> fadingInAnimationsList;
-    private String activityToolbarTitle;
     private Bundle savedInstanceState;
 
     private DbManager dbManager;
@@ -75,7 +74,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        activityToolbarTitle = getString(R.string.recipe_details);
+        String activityToolbarTitle = getString(R.string.recipe_details);
         toolbar.setTitle(activityToolbarTitle);
 
         toolbarColor = AppConsts.ToolbarColor.PRIMARY;
@@ -96,15 +95,12 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
             Fragment fragment;
 
             if (action.equals(AppConsts.Actions.ACTION_REVIEW)) {
-                // Creating RecipeReviewFragment
-
                 // Show details of a recipe came from one of the user lists
                 fragment = RecipeReviewFragment.newInstance(mRecipeId, null, extra_serving);
                 ft.add(R.id.layout_container, fragment, AppConsts.Fragments.RECIPE_REVIEW);
 
             } else if (action.equals(AppConsts.Actions.ACTION_EDIT)
                     || action.equals(AppConsts.Actions.ACTION_ADD_NEW)) {
-                // Creating EditRecipeFragment
 
                 fragment = EditRecipeFragment.newInstance(mRecipeId);
                 ft.add(R.id.layout_container, fragment, AppConsts.Fragments.EDIT_RECIPE);
@@ -166,7 +162,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
         for (Integer button : buttons) {
 
             toolBarButton = toolbar.getMenu().findItem(button);
-            if (toolBarButton!=null && toolBarButton.isVisible()) {
+            if (toolBarButton != null && toolBarButton.isVisible()) {
                 displayedButtons.add(button);
             }
         }
@@ -416,7 +412,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
                 if (!premium) {
 
                     int createdRecipesCount = sp.getInt(AppConsts.SharedPrefs.CREATED_COUNTER, 0);
-                    createdRecipesCount ++;
+                    createdRecipesCount++;
                     SharedPreferences.Editor editor = sp.edit();
 
                     editor.putInt(AppConsts.SharedPrefs.CREATED_COUNTER, createdRecipesCount);

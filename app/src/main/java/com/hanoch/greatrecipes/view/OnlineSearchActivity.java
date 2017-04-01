@@ -196,6 +196,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         }
 
         mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
+        int containerResId;
 
         if (getResources().getBoolean(R.bool.isTablet)) {
             // Tablet:
@@ -216,33 +217,23 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             textView_greatRecipes = (TextView) findViewById(R.id.textView_greatRecipes);
             textView_greatRecipes.setTypeface(MyFonts.getInstance(this).getMotionPictureFont());
 
-            // only add fragments if the state is null!
-            // if there's a state - they will be re-attached automatically
-            if (savedInstanceState == null) {
-
-                // create frags: List (no details at start...)
-                Fragment onlineSearchResultsFragment = OnlineSearchResultsFragment.newInstance();
-                FragmentManager fm = getSupportFragmentManager();
-                FragmentTransaction ft = fm.beginTransaction();
-                ft.add(R.id.layout_listContainer, onlineSearchResultsFragment, AppConsts.Fragments.ONLINE_SEARCH_RESULTS);
-                ft.commit();
-            }
+            containerResId = R.id.layout_listContainer;
 
         } else {
             // Phone
+            containerResId = R.id.layout_container;
+        }
 
-            if (savedInstanceState == null) {
-                // only add fragments if the state is null!
-                // if there's a state - they will be re-attached automatically
+        if (savedInstanceState == null) {
+            // only add fragments if the state is null!
+            // if there's a state - they will be re-attached automatically
 
-                // Creating OnlineSearchResultsFragment
-                Fragment onlineSearchResultsFragment = OnlineSearchResultsFragment.newInstance();
-                FragmentManager fm = getSupportFragmentManager();
-                FragmentTransaction ft = fm.beginTransaction();
+            Fragment onlineSearchResultsFragment = OnlineSearchResultsFragment.newInstance();
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
 
-                ft.add(R.id.layout_container, onlineSearchResultsFragment, AppConsts.Fragments.ONLINE_SEARCH_RESULTS);
-                ft.commit();
-            }
+            ft.add(containerResId, onlineSearchResultsFragment, AppConsts.Fragments.ONLINE_SEARCH_RESULTS);
+            ft.commit();
         }
     }
 
