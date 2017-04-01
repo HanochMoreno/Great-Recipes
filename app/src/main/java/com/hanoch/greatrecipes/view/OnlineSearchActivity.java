@@ -288,7 +288,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 String query = intent.getStringExtra(SearchManager.QUERY);
 
                 OnlineSearchResultsFragment onlineSearchResultsFragment = (OnlineSearchResultsFragment) getSupportFragmentManager().findFragmentByTag(AppConsts.Fragments.ONLINE_SEARCH_RESULTS);
-                onlineSearchResultsFragment.performOnlineSearch(query, true);
+                onlineSearchResultsFragment.performOnlineSearch(query);
 
                 if (searchView != null) {
                     searchView.clearFocus();

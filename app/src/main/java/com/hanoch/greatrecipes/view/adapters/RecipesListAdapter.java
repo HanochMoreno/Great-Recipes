@@ -158,7 +158,6 @@ public class RecipesListAdapter extends CursorAdapter {
         @Override
         protected Bitmap doInBackground(String... params) {
 
-            //String imageName = AppConsts.Images.RECIPE_IMAGE_PREFIX + id;
             String imageName = AppConsts.Images.RECIPE_THUMBNAIL_PREFIX + id;
             return ImageStorage.getImageBitmapByName(context, imageName);
         }
@@ -186,7 +185,6 @@ public class RecipesListAdapter extends CursorAdapter {
                     holder.imageView_image.setImageBitmap(image);
                     holder.imageView_image.setVisibility(View.VISIBLE);
                 }
-
             }
         }
     }

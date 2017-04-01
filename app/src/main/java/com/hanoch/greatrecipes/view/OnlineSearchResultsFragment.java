@@ -28,6 +28,7 @@ import com.android.volley.VolleyError;
 import com.android.volley.toolbox.StringRequest;
 import com.android.volley.toolbox.Volley;
 import com.hanoch.greatrecipes.AppHelper;
+import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.database.RecipesContract;
 import com.hanoch.greatrecipes.database.DbManager;
@@ -196,21 +197,16 @@ public class OnlineSearchResultsFragment extends Fragment implements
 
 //-------------------------------------------------------------------------------------------------
 
-//    public void performOnlineSearch() {
-    public void performOnlineSearch(String keyToSearch, boolean searchWasPerformedByUser) {
+    public void performOnlineSearch(String keyToSearch) {
 
         if (searchKeyTooShort(keyToSearch)) {
-            // checking if 'recipe's title search' field is empty
+            // checking if 'recipe's title search' field contains at least 2 chars
             // will return 'true' also in case of input contains only spaces
 
             Snackbar snack = Snackbar.make(view, R.string.at_least_2_chars_required, Snackbar.LENGTH_LONG);
             ViewGroup group = (ViewGroup) snack.getView();
             group.setBackgroundColor(Color.RED);
             snack.show();
-
-//            searchBoxWrapper.setError(getString(R.string.at_least_2_chars_required));
-
-//            AppHelper.hideKeyboardFrom(getContext(), editText_recipeSearch);
 
             return;
         }
@@ -490,13 +486,6 @@ public class OnlineSearchResultsFragment extends Fragment implements
     }*/
 
 //-------------------------------------------------------------------------------------------------
-
-    private boolean searchKeyTooShort(EditText editText) {
-        // checks if an editText has less than 2 letters excluding spaces.
-        int trimmedLength = editText.getText().toString().trim().length();
-
-        return (trimmedLength < 2);
-    }
 
     private boolean searchKeyTooShort(String keyToSearch) {
         // checks if an editText has less than 2 letters excluding spaces.

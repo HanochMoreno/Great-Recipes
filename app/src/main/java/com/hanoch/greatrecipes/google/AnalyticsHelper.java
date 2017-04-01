@@ -46,29 +46,20 @@ public class AnalyticsHelper {
         sendEvent(fragment.getActivity(), category, action);
     }
 
-    public static void sendEvent(Fragment fragment, String category, String action) {
-        sendEvent(fragment.getActivity(), category, action);
-    }
-
-    public static void sendEvent(Activity activity, String category, String action) {
-
-        if (BuildConfig.DEBUG && ignoreInDebugMode) return;
-
-        AnalyticsApplication application = (AnalyticsApplication) activity.getApplication();
-        Tracker mTracker = application.getDefaultTracker();
-
-        mTracker.send(new HitBuilders.EventBuilder()
-                .setCategory(category)
-                .setAction(action)
-                .build());
-    }
-
     public static void sendEvent(android.app.Fragment fragment, String category, String action, String label) {
         sendEvent(fragment.getActivity(), category, action, label);
     }
 
+//    public static void sendEvent(Fragment fragment, String category, String action) {
+//        sendEvent(fragment.getActivity(), category, action);
+//    }
+
     public static void sendEvent(Fragment fragment, String category, String action, String label) {
         sendEvent(fragment.getActivity(), category, action, label);
+    }
+
+    public static void sendEvent(Activity activity, String category, String action) {
+        sendEvent(activity, category, action, null);
     }
 
     public static void sendEvent(Activity activity, String category, String action, String label) {
@@ -78,11 +69,14 @@ public class AnalyticsHelper {
         GreatRecipesApplication application = (GreatRecipesApplication) activity.getApplication();
         Tracker mTracker = application.getDefaultTracker();
 
-        mTracker.send(new HitBuilders.EventBuilder()
-                .setCategory(category)
-                .setAction(action)
-                .setLabel(label)
-                .build());
+        HitBuilders.EventBuilder builder = new HitBuilders.EventBuilder();
+
+        builder.setCategory(category).setAction(action);
+        if (label != null) {
+            builder.setLabel(label);
+        }
+
+        mTracker.send(builder.build());
     }
 }
 
