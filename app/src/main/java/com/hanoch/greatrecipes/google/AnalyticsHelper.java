@@ -7,6 +7,7 @@ import android.util.Log;
 import com.google.android.gms.analytics.HitBuilders;
 import com.google.android.gms.analytics.Tracker;
 import com.hanoch.greatrecipes.BuildConfig;
+import com.hanoch.greatrecipes.GreatRecipesApplication;
 
 
 public class AnalyticsHelper {
@@ -33,7 +34,7 @@ public class AnalyticsHelper {
         }
 
         // Obtain the shared Tracker instance.
-        AnalyticsApplication application = (AnalyticsApplication) activity.getApplication();
+        GreatRecipesApplication application = (GreatRecipesApplication) activity.getApplication();
         Tracker mTracker = application.getDefaultTracker();
 
         Log.i(screenName, "Setting screen name: " + screenName);
@@ -74,7 +75,7 @@ public class AnalyticsHelper {
 
         if (BuildConfig.DEBUG && ignoreInDebugMode) return;
 
-        AnalyticsApplication application = (AnalyticsApplication) activity.getApplication();
+        GreatRecipesApplication application = (GreatRecipesApplication) activity.getApplication();
         Tracker mTracker = application.getDefaultTracker();
 
         mTracker.send(new HitBuilders.EventBuilder()

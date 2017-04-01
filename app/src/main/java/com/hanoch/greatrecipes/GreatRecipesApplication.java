@@ -14,10 +14,12 @@
  * limitations under the License.
  */
 
-package com.hanoch.greatrecipes.google;
+package com.hanoch.greatrecipes;
 
 import android.app.Application;
 
+import com.android.volley.RequestQueue;
+import com.android.volley.toolbox.Volley;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.hanoch.greatrecipes.R;
@@ -26,9 +28,9 @@ import com.hanoch.greatrecipes.R;
  * This is a subclass of {@link Application} used to provide shared objects for this app, such as
  * the {@link Tracker}.
  */
-public class AnalyticsApplication extends Application {
+public class GreatRecipesApplication extends Application {
     private Tracker mTracker;
-
+    private RequestQueue requestQueue;
     /**
      * Gets the default {@link Tracker} for this {@link Application}.
      * @return tracker
@@ -42,4 +44,10 @@ public class AnalyticsApplication extends Application {
         return mTracker;
     }
 
+    public RequestQueue getVolleyRequestQueue() {
+        if (requestQueue == null) {
+            requestQueue = Volley.newRequestQueue(this);
+        }
+        return requestQueue;
+    }
 }
