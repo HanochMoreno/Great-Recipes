@@ -64,21 +64,17 @@ public class SearchResultsAdapter extends CursorAdapter {
 
         } else {
 
-            // TODO: Replace the place-holder image and fix the "no image available" text problem:
-            // TODO: How to save the image after downloading with picasso...
             Target target = new Target() {
                 @Override
                 public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
                     String imageName = AppConsts.Images.RESULT_IMAGE_PREFIX + resultId;
                     ImageStorage.saveToSdCard(context, bitmap, imageName);
                     imageView_resultImage.setImageBitmap(bitmap);
-//                    imageView_resultImage.setVisibility(View.VISIBLE);
                     textView_noImageAvailable.setVisibility(View.INVISIBLE);
                 }
 
                 @Override
                 public void onBitmapFailed(Drawable errorDrawable) {
-
                 }
 
                 @Override
@@ -87,60 +83,7 @@ public class SearchResultsAdapter extends CursorAdapter {
             };
 
             Picasso.with(context).load(resultImageUrl).into(target);
-
-            // TODO: check if Picasso works correctly and delete this part:
-            /*GetBitmapFromApi networkSearch = new GetBitmapFromApi(resultId, holder);
-            networkSearch.execute(resultImageUrl);*/
         }
     }
-
-//----------------------------------------------------------------------------------------------
-
-    /*private class GetBitmapFromApi extends AsyncTask<String, Integer, Bitmap> {
-
-        private long id;
-        private ViewHolder holder;
-
-        public GetBitmapFromApi(long id, ViewHolder holder) {
-
-            this.id = id;
-            this.holder = holder;
-        }
-
-        //****************************************************
-
-        @Override
-        protected Bitmap doInBackground(String... params) {
-
-            String address = params[0];
-
-            Bitmap bitmap = HttpHandler.getBitmap(address, null);
-            if (bitmap != null) {
-                String imageName = AppConsts.Images.RESULT_IMAGE_PREFIX + id;
-                ImageStorage.saveToSdCard(context, bitmap, imageName);
-            }
-
-            return bitmap;
-        }
-
-        //****************************************************
-
-        @Override
-        protected void onPostExecute(Bitmap image) {
-
-            if (image != null) {
-
-                if (holder.id == this.id) {
-                    holder.imageView_resultImage.setImageBitmap(image);
-                    holder.imageView_resultImage.setVisibility(View.VISIBLE);
-                }
-
-            } else if (holder.id == this.id) {
-                holder.textView_noImageAvailable.setVisibility(View.VISIBLE);
-                holder.imageView_resultImage.setImageBitmap(null);
-                holder.imageView_resultImage.setVisibility(View.VISIBLE);
-            }
-        }
-    }*/
 
 }

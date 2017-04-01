@@ -17,7 +17,6 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.EditText;
 import android.widget.ListView;
 
 import com.android.volley.NoConnectionError;
@@ -267,7 +266,6 @@ public class OnlineSearchResultsFragment extends Fragment implements
         progressDialog.setMessage(getString(R.string.please_wait));
         progressDialog.show();
 
-        RequestQueue queue = Volley.newRequestQueue(getContext());
         stringRequest = new StringRequest(Request.Method.GET,
                 address,
                 new Response.Listener<String>() {
@@ -286,9 +284,8 @@ public class OnlineSearchResultsFragment extends Fragment implements
                             return;
                         }
 
-                        JSONObject json;
                         try {
-                            json = new JSONObject(response);
+                            JSONObject json = new JSONObject(response);
                             JSONArray resultsArray = json.getJSONArray("matches");
 
                             if (resultsArray.length() == 0) {
@@ -304,9 +301,9 @@ public class OnlineSearchResultsFragment extends Fragment implements
                             // Deleting old search
                             dbManager.deleteAllSearchResults();
 
-                            String resultYummlyId = "";
-                            String resultTitle = "";
-                            String resultThumbnailImageUrl = "";
+                            String resultYummlyId;
+                            String resultTitle;
+                            String resultThumbnailImageUrl;
 
                             for (int i = 0; i < resultsArray.length(); i++) {
 
@@ -349,141 +346,8 @@ public class OnlineSearchResultsFragment extends Fragment implements
                     }
         });
 
-        queue.add(stringRequest);
+        ((GreatRecipesApplication) getActivity().getApplication()).getVolleyRequestQueue().add(stringRequest);
     }
-
-//-------------------------------------------------------------------------------------------------
-
-    /*private class GetRecipesFromYummlyApi extends AsyncTask<String, Void, String> {
-
-        private ProgressDialog progressDialog;
-
-        //****************************************************
-
-        @Override
-        protected void onPreExecute() {
-
-            progressDialog = new ProgressDialog(getActivity());
-            progressDialog.setTitle(getString(R.string.searching));
-            progressDialog.setMessage(getString(R.string.please_wait));
-            progressDialog.show();
-        }
-
-        //****************************************************
-
-        @Override
-        protected String doInBackground(String... params) {
-
-            // Getting the user's Max. Online Search Results preference
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
-
-            boolean premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
-
-            String maxOnlineSearchResultsPref;
-            if (premium) {
-                maxOnlineSearchResultsPref = sp.getString(AppConsts.SharedPrefs.MAX_ONLINE_SEARCH_RESULTS, "10");
-
-            } else {
-                maxOnlineSearchResultsPref = "5";
-            }
-
-            String address = params[0];
-            String queryString = null;
-
-            try {
-
-                queryString = "q=" + URLEncoder.encode(keyToSearch, "utf-8")
-                        + "&start=" + URLEncoder.encode("0", "utf-8")
-                        + "&maxResult=" + URLEncoder.encode(maxOnlineSearchResultsPref, "utf-8")
-                        + "&_app_id=" + URLEncoder.encode(AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL, "utf-8")
-                        + "&_app_key=" + URLEncoder.encode(AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL, "utf-8");
-
-                final String allowedDietPrefix = "&allowedDiet[]=";
-                if (!allowedDietList.isEmpty()) {
-                    for (int i = 0; i < allowedDietList.size(); i++) {
-                        queryString = queryString + allowedDietPrefix
-                                + URLEncoder.encode(allowedDietList.get(i).getSearchKeyName(), "utf-8");
-                    }
-                }
-
-                final String allowedAllergiesPrefix = "&allowedAllergy[]=";
-                if (!allowedAllergiesList.isEmpty()) {
-                    for (int i = 0; i < allowedAllergiesList.size(); i++) {
-                        queryString = queryString + allowedAllergiesPrefix
-                                + URLEncoder.encode(allowedAllergiesList.get(i).getSearchKeyName(), "utf-8");
-                    }
-                }
-
-            } catch (UnsupportedEncodingException e) {
-                e.printStackTrace();
-            }
-
-            return HttpHandler.getFromApi(address, queryString);
-        }
-
-        //****************************************************
-
-        @Override
-        protected void onPostExecute(String result) {
-
-            //result = AppConsts.JsonHandling.FAKE_SEARCH_RESULTS;
-
-            progressDialog.dismiss();
-
-            if (result == null) {
-
-                Snackbar snack = Snackbar.make(view, R.string.internet_error, Snackbar.LENGTH_LONG);
-                ViewGroup group = (ViewGroup) snack.getView();
-                group.setBackgroundColor(Color.RED);
-                snack.show();
-
-                return;
-            }
-
-            JSONObject json;
-            try {
-                json = new JSONObject(result);
-                JSONArray resultsArray = json.getJSONArray("matches");
-
-                if (resultsArray.length() == 0) {
-
-                    Snackbar snack = Snackbar.make(view, R.string.no_results, Snackbar.LENGTH_LONG);
-                    ViewGroup group = (ViewGroup) snack.getView();
-                    group.setBackgroundColor(Color.RED);
-                    snack.show();
-
-                    return;
-                }
-
-                // Deleting old search
-                RecipesProviderHandler rph = new RecipesProviderHandler(getContext());
-                rph.deleteAllSearchResults();
-
-                String resultYummlyId = "";
-                String resultTitle = "";
-                String resultThumbnailImageUrl = "";
-
-                for (int i = 0; i < resultsArray.length(); i++) {
-
-                    JSONObject recipeResult = resultsArray.getJSONObject(i);
-
-                    resultYummlyId = recipeResult.getString("id");
-                    resultTitle = recipeResult.getString("recipeName");
-                    resultThumbnailImageUrl = recipeResult.getJSONObject("imageUrlsBySize").getString("90");
-                    resultThumbnailImageUrl = resultThumbnailImageUrl.replace("s90-c", "s360-c");
-
-                    RecipeSearchResult recipe = new
-                            RecipeSearchResult(-1, resultYummlyId, resultTitle, resultThumbnailImageUrl);
-
-                    rph = new RecipesProviderHandler(getContext());
-                    rph.addNewResult(recipe);
-                }
-
-            } catch (JSONException e) {
-                e.printStackTrace();
-            }
-        }
-    }*/
 
 //-------------------------------------------------------------------------------------------------
 
