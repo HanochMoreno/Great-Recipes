@@ -57,10 +57,11 @@ public class PreferencesActivity extends AppCompatActivity
 
         // Activity for phones and small tablets only
 
-        if (getResources().getBoolean(R.bool.isTablet))
+        if (getResources().getBoolean(R.bool.isTablet)) { // small tablet
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
-        else
+        } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        }
 
         setContentView(R.layout.activity_preferences);
 

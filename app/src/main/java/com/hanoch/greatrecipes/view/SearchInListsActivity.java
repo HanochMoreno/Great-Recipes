@@ -103,6 +103,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
         Intent prevIntent = getIntent();
         // The only action exists is "ADD_SERVING"- otherwise action will be null;
         extra_serving = prevIntent.getStringExtra(AppConsts.Extras.EXTRA_SERVING);
+        int conteinerResId;
 
         if (getResources().getBoolean(R.bool.isTablet)) {
             // Tablet:
@@ -113,34 +114,23 @@ public class SearchInListsActivity extends AppCompatActivity implements
             Typeface typeFace = Typeface.createFromAsset(getAssets(), "fonts/MotionPicture.ttf");
             textView_greatRecipes.setTypeface(typeFace);
 
-            // only add fragments if the state is null!
-            // if there's a state - they will be re-attached automatically
-
-            if (savedInstanceState == null) {
-                Fragment searchInListsFragment = SearchInListsFragment.newInstance(extra_serving);
-                FragmentManager fm = getSupportFragmentManager();
-                FragmentTransaction ft = fm.beginTransaction();
-
-                ft.add(R.id.layout_listContainer, searchInListsFragment, AppConsts.Fragments.SEARCH_IN_LISTS);
-                ft.commit();
-            }
+            conteinerResId = R.id.layout_listContainer;
 
         } else {
             // Phone
+            conteinerResId = R.id.layout_container;
+        }
 
-            //setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
+        if (savedInstanceState == null) {
+            // only add fragments if the state is null!
+            // if there's a state - they will be re-attached automatically
 
-            if (savedInstanceState == null) {
-                // only add fragments if the state is null!
-                // if there's a state - they will be re-attached automatically
+            Fragment searchInListsFragment = SearchInListsFragment.newInstance(extra_serving);
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
 
-                Fragment searchInListsFragment = SearchInListsFragment.newInstance(extra_serving);
-                FragmentManager fm = getSupportFragmentManager();
-                FragmentTransaction ft = fm.beginTransaction();
-
-                ft.add(R.id.layout_container, searchInListsFragment, AppConsts.Fragments.SEARCH_IN_LISTS);
-                ft.commit();
-            }
+            ft.add(conteinerResId, searchInListsFragment, AppConsts.Fragments.SEARCH_IN_LISTS);
+            ft.commit();
         }
     }
 

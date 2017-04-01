@@ -127,43 +127,32 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
         Intent prevIntent = getIntent();
         extra_serving = prevIntent.getStringExtra(AppConsts.Extras.EXTRA_SERVING);
-        FragmentManager fm = getSupportFragmentManager();
+        int containerResId;
 
         if (getResources().getBoolean(R.bool.isTablet)) {
-            // Tablet:
+            // Tablet
 
             layout_logo = (LinearLayout) findViewById(R.id.layout_logo);
 
             TextView textView_greatRecipes = (TextView) findViewById(R.id.textView_greatRecipes);
             textView_greatRecipes.setTypeface(MyFonts.getInstance(this).getMotionPictureFont());
 
-            // only add fragments if the state is null!
-            // if there's a state - they will be re-attached automatically
-            if (savedInstanceState == null) {
+            containerResId = R.id.layout_listContainer;
 
-                // create frags: List (no details at start...)
-                Fragment tabsFragment = TabsFragment.newInstance(extra_serving);
-                FragmentTransaction ft = fm.beginTransaction();
-
-                ft.add(R.id.layout_listContainer, tabsFragment, AppConsts.Fragments.TABS);
-
-                ft.commit();
-
-            }
         } else {
             // Phone
+            containerResId = R.id.layout_container;
+        }
 
-            if (savedInstanceState == null) {
-                // only add fragments if the state is null!
-                // if there's a state - they will be re-attached automatically
+        if (savedInstanceState == null) {
+            // only add fragments if the state is null!
+            // if there's a state - they will be re-attached automatically
 
-                Fragment tabsFragment = TabsFragment.newInstance(extra_serving);
-                FragmentTransaction ft = fm.beginTransaction();
-
-                ft.add(R.id.layout_container, tabsFragment, AppConsts.Fragments.TABS);
-
-                ft.commit();
-            }
+            Fragment tabsFragment = TabsFragment.newInstance(extra_serving);
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
+            ft.add(containerResId, tabsFragment, AppConsts.Fragments.TABS);
+            ft.commit();
         }
     }
 
