@@ -6,9 +6,7 @@ import android.graphics.Bitmap;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.os.Handler;
 import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
@@ -26,10 +24,7 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.android.volley.NoConnectionError;
-import com.android.volley.Request;
-import com.android.volley.Response;
-import com.android.volley.VolleyError;
-import com.android.volley.toolbox.StringRequest;
+import com.google.gson.internal.LinkedTreeMap;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.GreatRecipesApplication;
@@ -38,18 +33,19 @@ import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.DbManager;
 import com.hanoch.greatrecipes.model.Recipe;
 import com.hanoch.greatrecipes.model.RecipeSearchResult;
+import com.hanoch.greatrecipes.model.YummlyRecipe;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
-
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import retrofit2.Call;
+import retrofit2.Callback;
 
 
 public class RecipeReviewFragment extends Fragment implements View.OnClickListener {
@@ -107,7 +103,7 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
     private int recipeOriginIndex;
 
     private DbManager dbManager;
-    private StringRequest stringRequest;
+    private Call<YummlyRecipe> getRecipeDetails;
 
 
 //-------------------------------------------------------------------------------------------------
@@ -296,7 +292,6 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
 
                 imageView_recipeImage.setImageBitmap(recipeImage);
 
-
                 cardView_instructions.setVisibility(View.GONE);
 
                 cardView_privateNotes.setVisibility(View.GONE);
@@ -305,7 +300,9 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
 
                 if (recipeImage == null) {
                     textView_noImageAvailable.setVisibility(View.VISIBLE);
-                    tryToGetRecipeImage(result.imageUrl);
+                    if (result.imageUrl != null && !result.imageUrl.isEmpty()) {
+                        tryToGetRecipeImage(result.imageUrl);
+                    }
 
                 } else {
                     AppHelper.animateViewFadingIn(getContext(), imageView_recipeImage, 2500, 0);
@@ -437,221 +434,168 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
 //-------------------------------------------------------------------------------------------------
 
     public void tryToDownloadRecipeDetails() {
+        // For Example:
+        // http://api.yummly.com/v1/api/recipe/French-Onion-Soup-1292648?_app_id=417b707a&_app_key=249ec501a990bd7d5fa5dd5218bf7e14
 
-        final RecipeSearchResult result = dbManager.queryResultObjectById(mRecipeId);
+        String appId = AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL;
+        String appKey = AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL;
+        String requiredPictureValue = "true";
 
-        String queryString = "";
         try {
-
-            // For Example:
-            // http://api.yummly.com/v1/api/recipe/French-Onion-Soup-1292648?_app_id=417b707a&_app_key=249ec501a990bd7d5fa5dd5218bf7e14
-
-            queryString =
-                    "_app_id=" + URLEncoder.encode(AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL, "utf-8")
-                            + "&_app_key=" + URLEncoder.encode(AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL, "utf-8")
-                            + "&requirePictures=" + URLEncoder.encode("true", "utf-8");
-
+            appId = URLEncoder.encode(AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL, "utf-8");
+            appKey = URLEncoder.encode(AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL, "utf-8");
+            requiredPictureValue = URLEncoder.encode("true", "utf-8");
         } catch (UnsupportedEncodingException e) {
             e.printStackTrace();
         }
 
+        HashMap<String, String> query = new HashMap<>();
+        query.put("_app_id", appId);
+        query.put("_app_key", appKey);
+        query.put("requirePictures", requiredPictureValue);
+
         final ProgressDialog progressDialog = new ProgressDialog(getActivity());
-        progressDialog.setTitle(getString(R.string.searching));
+        progressDialog.setTitle(getString(R.string.loading_info));
         progressDialog.setMessage(getString(R.string.please_wait));
         progressDialog.show();
 
-        String address = AppConsts.ApiAccess.API_ADDRESS_YUMMLY_RECIPE_SEARCH + mOnlineSearchResultId + "?" + queryString;
-        stringRequest = new StringRequest(Request.Method.GET,
-                address,
-                new Response.Listener<String>() {
-                    @Override
-                    public void onResponse(String response) {
+        getRecipeDetails = ((GreatRecipesApplication) getActivity().getApplication()).getYummlyService().getRecipeInfo(mOnlineSearchResultId, query);
+        getRecipeDetails.enqueue(new Callback<YummlyRecipe>() {
+            @Override
+            public void onResponse(Call<YummlyRecipe> call, retrofit2.Response<YummlyRecipe> response) {
 
-                        progressDialog.dismiss();
+                ingredientsList = new ArrayList<>();
+                categoriesList = new ArrayList<>();
 
-                        ingredientsList = new ArrayList<>();
-                        categoriesList = new ArrayList<>();
+                if (RecipeReviewFragment.this.isDetached()) return;
 
-                        if (RecipeReviewFragment.this.isDetached()) return;
+                if (response == null || response.body() == null) {
+                    progressDialog.dismiss();
 
-                        if (response == null) {
-                            // Internet error
+                    mToolbarMenuSetting.setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, getString(R.string.online_search));
 
-                            mToolbarMenuSetting.setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, getString(R.string.online_search));
+                    Snackbar snack = Snackbar.make(view, R.string.internet_error, Snackbar.LENGTH_LONG);
+                    ViewGroup group = (ViewGroup) snack.getView();
+                    group.setBackgroundColor(Color.RED);
+                    snack.show();
 
-                            Snackbar snack = Snackbar.make(view, R.string.internet_error, Snackbar.LENGTH_LONG);
-                            ViewGroup group = (ViewGroup) snack.getView();
-                            group.setBackgroundColor(Color.RED);
-                            snack.show();
+                    ingredientsList.add(getString(R.string.no_info));
+                    fillList(layout_ingredientsList, ingredientsList);
 
-                            ingredientsList.add(getString(R.string.no_info));
-                            fillList(layout_ingredientsList, ingredientsList);
+                    categoriesList.add(getString(R.string.no_info));
+                    fillList(layout_categoriesList, categoriesList);
 
-                            categoriesList.add(getString(R.string.no_info));
-                            fillList(layout_categoriesList, categoriesList);
+                    recipeTotalCalories = -1;
 
-                            recipeTotalCalories = -1;
+                    ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
 
-                            ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
+                    toolbarButtonsList.add(AppConsts.ToolbarButtons.REFRESH);
 
-                            toolbarButtonsList.add(AppConsts.ToolbarButtons.REFRESH);
+                    mToolbarMenuSetting.setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.PRIMARY, getString(R.string.internet_error));
 
-                            mToolbarMenuSetting.setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.PRIMARY, getString(R.string.internet_error));
+                    return;
+                }
 
-                            return;
-                        }
+                YummlyRecipe recipe = response.body();
+                if (recipe.source != null) {
+                    recipeAuthor = AppConsts.Category.NO_INFO;
+                    if (recipe.source.containsKey("sourceDisplayName")) {
+                        recipeAuthor = (String) recipe.source.get("sourceDisplayName");
+                    }
 
-                        JSONObject resultRecipe;
-                        try {
-                            resultRecipe = new JSONObject(response);
+                    recipeUrl = getString(R.string.no_info);
+                    if (recipe.source.containsKey("sourceRecipeUrl")) {
+                        recipeUrl = (String) recipe.source.get("sourceRecipeUrl");
+                    }
+                }
 
-                            recipeAuthor = AppConsts.Category.NO_INFO;
+                if (recipe.ingredients == null || recipe.ingredients.isEmpty()) {
+                    recipe.ingredients = new ArrayList<>();
+                    recipe.ingredients.add(AppConsts.Category.NO_INFO);
+                }
 
-                            try {
-                                JSONObject source = resultRecipe.getJSONObject("source");
-                                recipeAuthor = source.getString("sourceDisplayName");
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
+                ingredientsList = recipe.ingredients;
 
-                            recipeTitle = resultRecipe.getString("name");
+                if (recipe.attributes != null && recipe.attributes.containsKey("course")) {
+                    categoriesList = (ArrayList<String>) recipe.attributes.get("course");
+                }
+                if (categoriesList.isEmpty()) {
+                    categoriesList.add(AppConsts.Category.NO_INFO);
+                }
+                translatedCategories = AppHelper.getTranslatedCategoriesList(getContext(), categoriesList);
 
-                            recipeTotalTime = 0;
-                            try {
-                                recipeTotalTime = resultRecipe.getInt("totalTimeInSeconds");
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-
-                            recipeUrl = getString(R.string.no_info);
-                            try {
-                                recipeUrl = resultRecipe.getJSONObject("source").getString("sourceRecipeUrl");
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-
-                            recipeYield = 0;
-                            try {
-                                recipeYield = resultRecipe.getInt("numberOfServings");
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-
-                            JSONArray nutritionEstimatesJsonArray = resultRecipe.getJSONArray("nutritionEstimates");
-                            String nutritionName;
-                            JSONObject nutritionJsonObject;
-                            recipeTotalCalories = -1;
-
-                            for (int i = 0; i < nutritionEstimatesJsonArray.length(); i++) {
-                                nutritionJsonObject = nutritionEstimatesJsonArray.getJSONObject(i);
-                                nutritionName = nutritionJsonObject.getString("attribute");
-                                if (nutritionName.equals("ENERC_KCAL")) {
-                                    recipeTotalCalories = (int) nutritionJsonObject.getDouble("value");
-                                }
-                            }
-
-                            //***************************//
-
-                            JSONArray ingredientsJsonArray = new JSONArray();
-
-                            ingredientsJsonArray.put(AppConsts.Category.NO_INFO);
-                            try {
-                                ingredientsJsonArray = resultRecipe.getJSONArray("ingredientLines");
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-
-                            for (int i = 0; i < ingredientsJsonArray.length(); i++) {
-                                ingredientsList.add(ingredientsJsonArray.getString(i));
-                            }
-
-                            //***************************//
-
-                            JSONArray coursesJsonArray = new JSONArray();
-                            coursesJsonArray.put(AppConsts.Category.NO_INFO);
-                            try {
-                                coursesJsonArray = resultRecipe.getJSONObject("attributes").getJSONArray("course");
-                            } catch (JSONException e) {
-                                e.printStackTrace();
-                            }
-
-                            for (int i = 0; i < coursesJsonArray.length(); i++) {
-                                categoriesList.add(coursesJsonArray.getString(i));
-                            }
-
-                            translatedCategories = AppHelper.getTranslatedCategoriesList(getContext(), categoriesList);
-
-                            //***************************//
-
-                            if (RecipeReviewFragment.this.isDetached()) return;
-                            if (!RecipeReviewFragment.this.isVisible()) return;
-                            if (RecipeReviewFragment.this.isRemoving()) return;
-
-                            setRecipeDetailsView();
-
-                            ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
-
-                            if ((extra_serving != null) &&
-                                    (extra_serving.equals(AppConsts.Extras.ADD_SERVING))) {
-
-                                toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING);
-
-                            } else {
-                                toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_LIST);
-                            }
-
-                            mToolbarMenuSetting.setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
-
-                            String resultStringIngredientsList = AppHelper.listToStringConverter(ingredientsList);
-                            String resultStringCategoriesList = AppHelper.listToStringConverter(categoriesList);
-
-                            RecipeSearchResult searchResult = new RecipeSearchResult(mRecipeId, mOnlineSearchResultId,
-                                    recipeTitle, recipeAuthor, recipeYield, recipeTotalTime, resultStringIngredientsList,
-                                    recipeTotalCalories, resultStringCategoriesList, recipeUrl, null);
-
-                            dbManager.updateSearchResult(searchResult);
-
-                            floatingButton_getInstructions.setVisibility(View.VISIBLE);
-                            AppHelper.animateViewFadingIn(getContext(), floatingButton_getInstructions, 1500, 0);
-                            AppHelper.animateViewFlipping(getContext(), floatingButton_getInstructions, 1500, 0);
-
-                        } catch (JSONException e) {
-                            e.printStackTrace();
-
-                            Snackbar snack = Snackbar.make(view, R.string.internet_error, Snackbar.LENGTH_LONG);
-                            ViewGroup group = (ViewGroup) snack.getView();
-                            group.setBackgroundColor(Color.RED);
-                            snack.show();
+                recipeTotalCalories = -1;
+                if (recipe.nutritions != null) {
+                    for (LinkedTreeMap nutrition : recipe.nutritions) {
+                        if (nutrition.containsKey("attribute") && nutrition.get("attribute").equals("ENERC_KCAL")) {
+                            double calories = (double) nutrition.get("value");
+                            recipeTotalCalories = (int) calories;
+                            break;
                         }
                     }
-                },
+                }
 
-                new Response.ErrorListener() {
-                    @Override
-                    public void onErrorResponse(VolleyError error) {
-                        progressDialog.dismiss();
+                recipeTitle = recipe.title;
+                recipeYield = recipe.yield;
+                recipeTotalTime = recipe.time;
 
-                        String errorMessage;
-                        if (error instanceof NoConnectionError) {
-                            errorMessage = getString(R.string.internet_error);
+                if (RecipeReviewFragment.this.isDetached()) return;
+                if (!RecipeReviewFragment.this.isVisible()) return;
+                if (RecipeReviewFragment.this.isRemoving()) return;
 
-                        } else {
-                            errorMessage = getString(R.string.unexpected_error);
-                        }
+                setRecipeDetailsView();
 
-                        Snackbar snack = Snackbar.make(view, errorMessage, Snackbar.LENGTH_LONG);
-                        ViewGroup group = (ViewGroup) snack.getView();
-                        group.setBackgroundColor(Color.RED);
-                        snack.show();
-                    }
-                });
+                progressDialog.dismiss();
 
-        ((GreatRecipesApplication) getActivity().getApplication()).getVolleyRequestQueue().add(stringRequest);
+                ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
+
+                if (extra_serving != null && extra_serving.equals(AppConsts.Extras.ADD_SERVING)) {
+                    toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING);
+
+                } else {
+                    toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_LIST);
+                }
+
+                mToolbarMenuSetting.setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
+
+                String resultStringIngredientsList = AppHelper.listToStringConverter(ingredientsList);
+                String resultStringCategoriesList = AppHelper.listToStringConverter(categoriesList);
+
+                RecipeSearchResult searchResult = new RecipeSearchResult(mRecipeId,
+                        recipeAuthor, recipeYield, recipeTotalTime, resultStringIngredientsList,
+                        recipeTotalCalories, resultStringCategoriesList, recipeUrl);
+
+                dbManager.updateFullSearchResultInfo(searchResult);
+
+                floatingButton_getInstructions.setVisibility(View.VISIBLE);
+                AppHelper.animateViewFadingIn(getContext(), floatingButton_getInstructions, 1500, 0);
+                AppHelper.animateViewFlipping(getContext(), floatingButton_getInstructions, 1500, 0);
+            }
+
+            @Override
+            public void onFailure(Call<YummlyRecipe> call, Throwable t) {
+                progressDialog.dismiss();
+                String errorMessage;
+                if (t instanceof NoConnectionError) {
+                    errorMessage = getString(R.string.internet_error);
+
+                } else {
+                    errorMessage = getString(R.string.unexpected_error);
+                }
+
+                Snackbar snack = Snackbar.make(view, errorMessage, Snackbar.LENGTH_LONG);
+                ViewGroup group = (ViewGroup) snack.getView();
+                group.setBackgroundColor(Color.RED);
+                snack.show();
+            }
+        });
 
         if (recipeImage == null) {
             // Retry to download the recipe's image
-
-            tryToGetRecipeImage(result.imageUrl);
+            String imageUrl = dbManager.queryResultObjectById(mRecipeId).imageUrl;
+            if (imageUrl != null && !imageUrl.isEmpty()) {
+                tryToGetRecipeImage(imageUrl);
+            }
         }
     }
 
@@ -661,13 +605,13 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
         Target target = new Target() {
             @Override
             public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                String imageName = AppConsts.Images.RESULT_IMAGE_PREFIX + mRecipeId;
-                ImageStorage.saveToSdCard(getContext(), bitmap, imageName);
                 imageView_recipeImage.setVisibility(View.VISIBLE);
 
                 if (bitmap == null) {
                     textView_noImageAvailable.setVisibility(View.VISIBLE);
                 } else {
+                    String imageName = AppConsts.Images.RESULT_IMAGE_PREFIX + mRecipeId;
+                    ImageStorage.saveToSdCard(getContext(), bitmap, imageName);
                     recipeImage = bitmap;
                     imageView_recipeImage.setImageBitmap(bitmap);
                     textView_noImageAvailable.setVisibility(View.INVISIBLE);
@@ -708,7 +652,7 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
             String imageName = AppConsts.Images.RECIPE_IMAGE_PREFIX + recipeId;
             File file = ImageStorage.saveToSdCard(getContext(), recipeImage, imageName);
 
-            if (file !=null) {
+            if (file != null) {
                 Bitmap thumbnail = ImageStorage.decodeSampledBitmapFromFile(file.getPath(), Bitmap.Config.ARGB_8888, 100, 100);
                 imageName = AppConsts.Images.RECIPE_THUMBNAIL_PREFIX + recipeId;
                 ImageStorage.saveToSdCard(getContext(), thumbnail, imageName);
@@ -767,7 +711,9 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
         mListener = null;
         mToolbarMenuSetting = null;
 
-        if (stringRequest != null) stringRequest.cancel();
+        if (getRecipeDetails != null && getRecipeDetails.isExecuted()) {
+            getRecipeDetails.cancel();
+        }
     }
 
 //-------------------------------------------------------------------------------------------------

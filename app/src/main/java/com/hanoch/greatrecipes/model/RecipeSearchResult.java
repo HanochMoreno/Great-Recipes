@@ -1,5 +1,6 @@
 package com.hanoch.greatrecipes.model;
 
+
 /**
  Represents one result of a recipe online search.
  */
@@ -23,16 +24,9 @@ public class RecipeSearchResult {
 
 //-------------------------------------------------------------------------------------------------
 
-    // CTOR for creating a search result card
-    public RecipeSearchResult(long recipeId, String yummlyId, String title, String imageUrl) {
-        this.recipeId = recipeId;
-        this.yummlyId = yummlyId;
-        this.title = title;
-        this.imageUrl = imageUrl;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
+    /**
+     * CTOR For getting a search result info from the DB.
+     */
     public RecipeSearchResult(long recipeId, String yummlyId, String title, String author,
                               int yield, int time, String ingredients, int energy,
                               String categories, String sourceUrl, String imageUrl) {
@@ -49,5 +43,21 @@ public class RecipeSearchResult {
         this.sourceUrl = sourceUrl;
         this.imageUrl = imageUrl;
     }
+//-------------------------------------------------------------------------------------------------
 
+    /**
+     * CTOR For updating the rest of the recipe search result info in the DB.
+     */
+    public RecipeSearchResult(long recipeId, String author, int yield, int time, String ingredients,
+                              int energy, String categories, String sourceUrl) {
+
+        this.recipeId = recipeId;
+        this.author = author;
+        this.yield = yield;
+        this.time = time;
+        this.ingredients = ingredients;
+        this.energy = energy;
+        this.categories = categories;
+        this.sourceUrl = sourceUrl;
+    }
 }

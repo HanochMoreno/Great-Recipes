@@ -25,6 +25,10 @@ import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.database.DbManager;
+import com.hanoch.greatrecipes.retrofit.YummlyService;
+
+import retrofit2.Retrofit;
+import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
  * This is a subclass of {@link Application} used to provide shared objects for this app, such as
@@ -34,6 +38,9 @@ public class GreatRecipesApplication extends Application {
     private Tracker mTracker;
     private RequestQueue requestQueue;
     private DbManager dbManager;
+    private YummlyService yummlyService;
+    private Retrofit retrofit;
+
     /**
      * Gets the default {@link Tracker} for this {@link Application}.
      * @return tracker
@@ -54,6 +61,22 @@ public class GreatRecipesApplication extends Application {
         return requestQueue;
     }
 
+    public Retrofit getRetrofit() {
+        if (retrofit == null) {
+            retrofit =  new Retrofit.Builder()
+                    .baseUrl(AppConsts.ApiAccess.YUMMLY_BASE_URL)
+                    .addConverterFactory(GsonConverterFactory.create())
+                    .build();
+        }
+        return retrofit;
+    }
+
+    public YummlyService getYummlyService() {
+        if (yummlyService == null) {
+            yummlyService = getRetrofit().create(YummlyService.class);
+        }
+        return yummlyService;
+    }
 
     public DbManager getDbManager() {
 

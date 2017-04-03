@@ -88,20 +88,17 @@ public class DbManager {
 
 //-------------------------------------------------------------------------------------------------
 
-    public void updateSearchResult(RecipeSearchResult result) {
+    public void updateFullSearchResultInfo(RecipeSearchResult result) {
 
         Uri contentUri = RecipesContract.SearchResults.CONTENT_URI;
 
         String selection = RecipesContract.SearchResults._ID + "=?";
-        String[] selectionArgs = {result.recipeId + ""};
+        String[] selectionArgs = {String.valueOf(result.recipeId)};
 
         ContentValues values = new ContentValues();
 
-        values.put(RecipesContract.SearchResults.TITLE, result.title);
-        values.put(RecipesContract.SearchResults.YUMMLY_ID, result.yummlyId);
         values.put(RecipesContract.SearchResults.YIELD, result.yield);
         values.put(RecipesContract.SearchResults.SOURCE_URL, result.sourceUrl);
-        values.put(RecipesContract.SearchResults.IMAGE_URL, result.imageUrl);
         values.put(RecipesContract.SearchResults.ENERGY, result.energy);
         values.put(RecipesContract.SearchResults.AUTHOR, result.author);
         values.put(RecipesContract.SearchResults.TIME, result.time);

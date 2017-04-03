@@ -203,5 +203,6 @@
     <string name="you_are_already_premium">אתה כבר משתמש פרימיום</string>
     <string name="error_purchasing">תקלה ברכישה</string>
     <string name="Billing_unavailable_for_device">שירות החיוב של גוגל אינו זמין למכשיר זה</string>
+    <string name="loading_info">טוען נתונים</string>
 
 </resources>

@@ -206,5 +206,6 @@
     <string name="you_are_already_premium">You are already a Premium user</string>
     <string name="error_purchasing">"Error purchasing"</string>
     <string name="Billing_unavailable_for_device">Billing service is not available for this device</string>
+    <string name="loading_info">Loading info</string>
 
 </resources>
