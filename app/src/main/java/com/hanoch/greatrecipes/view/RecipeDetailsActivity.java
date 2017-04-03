@@ -24,6 +24,7 @@ import android.widget.TextView;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
+import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.DbManager;
@@ -69,7 +70,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
         setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
 
-        dbManager = DbManager.getInstance(this);
+        dbManager = ((GreatRecipesApplication) getApplication()).getDbManager();
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);

@@ -138,7 +138,7 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        dbManager = DbManager.getInstance(getContext());
+        dbManager = ((GreatRecipesApplication) getActivity().getApplication()).getDbManager();
     }
 
 //-------------------------------------------------------------------------------------------------

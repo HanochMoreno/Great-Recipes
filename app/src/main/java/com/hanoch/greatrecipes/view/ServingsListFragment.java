@@ -18,6 +18,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.hanoch.greatrecipes.AppHelper;
+import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.control.ListFragmentListener;
 import com.hanoch.greatrecipes.database.RecipesContract;
@@ -46,8 +47,6 @@ public class ServingsListFragment extends MyFragment implements
 
     private ArrayList<String> selectedItemsIdList;
 
-    private DbManager dbManager;
-
 //-------------------------------------------------------------------------------------------------
 
     public static ServingsListFragment newInstance() {
@@ -59,15 +58,6 @@ public class ServingsListFragment extends MyFragment implements
     public interface FragmentServingsListListener {
 
         void listSizeChanged(int listSize);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        dbManager = DbManager.getInstance(getContext());
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -214,6 +204,7 @@ public class ServingsListFragment extends MyFragment implements
             }
 
         } else {
+            DbManager dbManager = ((GreatRecipesApplication) getActivity().getApplication()).getDbManager();
             long recipeId = dbManager.queryServingObjectById(id).recipeId;
             mListListener.onRecipeClick(this, recipeId);
         }

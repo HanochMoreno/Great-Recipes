@@ -79,7 +79,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        dbManager = DbManager.getInstance(getContext());
+        dbManager = ((GreatRecipesApplication) getActivity().getApplication()).getDbManager();
     }
 
 //-------------------------------------------------------------------------------------------------

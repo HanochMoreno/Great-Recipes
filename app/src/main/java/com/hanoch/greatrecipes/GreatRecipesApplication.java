@@ -17,12 +17,14 @@
 package com.hanoch.greatrecipes;
 
 import android.app.Application;
+import android.content.Context;
 
 import com.android.volley.RequestQueue;
 import com.android.volley.toolbox.Volley;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.hanoch.greatrecipes.R;
+import com.hanoch.greatrecipes.database.DbManager;
 
 /**
  * This is a subclass of {@link Application} used to provide shared objects for this app, such as
@@ -31,6 +33,7 @@ import com.hanoch.greatrecipes.R;
 public class GreatRecipesApplication extends Application {
     private Tracker mTracker;
     private RequestQueue requestQueue;
+    private DbManager dbManager;
     /**
      * Gets the default {@link Tracker} for this {@link Application}.
      * @return tracker
@@ -49,5 +52,15 @@ public class GreatRecipesApplication extends Application {
             requestQueue = Volley.newRequestQueue(this);
         }
         return requestQueue;
+    }
+
+
+    public DbManager getDbManager() {
+
+        if (dbManager == null) {
+            dbManager = new DbManager(this);
+        }
+
+        return dbManager;
     }
 }

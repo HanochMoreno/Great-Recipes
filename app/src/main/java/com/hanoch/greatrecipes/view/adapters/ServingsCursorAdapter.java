@@ -13,9 +13,9 @@ import android.widget.TextView;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
+import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.database.RecipesContract;
-import com.hanoch.greatrecipes.database.DbManager;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 
 import java.util.ArrayList;
@@ -31,8 +31,6 @@ public class ServingsCursorAdapter extends CursorAdapter {
 
     private ArrayList<String> selectedIds;
     private HashMap<String, View> viewsMap = new HashMap<>();
-
-    private DbManager dbManager;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -87,9 +85,8 @@ public class ServingsCursorAdapter extends CursorAdapter {
 
         ViewHolder holder = (ViewHolder) view.getTag();
 
-        dbManager = DbManager.getInstance(context);
-
-        holder.textView_recipeTitle.setText(dbManager.queryRecipeObjectById(recipeId).title);
+        String title = ((GreatRecipesApplication) context.getApplicationContext()).getDbManager().queryRecipeObjectById(recipeId).title;
+        holder.textView_recipeTitle.setText(title);
         holder.recipeId = recipeId;
 
         holder.id = id;

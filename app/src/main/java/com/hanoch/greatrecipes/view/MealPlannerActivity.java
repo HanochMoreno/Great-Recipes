@@ -36,6 +36,7 @@ import android.widget.Toast;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
+import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.control.ListFragmentListener;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
@@ -89,7 +90,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_template);
 
-        dbManager = DbManager.getInstance(this);
+        dbManager = ((GreatRecipesApplication) getApplication()).getDbManager();
 
         mRecipeId = AppConsts.NEW_RECIPE;
 

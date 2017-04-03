@@ -17,7 +17,6 @@ import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
-import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -32,8 +31,8 @@ import android.widget.Toast;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.BuildConfig;
+import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.database.DbManager;
 import com.hanoch.greatrecipes.google.IabHelperNonStatic;
 import com.hanoch.greatrecipes.google.IabResult;
 import com.hanoch.greatrecipes.google.Purchase;
@@ -59,7 +58,6 @@ public class PreferencesFragment extends PreferenceFragment
     private View view;
 
     private IabHelperNonStatic mIabHelper;
-    private DbManager dbManager;
     private String errorMessage;
     private boolean iabHelperWasAlreadySetUpSuccessfully;
     private ProgressDialog progressDialog;
@@ -75,15 +73,6 @@ public class PreferencesFragment extends PreferenceFragment
 
     public static PreferencesFragment newInstance() {
         return new PreferencesFragment();
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        dbManager = DbManager.getInstance(getActivity());
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -461,7 +450,7 @@ public class PreferencesFragment extends PreferenceFragment
             @Override
             public void onClick(View v) {
 
-                dbManager.deleteAllRecipes();
+                ((GreatRecipesApplication) getActivity().getApplication()).getDbManager().deleteAllRecipes();
 
                 Snackbar snack = Snackbar.make(view, R.string.all_the_recipe_were_deleted, Snackbar.LENGTH_LONG);
                 ViewGroup group = (ViewGroup) snack.getView();

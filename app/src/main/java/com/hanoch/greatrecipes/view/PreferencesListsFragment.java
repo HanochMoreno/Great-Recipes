@@ -18,8 +18,8 @@ import android.widget.Toast;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
+import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.database.DbManager;
 import com.hanoch.greatrecipes.model.FreeTrialPreference;
 
 public class PreferencesListsFragment extends PreferenceFragment implements
@@ -150,8 +150,7 @@ public class PreferencesListsFragment extends PreferenceFragment implements
             @Override
             public void onClick(View v) {
 
-                DbManager dbManager = DbManager.getInstance(getActivity());
-                dbManager.deleteAllRecipes();
+                ((GreatRecipesApplication) getActivity().getApplication()).getDbManager().deleteAllRecipes();
 
                 Snackbar snack = Snackbar.make(view, R.string.all_the_recipe_were_deleted, Snackbar.LENGTH_LONG);
                 ViewGroup group = (ViewGroup) snack.getView();

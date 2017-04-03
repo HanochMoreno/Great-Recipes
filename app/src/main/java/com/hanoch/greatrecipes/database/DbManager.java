@@ -5,36 +5,27 @@ import android.content.ContentValues;
 import android.content.Context;
 import android.database.Cursor;
 import android.net.Uri;
-import android.util.Log;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.model.Recipe;
 import com.hanoch.greatrecipes.model.RecipeSearchResult;
 import com.hanoch.greatrecipes.model.Serving;
+import com.hanoch.greatrecipes.model.ThinRecipeSearchResult;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
+
+import java.util.List;
 
 public class DbManager {
 
     private static final String TAG = "DbManager";
-
-    private static DbManager dbManager;
     private Context context;
 
-    public static DbManager getInstance(Context context) {
-
-        if (dbManager == null) {
-            dbManager = new DbManager(context);
-        }
-
-        return dbManager;
-    }
 
 //-------------------------------------------------------------------------------------------------
 
-    private DbManager(Context context) {
-        Log.d(TAG, "DbManager was just created");
-
-        this.context = context;
+    public DbManager (Context appContext) {
+        // Should only be called once by the Application
+        this.context = appContext;
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -79,7 +70,25 @@ public class DbManager {
 
 //-------------------------------------------------------------------------------------------------
 
-    public int updateSearchResult(RecipeSearchResult result) {
+    public void addSearchResults(List<ThinRecipeSearchResult> results) {
+
+        Uri contentUri = RecipesContract.SearchResults.CONTENT_URI;
+
+        for (ThinRecipeSearchResult result : results) {
+            ContentValues values = new ContentValues();
+
+            values.put(RecipesContract.SearchResults.YUMMLY_ID, result.yummlyId);
+            values.put(RecipesContract.SearchResults.TITLE, result.title);
+            String imageUrl = result.imageUrl.get("90").replace("s90-c", "s360-c");
+            values.put(RecipesContract.SearchResults.IMAGE_URL, imageUrl);
+
+            context.getContentResolver().insert(contentUri, values);
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public void updateSearchResult(RecipeSearchResult result) {
 
         Uri contentUri = RecipesContract.SearchResults.CONTENT_URI;
 
@@ -99,7 +108,7 @@ public class DbManager {
         values.put(RecipesContract.SearchResults.CATEGORIES_LIST, result.categories);
         values.put(RecipesContract.SearchResults.INGREDIENTS_LIST, result.ingredients);
 
-        return context.getContentResolver().update(contentUri, values, selection, selectionArgs);
+        context.getContentResolver().update(contentUri, values, selection, selectionArgs);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -187,7 +196,7 @@ public class DbManager {
 
 //-------------------------------------------------------------------------------------------------
 
-    public int updateRecipe(Recipe recipe) {
+    public void updateRecipe(Recipe recipe) {
 
         Uri contentUri = RecipesContract.Recipes.CONTENT_URI;
 
@@ -210,7 +219,7 @@ public class DbManager {
         values.put(RecipesContract.Recipes.INSTRUCTIONS, recipe.instructions);
         values.put(RecipesContract.Recipes.ORIGIN_INDEX, recipe.originIndex);
 
-        return context.getContentResolver().update(contentUri, values, selection, selectionArgs);
+        context.getContentResolver().update(contentUri, values, selection, selectionArgs);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -338,7 +347,7 @@ public class DbManager {
 
 //-------------------------------------------------------------------------------------------------
 
-    public Uri addNewServing(Serving serving) {
+    public void addNewServing(Serving serving) {
 
         Uri contentUri = RecipesContract.MealPlanning.CONTENT_URI;
 
@@ -347,7 +356,7 @@ public class DbManager {
         values.put(RecipesContract.MealPlanning.RECIPE_ID, serving.recipeId);
         values.put(RecipesContract.MealPlanning.SERVING_TYPE, serving.servingType);
 
-        return context.getContentResolver().insert(contentUri, values);
+        context.getContentResolver().insert(contentUri, values);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -387,14 +396,14 @@ public class DbManager {
 
 //-------------------------------------------------------------------------------------------------
 
-    public int deleteServingById(long id) {
+    public void deleteServingById(long id) {
 
         Uri contentUri = RecipesContract.MealPlanning.CONTENT_URI;
 
         String selection = RecipesContract.MealPlanning._ID + "=?";
         String[] selectionArgs = {id + ""};
 
-        return context.getContentResolver().delete(contentUri, selection, selectionArgs);
+        context.getContentResolver().delete(contentUri, selection, selectionArgs);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -414,7 +423,7 @@ public class DbManager {
 
 //-------------------------------------------------------------------------------------------------
 
-    public int deleteAllServings() {
+    public void deleteAllServings() {
 
         Uri contentUri = RecipesContract.MealPlanning.CONTENT_URI;
 
@@ -422,7 +431,7 @@ public class DbManager {
         String selection = null;
         String[] selectionArgs = null;
 
-        return context.getContentResolver().delete(contentUri, selection, selectionArgs);
+        context.getContentResolver().delete(contentUri, selection, selectionArgs);
     }
 
 }

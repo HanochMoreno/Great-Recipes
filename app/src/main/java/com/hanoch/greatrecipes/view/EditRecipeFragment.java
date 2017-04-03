@@ -36,6 +36,7 @@ import android.widget.TextView;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
+import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.database.DbManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
@@ -123,7 +124,7 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        dbManager = DbManager.getInstance(getContext());
+        dbManager = ((GreatRecipesApplication) getActivity().getApplication()).getDbManager();
     }
 
 //-------------------------------------------------------------------------------------------------

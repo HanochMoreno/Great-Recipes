@@ -31,11 +31,9 @@ import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
 
-import com.google.android.gms.analytics.Tracker;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.BuildConfig;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.database.DbManager;
 import com.hanoch.greatrecipes.google.IabHelperNonStatic;
 import com.hanoch.greatrecipes.google.IabResult;
 import com.hanoch.greatrecipes.google.Inventory;
@@ -75,8 +73,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
-
-        DbManager.getInstance(this);
 
         if (savedInstanceState != null) {
             alreadyGotGoogleAnswer = savedInstanceState.getBoolean("alreadyGotGoogleAnswer");
