@@ -13,9 +13,6 @@ import retrofit2.http.Path;
 import retrofit2.http.Query;
 import retrofit2.http.QueryMap;
 
-/**
- * Created by Hanoc_000 on 02/04/2017.
- */
 
 public interface YummlyService {
     @GET(AppConsts.ApiAccess.YUMMLY_KEY_SEARCH)
