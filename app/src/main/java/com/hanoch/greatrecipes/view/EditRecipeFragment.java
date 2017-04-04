@@ -255,11 +255,11 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
 
                 String ingredientsStringList = recipe.ingredientsList;
 
-                ingredientsList = AppHelper.stringToListConverter(ingredientsStringList);
+                ingredientsList = AppHelper.convertStringToList(ingredientsStringList);
 
                 String categoriesStringList = recipe.categoriesList;
 
-                categoriesList = AppHelper.stringToListConverter(categoriesStringList);
+                categoriesList = AppHelper.convertStringToList(categoriesStringList);
 
                 String imageName = AppConsts.Images.RECIPE_IMAGE_PREFIX + mRecipeId;
                 recipeImage = ImageStorage.getImageBitmapByName(getContext(), imageName);
@@ -583,9 +583,9 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
         String notes = editText_notes.getText().toString();
         if (notes.trim().isEmpty()) notes = "";
 
-        String StringIngredientsList = AppHelper.listToStringConverter(ingredientsList);
+        String StringIngredientsList = AppHelper.convertListToString(ingredientsList);
 
-        String StringCategoriesList = AppHelper.listToStringConverter(categoriesList);
+        String StringCategoriesList = AppHelper.convertListToString(categoriesList);
 
         long recipeId = getArguments().getLong(ARG_RECIPE_ID, AppConsts.NEW_RECIPE);
 

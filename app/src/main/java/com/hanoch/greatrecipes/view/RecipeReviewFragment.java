@@ -260,8 +260,8 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
                 recipeTotalTime = recipe.time;
                 recipeYield = recipe.yield;
                 recipeAuthor = recipe.author;
-                ingredientsList = AppHelper.stringToListConverter(recipe.ingredientsList);
-                categoriesList = AppHelper.stringToListConverter(recipe.categoriesList);
+                ingredientsList = AppHelper.convertStringToList(recipe.ingredientsList);
+                categoriesList = AppHelper.convertStringToList(recipe.categoriesList);
                 translatedCategories = AppHelper.getTranslatedCategoriesList(getContext(), categoriesList);
                 recipeOriginIndex = recipe.originIndex;
 
@@ -323,8 +323,8 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
                     recipeYield = result.yield;
                     recipeTotalCalories = result.energy;
 
-                    ingredientsList = AppHelper.stringToListConverter(result.ingredients);
-                    categoriesList = AppHelper.stringToListConverter(result.categories);
+                    ingredientsList = AppHelper.convertStringToList(result.ingredients);
+                    categoriesList = AppHelper.convertStringToList(result.categories);
                     translatedCategories = AppHelper.getTranslatedCategoriesList(getContext(), categoriesList);
 
                     setRecipeDetailsView();
@@ -558,8 +558,8 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
 
                 mToolbarMenuSetting.setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
 
-                String resultStringIngredientsList = AppHelper.listToStringConverter(ingredientsList);
-                String resultStringCategoriesList = AppHelper.listToStringConverter(categoriesList);
+                String resultStringIngredientsList = AppHelper.convertListToString(ingredientsList);
+                String resultStringCategoriesList = AppHelper.convertListToString(categoriesList);
 
                 RecipeSearchResult searchResult = new RecipeSearchResult(mRecipeId,
                         recipeAuthor, recipeYield, recipeTotalTime, resultStringIngredientsList,
@@ -636,9 +636,9 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
 
         // Add the new recipe (from online search) to database
 
-        String resultStringIngredientsList = AppHelper.listToStringConverter(ingredientsList);
+        String resultStringIngredientsList = AppHelper.convertListToString(ingredientsList);
 
-        String resultStringCategoriesList = AppHelper.listToStringConverter(categoriesList);
+        String resultStringCategoriesList = AppHelper.convertListToString(categoriesList);
 
         recipe = new Recipe(recipeTitle, recipeAuthor, recipeYield, recipeUrl,
                 resultStringCategoriesList, resultStringIngredientsList, recipeTotalTime, recipeTotalCalories);

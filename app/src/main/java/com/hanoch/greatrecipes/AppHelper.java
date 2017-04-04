@@ -23,6 +23,8 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import com.hanoch.greatrecipes.model.AllergensAndDietPrefItem;
 import com.hanoch.greatrecipes.model.Category;
 
@@ -345,34 +347,14 @@ public class AppHelper {
 
 //-------------------------------------------------------------------------------------------------
 
-    public final static String listDivider = "&&";
-
-    public static String listToStringConverter(ArrayList<String> list) {
-
-        String convertedList = "";
-
-        for (int i = 0; i < list.size(); i++) {
-            convertedList = convertedList + list.get(i) + listDivider;
-        }
-        return convertedList;
+    public static String convertListToString(ArrayList<String> list) {
+        return new Gson().toJson(list);
     }
 
 //-------------------------------------------------------------------------------------------------
 
-    public static ArrayList<String> stringToListConverter(String convertedList) {
-
-        ArrayList<String> resultList = new ArrayList<>();
-
-        String[] splitString = (convertedList.split(listDivider));
-
-    /*    for (String aSplitString : splitString) {
-
-            resultList.add(aSplitString);
-        }*/
-
-        Collections.addAll(resultList, splitString);
-
-        return resultList;
+    public static ArrayList<String> convertStringToList(String listAsString) {
+        return new Gson().fromJson(listAsString, new TypeToken<ArrayList<String>>(){}.getType());
     }
 
 //-------------------------------------------------------------------------------------------------
