@@ -15,7 +15,6 @@ repositories {
     maven { url 'https://maven.fabric.io/public' }
 }
 
-
 android {
     compileSdkVersion 25
     buildToolsVersion '25.0.2'
@@ -31,7 +30,17 @@ android {
         targetSdkVersion 25
         versionCode 14
         versionName "2.5"
+
+        jackOptions {
+            enabled true
+        }
     }
+
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+
     buildTypes {
         release {
             minifyEnabled false
