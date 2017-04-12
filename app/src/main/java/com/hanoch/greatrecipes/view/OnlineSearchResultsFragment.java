@@ -12,6 +12,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,7 +20,6 @@ import android.widget.AbsListView;
 import android.widget.AdapterView;
 import android.widget.ListView;
 
-import com.android.volley.NoConnectionError;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
@@ -29,17 +29,20 @@ import com.hanoch.greatrecipes.model.AllergensAndDietPrefItem;
 import com.hanoch.greatrecipes.model.RecipeSearchResult;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.model.RecipeSearchResultsResponse;
-import com.hanoch.greatrecipes.model.ThinRecipeSearchResult;
 import com.hanoch.greatrecipes.view.adapters.SearchResultsAdapter;
 
 import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
 import java.net.URLEncoder;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import retrofit2.Call;
-import retrofit2.Callback;
+import rx.Single;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.schedulers.Schedulers;
 
 public class OnlineSearchResultsFragment extends Fragment implements
         AdapterView.OnItemClickListener,
@@ -47,13 +50,13 @@ public class OnlineSearchResultsFragment extends Fragment implements
 
     private OnFragmentOnlineSearchListener mListener;
     private SearchResultsAdapter adapter;
-    private String keyToSearch;
-    private ArrayList<AllergensAndDietPrefItem> allowedDietList;
-    private ArrayList<AllergensAndDietPrefItem> allowedAllergiesList;
+    private ListView listView_searchResults;
+
     private View view;
 
     private DbManager dbManager;
-    private Call<RecipeSearchResultsResponse> getSearchResults;
+    private Subscriber<RecipeSearchResultsResponse> subscriber;
+    private boolean isToScrollToTop;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -87,7 +90,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
         // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_online_search_results, container, false);
 
-        ListView listView_searchResults = (ListView) view.findViewById(R.id.listView_searchResults);
+        listView_searchResults = (ListView) view.findViewById(R.id.listView_searchResults);
         listView_searchResults.setOnItemClickListener(this);
         listView_searchResults.setOnScrollListener(new AbsListView.OnScrollListener() {
             @Override
@@ -141,9 +144,10 @@ public class OnlineSearchResultsFragment extends Fragment implements
     public void onDetach() {
         super.onDetach();
         mListener = null;
+        isToScrollToTop = false;
 
-        if (getSearchResults != null && getSearchResults.isExecuted()) {
-            getSearchResults.cancel();
+        if (subscriber != null && !subscriber.isUnsubscribed()) {
+            subscriber.unsubscribe();
         }
     }
 
@@ -184,6 +188,11 @@ public class OnlineSearchResultsFragment extends Fragment implements
     public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
 
         adapter.swapCursor(cursor);
+
+        if (isToScrollToTop) {
+            isToScrollToTop = false;
+            listView_searchResults.smoothScrollToPosition(0);
+        }
     }
 
     @Override
@@ -213,11 +222,9 @@ public class OnlineSearchResultsFragment extends Fragment implements
         progressDialog.setMessage(getString(R.string.please_wait));
         progressDialog.show();
 
-        this.keyToSearch = keyToSearch;
-
         // Getting the user Diet & Allergies preferences:
-        allowedDietList = AppHelper.getUserAllowedDietPrefsList(getContext());
-        allowedAllergiesList = AppHelper.getUserAllowedAllergiesPrefsList(getContext());
+        ArrayList<AllergensAndDietPrefItem> allowedDietList = AppHelper.getUserAllowedDietPrefsList(getContext());
+        ArrayList<AllergensAndDietPrefItem> allowedAllergiesList = AppHelper.getUserAllowedAllergiesPrefsList(getContext());
 
         // Getting the user's Max. Online Search Results preference
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
@@ -234,7 +241,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
 
         try {
             HashMap<String, String> query = new HashMap<>();
-            query.put("q", URLEncoder.encode(this.keyToSearch, "utf-8"));
+            query.put("q", URLEncoder.encode(keyToSearch, "utf-8"));
             query.put("start", URLEncoder.encode("0", "utf-8"));
             query.put("maxResult", URLEncoder.encode(maxOnlineSearchResultsPref, "utf-8"));
             query.put("_app_id", URLEncoder.encode(AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL, "utf-8"));
@@ -250,29 +257,29 @@ public class OnlineSearchResultsFragment extends Fragment implements
                 allergensList.add(URLEncoder.encode(allergenItem.searchKeyName, "utf-8"));
             }
 
-            getSearchResults = ((GreatRecipesApplication) getActivity().getApplication()).getYummlyService().getSearchResults(query, dietList, allergensList);
-            getSearchResults.enqueue(new Callback<RecipeSearchResultsResponse>() {
+            subscriber = new Subscriber<RecipeSearchResultsResponse>() {
                 @Override
-                public void onResponse(Call<RecipeSearchResultsResponse> call, retrofit2.Response<RecipeSearchResultsResponse> response) {
+                public final void onCompleted() {
+                }
+
+                @Override
+                public final void onError(Throwable e) {
                     progressDialog.dismiss();
-                    if (response == null || response.body() == null) {
-
-                        Snackbar snack = Snackbar.make(view, R.string.internet_error, Snackbar.LENGTH_LONG);
-                        ViewGroup group = (ViewGroup) snack.getView();
-                        group.setBackgroundColor(Color.RED);
-                        snack.show();
-
-                        return;
+                    Log.e("subscriber", "onError: message: " + e.getMessage() + ", cause: " + e.getCause());
+                    if (e instanceof UnknownHostException || e instanceof ConnectException) {
+                        AppHelper.showSnackBar(view, R.string.internet_error, Color.RED);
+                    } else {
+                        AppHelper.showSnackBar(view, R.string.unexpected_error, Color.RED);
                     }
+                }
 
-                    List<ThinRecipeSearchResult> results = response.body().matches;
-                    if (results.size() == 0) {
+                @Override
+                public final void onNext(RecipeSearchResultsResponse response) {
+                    progressDialog.dismiss();
 
-                        Snackbar snack = Snackbar.make(view, R.string.no_results, Snackbar.LENGTH_LONG);
-                        ViewGroup group = (ViewGroup) snack.getView();
-                        group.setBackgroundColor(Color.RED);
-                        snack.show();
-
+                    if (response.matches == null || response.matches.isEmpty()) {
+                        // No results
+                        AppHelper.showSnackBar(view, R.string.no_results, Color.RED);
                         return;
                     }
 
@@ -280,26 +287,17 @@ public class OnlineSearchResultsFragment extends Fragment implements
                     dbManager.deleteAllSearchResults();
 
                     // Adding the new search results
-                    dbManager.addSearchResults(results);
+                    dbManager.addSearchResults(response.matches);
+
+                    isToScrollToTop = true;
                 }
+            };
 
-                @Override
-                public void onFailure(Call<RecipeSearchResultsResponse> call, Throwable t) {
-                    progressDialog.dismiss();
-                    String errorMessage;
-                    if (t instanceof NoConnectionError) {
-                        errorMessage = getString(R.string.internet_error);
-
-                    } else {
-                        errorMessage = getString(R.string.unexpected_error);
-                    }
-
-                    Snackbar snack = Snackbar.make(view, errorMessage, Snackbar.LENGTH_LONG);
-                    ViewGroup group = (ViewGroup) snack.getView();
-                    group.setBackgroundColor(Color.RED);
-                    snack.show();
-                }
-            });
+            Single<RecipeSearchResultsResponse> getSearchResults = ((GreatRecipesApplication) getActivity().getApplication()).getYummlyService().getSearchResults(query, dietList, allergensList);
+            getSearchResults
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(subscriber);
 
         } catch (UnsupportedEncodingException e) {
             progressDialog.dismiss();

@@ -1,10 +1,10 @@
 package com.hanoch.greatrecipes.model;
 
 import com.google.gson.annotations.SerializedName;
-import com.google.gson.internal.LinkedTreeMap;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.HashMap;
 
 /**
  Represents one result of a recipe online search.
@@ -25,8 +25,8 @@ public class YummlyRecipe implements Serializable {
     public ArrayList<String> ingredients;
 
     @SerializedName("nutritionEstimates")
-    public LinkedTreeMap[] nutritions;
+    public HashMap<String, Object>[] nutritions;
 
-    public LinkedTreeMap attributes;
-    public LinkedTreeMap source;
+    public HashMap<String, ArrayList<String>> attributes;
+    public HashMap<String, String> source;
 }

@@ -348,13 +348,24 @@ public class AppHelper {
 //-------------------------------------------------------------------------------------------------
 
     public static String convertListToString(ArrayList<String> list) {
+        if (list == null || list.isEmpty()) {
+            list = new ArrayList<>();
+            list.add(AppConsts.Category.NO_INFO);
+        }
         return new Gson().toJson(list);
     }
 
 //-------------------------------------------------------------------------------------------------
 
     public static ArrayList<String> convertStringToList(String listAsString) {
-        return new Gson().fromJson(listAsString, new TypeToken<ArrayList<String>>(){}.getType());
+        ArrayList<String> list = new Gson().fromJson(listAsString, new TypeToken<ArrayList<String>>() {
+        }.getType());
+
+        if (list == null) {
+            list = new ArrayList<>();
+        }
+
+        return list;
     }
 
 //-------------------------------------------------------------------------------------------------

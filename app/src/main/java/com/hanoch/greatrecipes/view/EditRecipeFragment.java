@@ -584,7 +584,6 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
         if (notes.trim().isEmpty()) notes = "";
 
         String StringIngredientsList = AppHelper.convertListToString(ingredientsList);
-
         String StringCategoriesList = AppHelper.convertListToString(categoriesList);
 
         long recipeId = getArguments().getLong(ARG_RECIPE_ID, AppConsts.NEW_RECIPE);

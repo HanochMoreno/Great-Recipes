@@ -17,17 +17,14 @@
 package com.hanoch.greatrecipes;
 
 import android.app.Application;
-import android.content.Context;
 
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.Volley;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
-import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.database.DbManager;
 import com.hanoch.greatrecipes.retrofit.YummlyService;
 
 import retrofit2.Retrofit;
+import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
 import retrofit2.converter.gson.GsonConverterFactory;
 
 /**
@@ -36,7 +33,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
  */
 public class GreatRecipesApplication extends Application {
     private Tracker mTracker;
-    private RequestQueue requestQueue;
     private DbManager dbManager;
     private YummlyService yummlyService;
     private Retrofit retrofit;
@@ -54,17 +50,11 @@ public class GreatRecipesApplication extends Application {
         return mTracker;
     }
 
-    public RequestQueue getVolleyRequestQueue() {
-        if (requestQueue == null) {
-            requestQueue = Volley.newRequestQueue(this);
-        }
-        return requestQueue;
-    }
-
     public Retrofit getRetrofit() {
         if (retrofit == null) {
             retrofit =  new Retrofit.Builder()
                     .baseUrl(AppConsts.ApiAccess.YUMMLY_BASE_URL)
+                    .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
                     .addConverterFactory(GsonConverterFactory.create())
                     .build();
         }
