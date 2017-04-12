@@ -11,7 +11,6 @@ import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
@@ -21,7 +20,6 @@ import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.ArrayAdapter;
 import android.widget.Button;
@@ -32,12 +30,10 @@ import android.widget.ListView;
 import android.widget.TextView;
 
 import com.hanoch.greatrecipes.AppConsts;
+import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.BuildConfig;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.google.IabHelperNonStatic;
-import com.hanoch.greatrecipes.google.IabResult;
-import com.hanoch.greatrecipes.google.Inventory;
-import com.hanoch.greatrecipes.google.Purchase;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.MyIllegalStateException;
 
@@ -84,30 +80,28 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         }
 
         final IabHelperNonStatic.QueryInventoryFinishedListener mGotInventoryListener
-                = new IabHelperNonStatic.QueryInventoryFinishedListener() {
-            public void onQueryInventoryFinished(IabResult result, Inventory inventory) {
+                = (result, inventory) -> {
 
-                if (progressDialog != null && progressDialog.isShowing()) {
-                    progressDialog.dismiss();
-                }
+                    if (progressDialog != null && progressDialog.isShowing()) {
+                        progressDialog.dismiss();
+                    }
 
-                alreadyGotGoogleAnswer = true;
+                    alreadyGotGoogleAnswer = true;
 
-                if (result.isFailure()) {
-                    // handle error here
-                    errorMessage = getString(R.string.problem_getting_premium_status) + ": " + result;
-                    googleErrorDialogTitle = getString(R.string.premium_status_error);
-                    onQueryPremiumStatusFinished(false, false);
-                    Log.d(TAG, "Problem getting user inventory: " + result);
+                    if (result.isFailure()) {
+                        // handle error here
+                        errorMessage = getString(R.string.problem_getting_premium_status) + ": " + result;
+                        googleErrorDialogTitle = getString(R.string.premium_status_error);
+                        onQueryPremiumStatusFinished(false, false);
+                        Log.d(TAG, "Problem getting user inventory: " + result);
 
-                } else {
-                    Log.d(TAG, "onQueryPremiumStatusFinished: successfully got user inventory");
-                    // does the user have the premium upgrade?
-                    boolean mIsPremium = inventory.hasPurchase(AppConsts.SKU_PREMIUM);
-                    onQueryPremiumStatusFinished(true, mIsPremium);
-                }
-            }
-        };
+                    } else {
+                        Log.d(TAG, "onQueryPremiumStatusFinished: successfully got user inventory");
+                        // does the user have the premium upgrade?
+                        boolean mIsPremium = inventory.hasPurchase(AppConsts.SKU_PREMIUM);
+                        onQueryPremiumStatusFinished(true, mIsPremium);
+                    }
+                };
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setCancelable(false);
@@ -119,35 +113,33 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         mIabHelper = new IabHelperNonStatic(this);
 
         try {
-            mIabHelper.startSetup(new IabHelperNonStatic.OnIabSetupFinishedListener() {
-                public void onIabSetupFinished(IabResult result) {
+            mIabHelper.startSetup(result -> {
 
-                    if (result.isSuccess()) {
-                        // Hooray, IAB is fully set up!
+                if (result.isSuccess()) {
+                    // Hooray, IAB is fully set up!
 
-                        iabHelperWasAlreadySetUpSuccessfully = true;
+                    iabHelperWasAlreadySetUpSuccessfully = true;
 
-                        try {
-                            mIabHelper.queryInventoryAsync(mGotInventoryListener);
-                        } catch (MyIllegalStateException e) {
-                            googleErrorDialogTitle = getString(R.string.premium_status_error);
-                            errorMessage = getString(R.string.problem_getting_premium_status);
-                            onQueryPremiumStatusFinished(false, false);
-                            Log.d(TAG, errorMessage);
-                            e.printStackTrace();
-                        }
-                    } else {
-                        // Oh no, there was a problem.
-                        if (result.toString().contains("unavailable on device")) {
-                            errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + getString(R.string.Billing_unavailable_for_device);
-                        } else {
-                            errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + result;
-                        }
-
+                    try {
+                        mIabHelper.queryInventoryAsync(mGotInventoryListener);
+                    } catch (MyIllegalStateException e) {
                         googleErrorDialogTitle = getString(R.string.premium_status_error);
+                        errorMessage = getString(R.string.problem_getting_premium_status);
                         onQueryPremiumStatusFinished(false, false);
-                        Log.d(TAG, "Problem setting up In-app Billing:\n " + result);
+                        Log.d(TAG, errorMessage);
+                        e.printStackTrace();
                     }
+                } else {
+                    // Oh no, there was a problem.
+                    if (result.toString().contains("unavailable on device")) {
+                        errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + getString(R.string.Billing_unavailable_for_device);
+                    } else {
+                        errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + result;
+                    }
+
+                    googleErrorDialogTitle = getString(R.string.premium_status_error);
+                    onQueryPremiumStatusFinished(false, false);
+                    Log.d(TAG, "Problem setting up In-app Billing:\n " + result);
                 }
             });
 
@@ -183,7 +175,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         int width = metrics.widthPixels;
-        //int height = metrics.heightPixels;
 
         if (getResources().getBoolean(R.bool.isTablet)
                 && !(getResources().getBoolean(R.bool.isSmallTablet))
@@ -204,18 +195,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         Button btnOk = (Button) googleErrorDialog.findViewById(R.id.button_yes);
         btnOk.setText(getString(R.string.ok));
-        btnOk.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-//                finish();
-
-                googleErrorDialog.dismiss();
-            }
-        });
+        btnOk.setOnClickListener(v -> googleErrorDialog.dismiss());
 
         (googleErrorDialog.findViewById(R.id.button_cancel)).setVisibility(View.GONE);
-
         googleErrorDialog.show();
     }
 
@@ -230,7 +212,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         initDisplay();
 
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sp.edit();
 
         if (isSuccessful) {
@@ -479,14 +461,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                     if (createdRecipesCount == 3) {
                         // The free-trial limitation for creating recipes is exceeded
 
-                        AnalyticsHelper.sendEvent(MainActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
+                        AnalyticsHelper.sendEvent(this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
 
                         View view = this.findViewById(android.R.id.content);
-                        Snackbar snack = Snackbar.make(view, R.string.you_exceeded_the_recipes_creation_limit, Snackbar.LENGTH_LONG);
-                        ViewGroup group = (ViewGroup) snack.getView();
-                        group.setBackgroundColor(ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial));
-                        snack.show();
-
+                        AppHelper.showSnackBar(view, R.string.you_exceeded_the_recipes_creation_limit, ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial));
                         break;
                     }
                 }
@@ -550,7 +528,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         int width = metrics.widthPixels;
-        //int height = metrics.heightPixels;
 
         if (getResources().getBoolean(R.bool.isTablet)
                 && !(getResources().getBoolean(R.bool.isSmallTablet))
@@ -571,108 +548,94 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         listView.setAdapter(adapter);
 
         Button btnUpgrade = (Button) premiumDialog.findViewById(R.id.button_upgrade);
-        btnUpgrade.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        btnUpgrade.setOnClickListener(v -> {
 
-                AnalyticsHelper.sendEvent(MainActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "Purchase Premium button clicked");
+            AnalyticsHelper.sendEvent(MainActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "Purchase Premium button clicked");
 
 //                if (!BuildConfig.DEBUG) {
 
-                if (mIabHelper != null && iabHelperWasAlreadySetUpSuccessfully) {
+            if (mIabHelper != null && iabHelperWasAlreadySetUpSuccessfully) {
 
-                    purchasePremiumAccess();
+                purchasePremiumAccess();
 
-                } else {
+            } else {
 
-                    progressDialog = new ProgressDialog(MainActivity.this);
-                    progressDialog.setCancelable(false);
-                    progressDialog.setCanceledOnTouchOutside(false);
-                    progressDialog.setTitle(getString(R.string.connecting_google_servers));
-                    progressDialog.setMessage(getString(R.string.please_wait));
-                    progressDialog.show();
+                progressDialog = new ProgressDialog(MainActivity.this);
+                progressDialog.setCancelable(false);
+                progressDialog.setCanceledOnTouchOutside(false);
+                progressDialog.setTitle(getString(R.string.connecting_google_servers));
+                progressDialog.setMessage(getString(R.string.please_wait));
+                progressDialog.show();
 
-                    mIabHelper = new IabHelperNonStatic(MainActivity.this);
+                mIabHelper = new IabHelperNonStatic(MainActivity.this);
 
-                    try {
-                        mIabHelper.startSetup(new IabHelperNonStatic.OnIabSetupFinishedListener() {
-                            public void onIabSetupFinished(IabResult result) {
+                try {
+                    mIabHelper.startSetup(result -> {
 
-                                if (progressDialog != null && progressDialog.isShowing())
-                                    progressDialog.dismiss();
+                        if (progressDialog != null && progressDialog.isShowing())
+                            progressDialog.dismiss();
 
-                                if (result.isSuccess()) {
-                                    // Hooray, IAB is fully set up!
+                        if (result.isSuccess()) {
+                            // Hooray, IAB is fully set up!
 
-                                    iabHelperWasAlreadySetUpSuccessfully = true;
-                                    purchasePremiumAccess();
+                            iabHelperWasAlreadySetUpSuccessfully = true;
+                            purchasePremiumAccess();
 
-                                } else {
-                                    // Oh no, there was a problem.
+                        } else {
+                            // Oh no, there was a problem.
 
-                                    if (result.toString().contains("unavailable on device")) {
-                                        errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + getString(R.string.Billing_unavailable_for_device);
-                                    } else {
-                                        errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + result;
-                                    }
-
-                                    showGoogleErrorDialog(getString(R.string.purchase_has_failed), errorMessage);
-                                    Log.d(TAG, errorMessage);
-                                }
+                            if (result.toString().contains("unavailable on device")) {
+                                errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + getString(R.string.Billing_unavailable_for_device);
+                            } else {
+                                errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + result;
                             }
-                        });
 
-                    } catch (MyIllegalStateException e) {
-                        errorMessage = getString(R.string.problem_starting_purchase_progress);
-                        showGoogleErrorDialog(getString(R.string.purchase_has_failed), errorMessage);
-                        Log.d(TAG, errorMessage);
-                        e.printStackTrace();
-                    }
+                            showGoogleErrorDialog(getString(R.string.purchase_has_failed), errorMessage);
+                            Log.d(TAG, errorMessage);
+                        }
+                    });
 
-             /*   } else {
-                    // Debug
-                    progressDialog.dismiss();
-
-                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-                    SharedPreferences.Editor editor = sp.edit();
-
-                    editor.putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, true);
-                    editor.commit();
-
-                    View rootView = MainActivity.this.findViewById(android.R.id.content);
-                    Snackbar snack = Snackbar.make(rootView, R.string.purchase_complete_successfully, Snackbar.LENGTH_LONG);
-                    ViewGroup group = (ViewGroup) snack.getView();
-                    group.setBackgroundColor(ActivityCompat.getColor(MainActivity.this, R.color.colorSnackbarGreen));
-                    snack.show();
-                }*/
+                } catch (MyIllegalStateException e) {
+                    errorMessage = getString(R.string.problem_starting_purchase_progress);
+                    showGoogleErrorDialog(getString(R.string.purchase_has_failed), errorMessage);
+                    Log.d(TAG, errorMessage);
+                    e.printStackTrace();
                 }
 
-                // Close the premiumDialog
-                premiumDialog.dismiss();
+         /*   } else {
+                // Debug
+                progressDialog.dismiss();
+
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+                SharedPreferences.Editor editor = sp.edit();
+
+                editor.putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, true);
+                editor.commit();
+
+                View rootView = MainActivity.this.findViewById(android.R.id.content);
+                AppHelper.showSnackBar(rootView, R.string.purchase_complete_successfully, ActivityCompat.getColor(MainActivity.this, R.color.colorSnackbarGreen));
+            }*/
             }
+
+            premiumDialog.dismiss();
         });
 
         Button btnNotNow = (Button) premiumDialog.findViewById(R.id.button_notNow);
-        btnNotNow.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        btnNotNow.setOnClickListener(v -> {
 
-                AnalyticsHelper.sendEvent(MainActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "Not Now Button Clicked");
+            AnalyticsHelper.sendEvent(MainActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "Not Now Button Clicked");
 
-                if (BuildConfig.DEBUG) {
-                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-                    SharedPreferences.Editor editor = sp.edit();
+            if (BuildConfig.DEBUG) {
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+                SharedPreferences.Editor editor = sp.edit();
 
-                    editor.putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
-                    editor.commit();
-                }
-
-                // Close the premiumDialog
-                premiumDialog.dismiss();
+                editor.putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
+                editor.commit();
             }
+
+            premiumDialog.dismiss();
         });
 
-        // Display the premiumDialog
         premiumDialog.show();
     }
 
@@ -681,39 +644,34 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private void purchasePremiumAccess(){
 
         final IabHelperNonStatic.OnIabPurchaseFinishedListener mPurchaseFinishedListener
-                = new IabHelperNonStatic.OnIabPurchaseFinishedListener() {
-            public void onIabPurchaseFinished(IabResult result, Purchase purchase) {
+                = (result, purchase) -> {
 
-                if (result.isFailure()) {
-                    errorMessage = result.toString();
-                    if (errorMessage.contains("Already Owned")) {
-                        errorMessage = getString(R.string.error_purchasing) + ": " + getString(R.string.you_are_already_premium);
-                    } else {
-                        errorMessage = getString(R.string.error_purchasing) + ": " + result;
+                    if (result.isFailure()) {
+                        errorMessage = result.toString();
+                        if (errorMessage.contains("Already Owned")) {
+                            errorMessage = getString(R.string.error_purchasing) + ": " + getString(R.string.you_are_already_premium);
+                        } else {
+                            errorMessage = getString(R.string.error_purchasing) + ": " + result;
+                        }
+
+                        showGoogleErrorDialog(getString(R.string.purchase_has_failed), errorMessage);
+                        Log.d(TAG, errorMessage);
+
+                    } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
+                        // give user access to premium content
+
+                        AnalyticsHelper.sendEvent(MainActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "User purchased premium access");
+
+                        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+                        SharedPreferences.Editor editor = sp.edit();
+
+                        editor.putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, true);
+                        editor.commit();
+
+                        View rootView = MainActivity.this.findViewById(android.R.id.content);
+                        AppHelper.showSnackBar(rootView, R.string.purchase_complete_successfully, ActivityCompat.getColor(MainActivity.this, R.color.colorSnackbarGreen));
                     }
-
-                    showGoogleErrorDialog(getString(R.string.purchase_has_failed), errorMessage);
-                    Log.d(TAG, errorMessage);
-
-                } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
-                    // give user access to premium content
-
-                    AnalyticsHelper.sendEvent(MainActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "User purchased premium access");
-
-                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-                    SharedPreferences.Editor editor = sp.edit();
-
-                    editor.putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, true);
-                    editor.commit();
-
-                    View rootView = MainActivity.this.findViewById(android.R.id.content);
-                    Snackbar snack = Snackbar.make(rootView, R.string.purchase_complete_successfully, Snackbar.LENGTH_LONG);
-                    ViewGroup group = (ViewGroup) snack.getView();
-                    group.setBackgroundColor(ActivityCompat.getColor(MainActivity.this, R.color.colorSnackbarGreen));
-                    snack.show();
-                }
-            }
-        };
+                };
 
         try {
             mIabHelper.launchPurchaseFlow(MainActivity.this, AppConsts.SKU_PREMIUM, AppConsts.REQ_CODE_PURCHASE, mPurchaseFinishedListener);
@@ -731,10 +689,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         loginDialog = new Dialog(this);
 
-        // hide to default title for Dialog
         loginDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        // inflate the layout dialog_layout.xml and set it as contentView
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         final View view = inflater.inflate(R.layout.dialog_login, null, false);
         loginDialog.setCanceledOnTouchOutside(false);
@@ -751,57 +707,35 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         textView_dialogTitleNote.setText(getString(R.string.the_username_used_as_author) + " " + (getString(R.string.when_creating_own_recipe)));
 
         Button button_save = (Button) loginDialog.findViewById(R.id.button_save);
-        button_save.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        button_save.setOnClickListener(v -> {
 
-                // Get the input text
-                String userName = editText_userInput.getText().toString();
+            // Get the input text
+            String userName = editText_userInput.getText().toString();
 
-                if (usernameTooShort(userName)) {
-                    // Less than 6 letters
-
-                    Snackbar snack = Snackbar.make(view, R.string.at_least_6_characters_are_required, Snackbar.LENGTH_LONG);
-                    ViewGroup group = (ViewGroup) snack.getView();
-                    group.setBackgroundColor(Color.RED);
-                    snack.show();
-
-                    return;
-                }
-
-                if (usernameTooLong(userName)) {
-                    // Less than 6 letters
-
-                    Snackbar snack = Snackbar.make(view, R.string.max_20_chars_are_allowed, Snackbar.LENGTH_LONG);
-                    ViewGroup group = (ViewGroup) snack.getView();
-                    group.setBackgroundColor(Color.RED);
-                    snack.show();
-
-                    return;
-                }
-
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-                SharedPreferences.Editor editor = sp.edit();
-                editor.putString(AppConsts.SharedPrefs.USER_NAME, userName);
-                editor.commit();
-
-                AnalyticsHelper.sendEvent(MainActivity.this, AppConsts.Analytics.CATEGORY_LOGIN, "Login successfully", userName);
-
-                // Dismiss the loginDialog
-                loginDialog.dismiss();
+            if (usernameTooShort(userName)) {
+                // Less than 6 letters
+                AppHelper.showSnackBar(view, R.string.at_least_6_characters_are_required, Color.RED);
+                return;
             }
+
+            if (usernameTooLong(userName)) {
+                // More than 20 letters
+                AppHelper.showSnackBar(view, R.string.max_20_chars_are_allowed, Color.RED);
+                return;
+            }
+
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putString(AppConsts.SharedPrefs.USER_NAME, userName);
+            editor.commit();
+
+            AnalyticsHelper.sendEvent(MainActivity.this, AppConsts.Analytics.CATEGORY_LOGIN, "Login successfully", userName);
+
+            loginDialog.dismiss();
         });
 
         Button btnCancel = (Button) loginDialog.findViewById(R.id.button_cancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Close the loginDialog
-                loginDialog.dismiss();
-            }
-        });
-
-        // Display the loginDialog
+        btnCancel.setOnClickListener(v -> loginDialog.dismiss());
         loginDialog.show();
     }
 

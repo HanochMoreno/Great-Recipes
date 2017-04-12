@@ -7,16 +7,15 @@ import android.animation.PropertyValuesHolder;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
-import android.content.pm.PackageManager;
 import android.graphics.Color;
 import android.graphics.drawable.Drawable;
-import android.os.Build;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
-import android.support.v4.app.ActivityCompat;
+import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.view.MenuItem;
 import android.view.View;
+import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
 import android.widget.FrameLayout;
@@ -29,13 +28,10 @@ import com.hanoch.greatrecipes.model.AllergensAndDietPrefItem;
 import com.hanoch.greatrecipes.model.Category;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.HashMap;
 
 
-public class AppHelper {
-
-    private static final String TAG = "App Helper";
+public abstract class AppHelper {
 
     public static void setSelectedRecipe(View view, Context context) {
 
@@ -655,6 +651,16 @@ public class AppHelper {
             Vibrator v = (Vibrator) context.getSystemService(Context.VIBRATOR_SERVICE);
             v.vibrate(500);
         }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public static void showSnackBar(View view, int stringResId, int color) {
+
+        Snackbar snack = Snackbar.make(view, stringResId, Snackbar.LENGTH_LONG);
+        ViewGroup group = (ViewGroup) snack.getView();
+        group.setBackgroundColor(color);
+        snack.show();
     }
 
 }

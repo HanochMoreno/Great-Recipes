@@ -6,11 +6,9 @@ import android.os.Bundle;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.view.LayoutInflater;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
@@ -146,36 +144,21 @@ public class PreferencesListsFragment extends PreferenceFragment implements
         );
 
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
-        button_yes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        button_yes.setOnClickListener(v -> {
 
-                ((GreatRecipesApplication) getActivity().getApplication()).getDbManager().deleteAllRecipes();
-
-                Snackbar snack = Snackbar.make(view, R.string.all_the_recipe_were_deleted, Snackbar.LENGTH_LONG);
-                ViewGroup group = (ViewGroup) snack.getView();
-                group.setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
-                snack.show();
-
-                // Close the dialog
-                dialog.dismiss();
-            }
+            ((GreatRecipesApplication) getActivity().getApplication()).getDbManager().deleteAllRecipes();
+            AppHelper.showSnackBar(view, R.string.all_the_recipe_were_deleted, ContextCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
+            dialog.dismiss();
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        btnCancel.setOnClickListener(v -> {
 
-                String toastMessage = getString(R.string.the_operation_was_aborted);
-                Toast.makeText(getActivity(), toastMessage, Toast.LENGTH_LONG).show();
-
-                // Close the dialog
-                dialog.dismiss();
-            }
+            String toastMessage = getString(R.string.the_operation_was_aborted);
+            Toast.makeText(getActivity(), toastMessage, Toast.LENGTH_LONG).show();
+            dialog.dismiss();
         });
 
-        // Display the dialog
         dialog.show();
     }
 }

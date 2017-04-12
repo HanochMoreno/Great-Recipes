@@ -16,7 +16,6 @@ import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
 import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
 import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -34,8 +33,6 @@ import com.hanoch.greatrecipes.BuildConfig;
 import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.google.IabHelperNonStatic;
-import com.hanoch.greatrecipes.google.IabResult;
-import com.hanoch.greatrecipes.google.Purchase;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.FreeTrialCheckBoxPreference;
 import com.hanoch.greatrecipes.model.FreeTrialPreference;
@@ -176,7 +173,6 @@ public class PreferencesFragment extends PreferenceFragment
             throw new ClassCastException(getActivity().toString()
                     + " must implement PreferencesFragmentListener");
         }
-
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -185,15 +181,6 @@ public class PreferencesFragment extends PreferenceFragment
     // onAttach is never called in PreferenceFragment - Do all stuff in onViewCreated()
     public void onAttach(Context context) {
         super.onAttach(context);
-
-        /*AnalyticsHelper.setScreenName(this);
-
-        try {
-            mListener = (PreferencesFragmentListener) context;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(context.toString()
-                    + " must implement PreferencesFragmentListener");
-        }*/
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -276,11 +263,7 @@ public class PreferencesFragment extends PreferenceFragment
                 try {
                     getActivity().startActivity(Intent.createChooser(contactUsIntent, getString(R.string.select_mail_app)));
                 } catch (ActivityNotFoundException e) {
-                    Snackbar snack = Snackbar.make(view, R.string.no_email_app, Snackbar.LENGTH_LONG);
-                    ViewGroup group = (ViewGroup) snack.getView();
-                    group.setBackgroundColor(Color.RED);
-                    snack.show();
-
+                    AppHelper.showSnackBar(view, R.string.no_email_app, Color.RED);
                     e.printStackTrace();
                 }
                 break;
@@ -319,34 +302,32 @@ public class PreferencesFragment extends PreferenceFragment
                     mIabHelper = new IabHelperNonStatic(getActivity());
 
                     try {
-                        mIabHelper.startSetup(new IabHelperNonStatic.OnIabSetupFinishedListener() {
-                            public void onIabSetupFinished(IabResult result) {
+                        mIabHelper.startSetup(result -> {
 
-                                if (progressDialog != null && progressDialog.isShowing()) {
-                                    progressDialog.dismiss();
-                                }
+                            if (progressDialog != null && progressDialog.isShowing()) {
+                                progressDialog.dismiss();
+                            }
 
-                                preference.setEnabled(true);
+                            preference.setEnabled(true);
 
-                                if (result.isSuccess()) {
-                                    // Hooray, IAB is fully set up!
+                            if (result.isSuccess()) {
+                                // Hooray, IAB is fully set up!
 
-                                    Log.d(TAG, "Iab was set up successfully");
-                                    iabHelperWasAlreadySetUpSuccessfully = true;
-                                    purchasePremiumAccess();
+                                Log.d(TAG, "Iab was set up successfully");
+                                iabHelperWasAlreadySetUpSuccessfully = true;
+                                purchasePremiumAccess();
 
+                            } else {
+                                // Oh noes, there was a problem.
+                                if (result.toString().contains("unavailable on device")) {
+                                    errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + getString(R.string.Billing_unavailable_for_device);
                                 } else {
-                                    // Oh noes, there was a problem.
-                                    if (result.toString().contains("unavailable on device")) {
-                                        errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + getString(R.string.Billing_unavailable_for_device);
-                                    } else {
 
-                                        errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + result;
-                                    }
-                                    showGoogleErrorDialog(errorMessage);
-
-                                    Log.e(TAG, "Iab set up was FAILED: " + errorMessage);
+                                    errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + result;
                                 }
+                                showGoogleErrorDialog(errorMessage);
+
+                                Log.e(TAG, "Iab set up was FAILED: " + errorMessage);
                             }
                         });
 
@@ -377,32 +358,30 @@ public class PreferencesFragment extends PreferenceFragment
     private void purchasePremiumAccess(){
 
         final IabHelperNonStatic.OnIabPurchaseFinishedListener mPurchaseFinishedListener
-                = new IabHelperNonStatic.OnIabPurchaseFinishedListener() {
-            public void onIabPurchaseFinished(IabResult result, Purchase purchase) {
+                = (result, purchase) -> {
 
-                if (result.isFailure()) {
+                    if (result.isFailure()) {
 
-                    if (prefUpgradeToPremium != null) {
-                        prefUpgradeToPremium.setEnabled(true);
+                        if (prefUpgradeToPremium != null) {
+                            prefUpgradeToPremium.setEnabled(true);
+                        }
+
+                        errorMessage = result.toString();
+                        if (errorMessage.contains("Already Owned")) {
+                            errorMessage = getString(R.string.error_purchasing) + ": " + getString(R.string.you_are_already_premium);
+                        } else {
+                            errorMessage = getString(R.string.error_purchasing) + ": " + result;
+                        }
+
+                        showGoogleErrorDialog(errorMessage);
+                        Log.e(TAG, errorMessage);
+
+                    } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
+                        // give user access to premium content
+
+                        mListener.onPremiumAccessPurchased();
                     }
-
-                    errorMessage = result.toString();
-                    if (errorMessage.contains("Already Owned")) {
-                        errorMessage = getString(R.string.error_purchasing) + ": " + getString(R.string.you_are_already_premium);
-                    } else {
-                        errorMessage = getString(R.string.error_purchasing) + ": " + result;
-                    }
-
-                    showGoogleErrorDialog(errorMessage);
-                    Log.e(TAG, errorMessage);
-
-                } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
-                    // give user access to premium content
-
-                    mListener.onPremiumAccessPurchased();
-                }
-            }
-        };
+                };
 
         try {
             mIabHelper.launchPurchaseFlow(getActivity(), AppConsts.SKU_PREMIUM, AppConsts.REQ_CODE_PURCHASE, mPurchaseFinishedListener);
@@ -422,12 +401,9 @@ public class PreferencesFragment extends PreferenceFragment
 
         final Dialog dialog = new Dialog(getActivity());
 
-        // hide to default title for Dialog
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         LayoutInflater inflater = LayoutInflater.from(getActivity());
-
-        // inflate the layout dialog_layout.xml and set it as contentView
         View dialogView = inflater.inflate(R.layout.dialog_warning, null, false);
 
         dialog.setCancelable(false);
@@ -446,36 +422,22 @@ public class PreferencesFragment extends PreferenceFragment
         );
 
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
-        button_yes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        button_yes.setOnClickListener(v -> {
 
-                ((GreatRecipesApplication) getActivity().getApplication()).getDbManager().deleteAllRecipes();
-
-                Snackbar snack = Snackbar.make(view, R.string.all_the_recipe_were_deleted, Snackbar.LENGTH_LONG);
-                ViewGroup group = (ViewGroup) snack.getView();
-                group.setBackgroundColor(ContextCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
-                snack.show();
-
-                // Close the dialog
-                dialog.dismiss();
-            }
+            ((GreatRecipesApplication) getActivity().getApplication()).getDbManager().deleteAllRecipes();
+            AppHelper.showSnackBar(view, R.string.all_the_recipe_were_deleted, ContextCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
+            dialog.dismiss();
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        btnCancel.setOnClickListener(v -> {
 
-                String toastMessage = getString(R.string.the_operation_was_aborted);
-                Toast.makeText(getActivity(), toastMessage, Toast.LENGTH_LONG).show();
+            String toastMessage = getString(R.string.the_operation_was_aborted);
+            Toast.makeText(getActivity(), toastMessage, Toast.LENGTH_LONG).show();
 
-                // Close the dialog
-                dialog.dismiss();
-            }
+            dialog.dismiss();
         });
 
-        // Display the dialog
         dialog.show();
     }
 
@@ -487,10 +449,8 @@ public class PreferencesFragment extends PreferenceFragment
 
         final Dialog googleErrorDialog = new Dialog(getActivity());
 
-        // hide to default title for Dialog
         googleErrorDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        // inflate the layout dialog_layout.xml and set it as contentView
         LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(R.layout.dialog_warning, null, false);
         googleErrorDialog.setCanceledOnTouchOutside(false);
@@ -499,7 +459,6 @@ public class PreferencesFragment extends PreferenceFragment
 
         DisplayMetrics metrics = getResources().getDisplayMetrics();
         int width = metrics.widthPixels;
-        //int height = metrics.heightPixels;
 
         if (getResources().getBoolean(R.bool.isTablet)
                 && !(getResources().getBoolean(R.bool.isSmallTablet))
@@ -522,18 +481,9 @@ public class PreferencesFragment extends PreferenceFragment
 
         Button btnOk = (Button) googleErrorDialog.findViewById(R.id.button_yes);
         btnOk.setText(getString(R.string.ok));
-        btnOk.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-
-//                finish();
-
-                googleErrorDialog.dismiss();
-            }
-        });
+        btnOk.setOnClickListener(v -> googleErrorDialog.dismiss());
 
         (googleErrorDialog.findViewById(R.id.button_cancel)).setVisibility(View.GONE);
-
         googleErrorDialog.show();
     }
 

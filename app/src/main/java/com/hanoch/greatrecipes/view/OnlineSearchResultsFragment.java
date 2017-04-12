@@ -7,7 +7,6 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
@@ -102,7 +101,6 @@ public class OnlineSearchResultsFragment extends Fragment implements
 
             @Override
             public void onScroll(AbsListView view, int firstVisibleItem, int visibleItemCount, int totalItemCount) {
-
             }
         });
 
@@ -209,11 +207,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
             // checking if 'recipe's title search' field contains at least 2 chars
             // will return 'true' also in case of input contains only spaces
 
-            Snackbar snack = Snackbar.make(view, R.string.at_least_2_chars_required, Snackbar.LENGTH_LONG);
-            ViewGroup group = (ViewGroup) snack.getView();
-            group.setBackgroundColor(Color.RED);
-            snack.show();
-
+            AppHelper.showSnackBar(view, R.string.at_least_2_chars_required, Color.RED);
             return;
         }
 
@@ -301,12 +295,8 @@ public class OnlineSearchResultsFragment extends Fragment implements
 
         } catch (UnsupportedEncodingException e) {
             progressDialog.dismiss();
-
+            AppHelper.showSnackBar(view, R.string.unexpected_error, Color.RED);
             e.printStackTrace();
-            Snackbar snack = Snackbar.make(view, R.string.unexpected_error, Snackbar.LENGTH_LONG);
-            ViewGroup group = (ViewGroup) snack.getView();
-            group.setBackgroundColor(Color.RED);
-            snack.show();
         }
     }
 

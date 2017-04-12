@@ -5,7 +5,6 @@ import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Parcelable;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
@@ -114,11 +113,8 @@ public class SearchInListsFragment extends MyFragment implements
 
             boolean isListViewEnabled = savedInstanceState.getBoolean("isListViewEnabled");
             listView_searchResults.setEnabled(isListViewEnabled);
-
             selectedId = savedInstanceState.getLong("selectedId");
-
             checkedItemsIdList = savedInstanceState.getStringArrayList("checkedItemsIdList");
-
             keyToSearch = savedInstanceState.getString("keyToSearch");
 
             if (keyToSearch != null) {
@@ -153,13 +149,9 @@ public class SearchInListsFragment extends MyFragment implements
         super.onSaveInstanceState(outState);
 
         outState.putBoolean("isListViewEnabled", listView_searchResults.isEnabled());
-
         outState.putParcelable("listViewState", listView_searchResults.onSaveInstanceState());
-
         outState.putLong("selectedId", selectedId);
-
         outState.putStringArrayList("checkedItemsIdList", checkedItemsIdList);
-
         outState.putString("keyToSearch", keyToSearch);
     }
 
@@ -416,11 +408,7 @@ public class SearchInListsFragment extends MyFragment implements
         if (cursor.getCount() == 0 && searchWasPerformedByUser) {
 
             searchWasPerformedByUser = false;
-
-            Snackbar snack = Snackbar.make(view, R.string.no_results, Snackbar.LENGTH_LONG);
-            ViewGroup group = (ViewGroup) snack.getView();
-            group.setBackgroundColor(Color.RED);
-            snack.show();
+            AppHelper.showSnackBar(view, R.string.no_results, Color.RED);
         }
 
         adapter.swapCursor(cursor);

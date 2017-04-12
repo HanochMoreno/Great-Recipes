@@ -9,7 +9,6 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -20,11 +19,9 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.view.animation.Animation;
 import android.view.animation.ScaleAnimation;
-import android.widget.AdapterView;
 import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
@@ -376,86 +373,63 @@ public class MealPlannerActivity extends AppCompatActivity implements
         ServingTypesAdapter adapter = new ServingTypesAdapter(this, servingTypesList, premium);
         gridView_servingTypesList.setAdapter(adapter);
 
-        gridView_servingTypesList.setOnItemClickListener(new AdapterView.OnItemClickListener() {
-            @Override
-            public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                View textView_premium = view.findViewById(R.id.textView_premium);
+        gridView_servingTypesList.setOnItemClickListener((parent, view1, position, id) -> {
+            View textView_premium = view1.findViewById(R.id.textView_premium);
 
-                if (textView_premium.getVisibility() == View.VISIBLE) {
+            if (textView_premium.getVisibility() == View.VISIBLE) {
 
-                    Animation animation = new ScaleAnimation(1f, 2f, 1f, 2f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
-                    animation.setDuration(700);
-                    animation.setRepeatMode(Animation.REVERSE);
-                    animation.setRepeatCount(1);
-                    textView_premium.startAnimation(animation);
+                Animation animation = new ScaleAnimation(1f, 2f, 1f, 2f, Animation.RELATIVE_TO_SELF, 0.5f, Animation.RELATIVE_TO_SELF, 0.5f);
+                animation.setDuration(700);
+                animation.setRepeatMode(Animation.REVERSE);
+                animation.setRepeatCount(1);
+                textView_premium.startAnimation(animation);
 
-                    return;
-                }
-
-                servingType = servingTypesList.get(position).name;
-
-                String translatedServingType = AppHelper.getTranslatedServingTypeName(MealPlannerActivity.this, servingType);
-                textView_servingType.setText(translatedServingType);
-
-                gridView_servingTypesList.setVisibility(View.GONE);
-                viewGroup_searchSelector.setVisibility(View.VISIBLE);
-                layout_buttons.setVisibility(View.VISIBLE);
-                layout_servingType.setVisibility(View.VISIBLE);
-                dialogTitle.setText(R.string.does_recipe_exist);
+                return;
             }
+
+            servingType = servingTypesList.get(position).name;
+
+            String translatedServingType = AppHelper.getTranslatedServingTypeName(MealPlannerActivity.this, servingType);
+            textView_servingType.setText(translatedServingType);
+
+            gridView_servingTypesList.setVisibility(View.GONE);
+            viewGroup_searchSelector.setVisibility(View.VISIBLE);
+            layout_buttons.setVisibility(View.VISIBLE);
+            layout_servingType.setVisibility(View.VISIBLE);
+            dialogTitle.setText(R.string.does_recipe_exist);
         });
 
         ImageView button_chooseServingType = (ImageView) dialog.findViewById(R.id.button_chooseServingType);
 
-        button_chooseServingType.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                gridView_servingTypesList.setVisibility(View.VISIBLE);
-                viewGroup_searchSelector.setVisibility(View.GONE);
-                layout_buttons.setVisibility(View.GONE);
-                layout_servingType.setVisibility(View.GONE);
-                dialogTitle.setText(R.string.choose_serving_type);
-            }
+        button_chooseServingType.setOnClickListener(v -> {
+            gridView_servingTypesList.setVisibility(View.VISIBLE);
+            viewGroup_searchSelector.setVisibility(View.GONE);
+            layout_buttons.setVisibility(View.GONE);
+            layout_servingType.setVisibility(View.GONE);
+            dialogTitle.setText(R.string.choose_serving_type);
         });
 
         Button button_search = (Button) dialog.findViewById(R.id.button_search);
-        button_search.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        button_search.setOnClickListener(v -> {
 
-                if (radioButton_fromLists.isChecked()) {
-                    openListsActivity();
+            if (radioButton_fromLists.isChecked()) {
+                openListsActivity();
 
+            } else {
+                if (!premium && downloadedRecipesCount == 3) {
+                    AnalyticsHelper.sendEvent(thisActivity, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
+                    AppHelper.showSnackBar(view, R.string.you_exceeded_the_downloaded_recipes_limit, ContextCompat.getColor(thisActivity, R.color.colorSnackbarFreeTrial));
+                    return;
                 } else {
-                    if (!premium && downloadedRecipesCount == 3) {
-
-                        AnalyticsHelper.sendEvent(thisActivity, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
-
-                        Snackbar snack = Snackbar.make(view, R.string.you_exceeded_the_downloaded_recipes_limit, Snackbar.LENGTH_LONG);
-                        ViewGroup group = (ViewGroup) snack.getView();
-                        group.setBackgroundColor(ContextCompat.getColor(thisActivity, R.color.colorSnackbarFreeTrial));
-                        snack.show();
-                        return;
-                    } else {
-                        openOnlineSearchActivity();
-                    }
+                    openOnlineSearchActivity();
                 }
-
-                // Dismiss the dialog
-                dialog.dismiss();
             }
+
+            dialog.dismiss();
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Close the dialog
-                dialog.dismiss();
-            }
-        });
-
-        // Display the dialog
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
 
@@ -480,7 +454,6 @@ public class MealPlannerActivity extends AppCompatActivity implements
         if (getResources().getBoolean(R.bool.isTablet)) {
 
             // phone
-
             ft.replace(R.id.layout_detailsContainer, webViewFragment, AppConsts.Fragments.WEB_VIEW);
 
         } else {
@@ -712,52 +685,42 @@ public class MealPlannerActivity extends AppCompatActivity implements
                 + getString(R.string.the_operation_is_irreversible));
 
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
-        button_yes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        button_yes.setOnClickListener(v -> {
 
-                dbManager.deleteAllServings();
+            dbManager.deleteAllServings();
 
-                FragmentManager fm = getSupportFragmentManager();
-                Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
+            FragmentManager fm = getSupportFragmentManager();
+            Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
 
-                if (recipeReviewFragment != null) {
+            if (recipeReviewFragment != null) {
 
-                    if (getResources().getBoolean(R.bool.isTablet)) {
+                if (getResources().getBoolean(R.bool.isTablet)) {
 
-                        FragmentTransaction ft = fm.beginTransaction();
-                        ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
-                        ft.remove(recipeReviewFragment);
-                        ft.commit();
+                    FragmentTransaction ft = fm.beginTransaction();
+                    ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
+                    ft.remove(recipeReviewFragment);
+                    ft.commit();
 
-                        AppHelper.animateViewFadingIn(context, layout_logo, 500, 500);
+                    AppHelper.animateViewFadingIn(context, layout_logo, 500, 500);
 
-                    } else {
-                        fm.popBackStack();
-                    }
+                } else {
+                    fm.popBackStack();
                 }
-
-                selectedItemsId.clear();
-
-                // Dismiss the dialog
-                dialog.dismiss();
             }
+
+            selectedItemsId.clear();
+
+            dialog.dismiss();
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        btnCancel.setOnClickListener(v -> {
 
-                String toastMessage = getString(R.string.the_operation_was_aborted);
-                Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show();
-
-                // Close the dialog
-                dialog.dismiss();
-            }
+            String toastMessage = getString(R.string.the_operation_was_aborted);
+            Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show();
+            dialog.dismiss();
         });
 
-        // Display the dialog
         dialog.show();
     }
 
@@ -844,21 +807,12 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
                 selectedItemsId.clear();
 
-                // Close the dialog
                 dialog.dismiss();
             }
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Close the dialog
-                dialog.dismiss();
-            }
-        });
-
-        // Display the dialog
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
 

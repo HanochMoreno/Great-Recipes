@@ -27,10 +27,7 @@ public class CategoriesChooserFragment extends Fragment
 
     private static final String ARG_SELECTED_CATEGORIES_LIST = "categoriesList";
 
-//    private GridView gridView_categoriesList;
-
     private ArrayList<String> selectedCategoriesNamesList;
-//    private ArrayList<Category> categoriesList;
 
     private CardView cardView_appetizers;
     private CardView cardView_beverages;
@@ -62,7 +59,6 @@ public class CategoriesChooserFragment extends Fragment
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-//        View view = inflater.inflate(R.layout.fragment_categories_chooser, container, false);
         View view = inflater.inflate(R.layout.fragment_categories_chooser, container, false);
 
         cardView_desserts = (CardView) view.findViewById(R.id.cardView_desserts);
@@ -117,7 +113,6 @@ public class CategoriesChooserFragment extends Fragment
         boolean premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
 
         if (!premium) {
-
             setFreeTrialCategory(cardView_appetizers);
             setFreeTrialCategory(cardView_beverages);
             setFreeTrialCategory(cardView_breakfast);
@@ -130,35 +125,6 @@ public class CategoriesChooserFragment extends Fragment
             setFreeTrialCategory(cardView_soups);
         }
 
-        /*if (premium) {
-            cardView_appetizers.setOnClickListener(this);
-            cardView_beverages.setOnClickListener(this);
-            cardView_breakfast.setOnClickListener(this);
-            cardView_cocktails.setOnClickListener(this);
-            cardView_sauces.setOnClickListener(this);
-            cardView_lunch.setOnClickListener(this);
-            cardView_mainDishes.setOnClickListener(this);
-            cardView_salads.setOnClickListener(this);
-            cardView_sideDishes.setOnClickListener(this);
-            cardView_soups.setOnClickListener(this);
-
-        } else {
-            setFreeTrialCategory(cardView_appetizers);
-            setFreeTrialCategory(cardView_beverages);
-            setFreeTrialCategory(cardView_breakfast);
-            setFreeTrialCategory(cardView_cocktails);
-            setFreeTrialCategory(cardView_sauces);
-            setFreeTrialCategory(cardView_lunch);
-            setFreeTrialCategory(cardView_mainDishes);
-            setFreeTrialCategory(cardView_salads);
-            setFreeTrialCategory(cardView_sideDishes);
-            setFreeTrialCategory(cardView_soups);
-        }*/
-
-        //gridView_categoriesList = (GridView) view.findViewById(R.id.gridView_servingTypesList);
-
-        //gridView_categoriesList.setOnItemClickListener(this);
-
         return view;
     }
 
@@ -169,9 +135,6 @@ public class CategoriesChooserFragment extends Fragment
         ((TextView) cardView.findViewById(R.id.textView_categoryOriginalName)).setText(catOriginalName);
         ((TextView) cardView.findViewById(R.id.textView_categoryName)).setText(getString(catTitleRes));
         ((ImageView) cardView.findViewById(R.id.imageView_categoryImage)).setImageResource(catImageRes);
-
-//        ((TextView) cardView_desserts.findViewById(R.id.textView_premium)).setText(getString(R.string.premium));
-//        ((ImageView) cardView_desserts.findViewById(R.id.imageView_checkedIcon)).setImageResource(R.drawable.ic_checked);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -189,8 +152,9 @@ public class CategoriesChooserFragment extends Fragment
 
         if (selectedCategoriesNamesList != null) {
 
-            if (selectedCategoriesNamesList.isEmpty() || selectedCategoriesNamesList.get(0).equals(AppConsts.Category.NO_INFO))
+            if (selectedCategoriesNamesList.isEmpty() || selectedCategoriesNamesList.get(0).equals(AppConsts.Category.NO_INFO)) {
                 selectedCategoriesNamesList = new ArrayList<>();
+            }
         }
 
         checkCurrentCategories(selectedCategoriesNamesList);
@@ -227,98 +191,32 @@ public class CategoriesChooserFragment extends Fragment
     private void checkCurrentCategories(ArrayList<String> currentCategories) {
 
         setCategoryCheckedStatus(cardView_appetizers, currentCategories);
-
         setCategoryCheckedStatus(cardView_beverages, currentCategories);
-
         setCategoryCheckedStatus(cardView_breads, currentCategories);
-
         setCategoryCheckedStatus(cardView_breakfast, currentCategories);
-
         setCategoryCheckedStatus(cardView_cocktails, currentCategories);
-
         setCategoryCheckedStatus(cardView_sauces, currentCategories);
-
         setCategoryCheckedStatus(cardView_desserts, currentCategories);
-
         setCategoryCheckedStatus(cardView_lunch, currentCategories);
-
         setCategoryCheckedStatus(cardView_mainDishes, currentCategories);
-
         setCategoryCheckedStatus(cardView_salads, currentCategories);
-
         setCategoryCheckedStatus(cardView_sideDishes, currentCategories);
-
         setCategoryCheckedStatus(cardView_soups, currentCategories);
     }
 
 //-------------------------------------------------------------------------------------------------
 
-    //    private void setCategoryCheckedStatus(CategoryView categoryView, ArrayList<String> currentCategories) {
     private void setCategoryCheckedStatus(CardView cardView_category, ArrayList<String> currentCategories) {
 
         TextView textView_categoryOriginalName = (TextView) cardView_category.findViewById(R.id.textView_categoryOriginalName);
 
         if (currentCategories.contains(textView_categoryOriginalName.getText().toString())) {
-//        if (currentCategories.contains(categoryView.getFullName().getText().toString())) {
             ImageView imageView_checkedIcon = (ImageView) cardView_category.findViewById(R.id.imageView_checkedIcon);
             ImageView imageView_categoryImage = (ImageView) cardView_category.findViewById(R.id.imageView_categoryImage);
-//            categoryView.getCheckedIcon().setVisibility(View.VISIBLE);
             imageView_checkedIcon.setVisibility(View.VISIBLE);
-//            categoryView.getImage().setAlpha(0.5f);
             imageView_categoryImage.setAlpha(0.5f);
         }
     }
-
-//-------------------------------------------------------------------------------------------------
-
-    /*private ArrayList<Category> getCategoriesListIncludingSelections(ArrayList<String> selectedCategoriesNamesList) {
-
-        ArrayList<Category> categoriesList = AppHelper.getDefaultCategoriesList();
-
-        if (selectedCategoriesNamesList != null) {
-
-            for (String selectedCategory :selectedCategoriesNamesList) {
-                Category category;
-
-                for (int i = 0; i < categoriesList.size(); i++) {
-                    category = categoriesList.get(i);
-                    if (selectedCategory.equals(category.getName())) {
-                        category.setSelected(true);
-                        categoriesList.set(i, category);
-                        break;
-                    }
-                }
-            }
-        }
-
-        return categoriesList;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
-    public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-
-        ImageView icon = (ImageView) view.findViewById(R.id.imageView_checkedIcon);
-        icon.setAlpha(1f);
-
-        Category clickedCategory = categoriesList.get(position);
-
-        if (clickedCategory.isSelected()) {
-            // Checked category was unchecked
-
-            clickedCategory.setSelected(false);
-            AppHelper.animateUncheckedCategory(view, getContext());
-            selectedCategoriesNamesList.remove(clickedCategory.getName());
-
-        } else {
-            // Unchecked category was checked
-
-            clickedCategory.setSelected(true);
-            selectedCategoriesNamesList.add(clickedCategory.getName());
-            AppHelper.animateCheckedCategory(view, getContext());
-        }
-    }*/
 
 //-------------------------------------------------------------------------------------------------
 
@@ -341,7 +239,6 @@ public class CategoriesChooserFragment extends Fragment
         String categoryOriginalName = textView_categoryOriginalName.getText().toString();
         if (selectedCategoriesNamesList.contains(categoryOriginalName)) {
             // Checked category was unchecked
-
             selectedCategoriesNamesList.remove(categoryOriginalName);
             AppHelper.animateUncheckedCategory(v, getContext());
 
@@ -355,7 +252,6 @@ public class CategoriesChooserFragment extends Fragment
 //-------------------------------------------------------------------------------------------------
 
     public ArrayList<String> getSelectedCategoriesNamesList() {
-
         return selectedCategoriesNamesList;
     }
 

@@ -55,25 +55,13 @@ public class Recipe{
         this.originIndex = AppConsts.RecipeOrigin.FROM_ONLINE_SEARCH;
     }
 
-    //CTOR for recipe written by the user
+    //CTOR for a ,recipe written by the user
     public Recipe(long id, String title, String author, int yield, float rating,
                   int favouriteIndex, String notes, int time,
                   String categoriesList, String ingredientsList, String instructions) {
 
-        this.id = id;
-        this.title = title;
-        this.author = author;
-        this.yield = yield;
-        this.url = "";
-        this.energy = 0;
-        this.rating = rating;
-        this.favouriteIndex = favouriteIndex;
-        this.notes = notes;
-        this.time = time;
-        this.categoriesList = categoriesList;
-        this.ingredientsList = ingredientsList;
-        this.instructions = instructions;
-        this.originIndex = AppConsts.RecipeOrigin.ADDED_MANUALLY;
+        this(id, title, author, yield, "", 0, rating, favouriteIndex, notes, time, categoriesList,
+                ingredientsList, instructions, AppConsts.RecipeOrigin.ADDED_MANUALLY);
     }
 
     //CTOR for recipe query by the provider

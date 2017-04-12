@@ -13,7 +13,6 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.CardView;
@@ -469,19 +468,13 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
                             parcelFileDescriptor.close();
 
                         } catch (Exception e2) {
-                            Snackbar snack = Snackbar.make(view, R.string.the_image_not_supported, Snackbar.LENGTH_LONG);
-                            ViewGroup group = (ViewGroup) snack.getView();
-                            group.setBackgroundColor(Color.RED);
-                            snack.show();
+                            AppHelper.showSnackBar(view, R.string.the_image_not_supported, Color.RED);
                             return;
                         }
                     }
 
                     if (selectedImage == null) {
-                        Snackbar snack = Snackbar.make(view, R.string.the_image_not_supported, Snackbar.LENGTH_LONG);
-                        ViewGroup group = (ViewGroup) snack.getView();
-                        group.setBackgroundColor(Color.RED);
-                        snack.show();
+                        AppHelper.showSnackBar(view, R.string.the_image_not_supported, Color.RED);
                         return;
                     }
 
@@ -515,10 +508,7 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
                     break;
             }
         } else {
-            Snackbar snack = Snackbar.make(view, R.string.you_should_approve_permission, Snackbar.LENGTH_LONG);
-            ViewGroup group = (ViewGroup) snack.getView();
-            group.setBackgroundColor(Color.RED);
-            snack.show();
+            AppHelper.showSnackBar(view, R.string.you_should_approve_permission, Color.RED);
         }
     }
 
@@ -561,7 +551,6 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
         this.favouriteIndex = favouriteIndex;
 
         if (favouriteIndex == AppConsts.FavouriteIndex.FAVOURITE) {
-
             AppHelper.animateViewFadingIn(getContext(), imageView_favourite, 500, 0);
 
         } else {
@@ -598,10 +587,7 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
             Uri uri = dbManager.addNewRecipe(recipe);
             recipeId = dbManager.getRecipeIdFromUri(uri);
 
-            Snackbar snack = Snackbar.make(view, R.string.added_to_my_own, Snackbar.LENGTH_LONG);
-            ViewGroup group = (ViewGroup) snack.getView();
-            group.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorSnackbarGreen));
-            snack.show();
+            AppHelper.showSnackBar(view, R.string.added_to_my_own, ContextCompat.getColor(getContext(), R.color.colorSnackbarGreen));
 
             if (!imageWasDeleted && selectedImage != null) {
                 String imageName = AppConsts.Images.RECIPE_IMAGE_PREFIX + recipeId;
@@ -619,11 +605,7 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
 
         } else {
             dbManager.updateRecipe(recipe);
-
-            Snackbar snack = Snackbar.make(view, R.string.saved_successfully, Snackbar.LENGTH_LONG);
-            ViewGroup group = (ViewGroup) snack.getView();
-            group.setBackgroundColor(ContextCompat.getColor(getContext(), R.color.colorSnackbarGreen));
-            snack.show();
+            AppHelper.showSnackBar(view, R.string.saved_successfully, ContextCompat.getColor(getContext(), R.color.colorSnackbarGreen));
 
             if (imageWasDeleted) {
                 String imageName = AppConsts.Images.RECIPE_IMAGE_PREFIX + recipeId;
@@ -737,48 +719,14 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
             case R.id.imageView_choosePicture:
             case R.id.imageView_recipeImage:
                 // Choose a picture from gallery
-
-                /*Intent photoPickerIntent = new Intent(Intent.ACTION_GET_CONTENT, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                photoPickerIntent.setType("image/*");
-                photoPickerIntent.putExtra("crop", "true");
-                photoPickerIntent.putExtra("aspectX", 1);
-                photoPickerIntent.putExtra("aspectY", 1);
-                photoPickerIntent.putExtra(MediaStore.EXTRA_OUTPUT, ImageStorage.getTempUri(getContext()));
-                photoPickerIntent.putExtra("outputFormat", Bitmap.CompressFormat.JPEG.toString());
-                startActivityForResult(photoPickerIntent, REQ_CODE_PICK_IMAGE);*/
-
                 boolean isWriteStoragePermissionGranted = isPermissionGranted(getActivity(), AppConsts.Permissions.PERMISSION_REQ_CODE_READ_STORAGE);
 
                 if (isWriteStoragePermissionGranted) {
-
-                    /*Intent getIntent = new Intent(Intent.ACTION_GET_CONTENT);
-                    getIntent.setType("image/*");
-
-                    Intent photoPickerIntent = new Intent(Intent.ACTION_PICK, MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                    photoPickerIntent.setType("image/*");
-
-                    Intent chooserIntent = Intent.createChooser(getIntent, getString(R.string.select_image));
-                    chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[]{photoPickerIntent});
-
-                    startActivityForResult(chooserIntent, REQ_CODE_PICK_IMAGE);*/
-
                     Intent intent = new Intent();
                     intent.setType("image/*");
                     intent.setAction(Intent.ACTION_GET_CONTENT);
                     startActivityForResult(Intent.createChooser(intent, getString(R.string.select_gallery)), REQ_CODE_PICK_IMAGE);
                 }
-
-                /*Intent photoPickerIntent = new Intent(Intent.ACTION_GET_CONTENT);
-                photoPickerIntent.setType("image/*");
-
-                Intent pickIntent = new Intent(Intent.ACTION_PICK, android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI);
-                pickIntent.setType("image/*");
-
-                Intent chooserIntent = Intent.createChooser(photoPickerIntent, "Select Image");
-                chooserIntent.putExtra(Intent.EXTRA_INITIAL_INTENTS, new Intent[] {pickIntent});
-
-                startActivityForResult(chooserIntent, REQ_CODE_PICK_IMAGE);*/
-
                 break;
 
             case R.id.imageView_deleteImage:
@@ -838,21 +786,17 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
 
         minutesPicker.setWrapSelectorWheel(false);
 
-        buttonSet.setOnClickListener(new View.OnClickListener() {
+        buttonSet.setOnClickListener(v -> {
+            totalTimeDialog.dismiss();
+            totalTimeInSeconds = (hoursPicker.getValue() * 3600 + minutesPicker.getValue() * 60);
 
-            @Override
-            public void onClick(View v) {
-                totalTimeDialog.dismiss();
-                totalTimeInSeconds = (hoursPicker.getValue() * 3600 + minutesPicker.getValue() * 60);
-
-                if (totalTimeInSeconds > 0) {
-                    textView_totalTime.setTextColor(Color.BLACK);
-                } else {
-                    textView_totalTime.setTextColor(Color.RED);
-                }
-
-                textView_totalTime.setText(AppHelper.getStringRecipeTotalTime(getContext(), totalTimeInSeconds));
+            if (totalTimeInSeconds > 0) {
+                textView_totalTime.setTextColor(Color.BLACK);
+            } else {
+                textView_totalTime.setTextColor(Color.RED);
             }
+
+            textView_totalTime.setText(AppHelper.getStringRecipeTotalTime(getContext(), totalTimeInSeconds));
         });
 
         totalTimeDialog.show();
@@ -875,22 +819,18 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
 
         servingsPicker.setWrapSelectorWheel(false);
 
-        buttonSet.setOnClickListener(new View.OnClickListener() {
+        buttonSet.setOnClickListener(v -> {
 
-            @Override
-            public void onClick(View v) {
+            servings = servingsPicker.getValue();
+            textView_servings.setText(AppHelper.getStringRecipeServings(getContext(), servings));
 
-                servings = servingsPicker.getValue();
-                textView_servings.setText(AppHelper.getStringRecipeServings(getContext(), servings));
-
-                if (servings > 0) {
-                    textView_servings.setTextColor(Color.BLACK);
-                } else {
-                    textView_servings.setTextColor(Color.RED);
-                }
-
-                servingsDialog.dismiss();
+            if (servings > 0) {
+                textView_servings.setTextColor(Color.BLACK);
+            } else {
+                textView_servings.setTextColor(Color.RED);
             }
+
+            servingsDialog.dismiss();
         });
 
         servingsDialog.show();
@@ -915,39 +855,25 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
         editText_inputIngredient = (EditText) dialog.findViewById(R.id.editText_userInput);
 
         Button button_addIngredient = (Button) dialog.findViewById(R.id.buttonAlert_add);
-        button_addIngredient.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        button_addIngredient.setOnClickListener(v -> {
 
-                // Get the input text and add it to the list
-                String ing = editText_inputIngredient.getText().toString();
+            // Get the input text and add it to the list
+            String ing = editText_inputIngredient.getText().toString();
 
-                if (ingredientsList.get(0).equals(AppConsts.Category.NO_INFO)) {
-                    ingredientsList.set(0, ing);
+            if (ingredientsList.get(0).equals(AppConsts.Category.NO_INFO)) {
+                ingredientsList.set(0, ing);
 
-                } else {
-                    ingredientsList.add(ing);
-                    /*ingredientsListAdapter.notifyDataSetChanged();*/
-                }
-
-                fillIngredientsList();
-
-                // Dismiss the dialog
-                dialog.dismiss();
-
+            } else {
+                ingredientsList.add(ing);
             }
+
+            fillIngredientsList();
+            dialog.dismiss();
+
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.buttonAlert_cancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Close the dialog
-                dialog.dismiss();
-            }
-        });
-
-        // Display the dialog
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
 
@@ -966,7 +892,6 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         // inflate the layout dialog_layout.xml and set it as contentView
-        //LayoutInflater inflater = (LayoutInflater) getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(R.layout.dialog_add_ingredient, null, false);
         dialog.setCanceledOnTouchOutside(false);
         dialog.setContentView(view);
@@ -975,31 +900,18 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
         editText_inputIngredient.setText(ingredientText);
 
         Button button_addIngredient = (Button) dialog.findViewById(R.id.buttonAlert_add);
-        button_addIngredient.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        button_addIngredient.setOnClickListener(v -> {
 
-                // Get the input text and add it to the list
-                String ing = editText_inputIngredient.getText().toString();
-                ingredientsList.set(position, ing);
+            // Get the input text and add it to the list
+            String ing = editText_inputIngredient.getText().toString();
+            ingredientsList.set(position, ing);
 
-                fillIngredientsList();
-
-                // Dismiss the dialog
-                dialog.dismiss();
-            }
+            fillIngredientsList();
+            dialog.dismiss();
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.buttonAlert_cancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Close the dialog
-                dialog.dismiss();
-            }
-        });
-
-        // Display the dialog
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
 
@@ -1119,57 +1031,40 @@ public class EditRecipeFragment extends Fragment implements View.OnClickListener
         editText_userInput.setSelection(pos);
 
         Button button_save = (Button) loginDialog.findViewById(R.id.button_save);
-        button_save.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        button_save.setOnClickListener(v -> {
 
-                // Get the input text
-                author = editText_userInput.getText().toString();
+            // Get the input text
+            author = editText_userInput.getText().toString();
 
-                if (usernameTooShort(author)) {
-                    // Less than 6 letters
-
-                    Snackbar.make(view, R.string.at_least_6_characters_are_required, Snackbar.LENGTH_LONG).show();
-
-                    return;
-                }
-
-                if (usernameTooLong(author)) {
-                    // Less than 6 letters
-
-                    Snackbar snack = Snackbar.make(view, R.string.max_20_chars_are_allowed, Snackbar.LENGTH_LONG);
-                    ViewGroup group = (ViewGroup) snack.getView();
-                    group.setBackgroundColor(Color.RED);
-                    snack.show();
-
-                    return;
-                }
-
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                SharedPreferences.Editor editor = sp.edit();
-                editor.putString(AppConsts.SharedPrefs.USER_NAME, author);
-                editor.commit();
-
-                AnalyticsHelper.sendEvent(EditRecipeFragment.this, AppConsts.Analytics.CATEGORY_LOGIN, "Login successfully", author);
-
-                // Dismiss the dialog
-                loginDialog.dismiss();
+            if (usernameTooShort(author)) {
+                // Less than 6 letters
+                AppHelper.showSnackBar(view, R.string.at_least_6_characters_are_required, Color.RED);
+                return;
             }
+
+            if (usernameTooLong(author)) {
+                // More than 20 letters
+                AppHelper.showSnackBar(view, R.string.max_20_chars_are_allowed, Color.RED);
+                return;
+            }
+
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+            SharedPreferences.Editor editor = sp.edit();
+            editor.putString(AppConsts.SharedPrefs.USER_NAME, author);
+            editor.commit();
+
+            AnalyticsHelper.sendEvent(EditRecipeFragment.this, AppConsts.Analytics.CATEGORY_LOGIN, "Login successfully", author);
+
+            loginDialog.dismiss();
         });
 
         Button btnCancel = (Button) loginDialog.findViewById(R.id.button_cancel);
         btnCancel.setText(R.string.not_now);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Close the dialog
-                loginDialog.dismiss();
-
-                mListener.onCancelLoginButtonClicked();
-            }
+        btnCancel.setOnClickListener(v -> {
+            loginDialog.dismiss();
+            mListener.onCancelLoginButtonClicked();
         });
 
-        // Display the dialog
         loginDialog.show();
     }
 

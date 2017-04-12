@@ -10,7 +10,6 @@ import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
 import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -26,7 +25,6 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.EditText;
 import android.widget.LinearLayout;
@@ -54,7 +52,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
     private static final String TAG = "OnlineSearchActivity";
 
-    private TextView textView_greatRecipes;
     private LinearLayout layout_logo;
 
     private DrawerLayout mDrawerLayout;
@@ -203,18 +200,15 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
             // When touching the details layout - hide the keyboard if it's showing
             View layout_detailsContainer = findViewById(R.id.layout_detailsContainer);
-            layout_detailsContainer.setOnClickListener(new View.OnClickListener() {
-                @Override
-                public void onClick(View v) {
-                    if (searchView != null) {
-                        searchView.clearFocus();
-                    }
+            layout_detailsContainer.setOnClickListener(v -> {
+                if (searchView != null) {
+                    searchView.clearFocus();
                 }
             });
 
             layout_logo = (LinearLayout) findViewById(R.id.layout_logo);
 
-            textView_greatRecipes = (TextView) findViewById(R.id.textView_greatRecipes);
+            TextView textView_greatRecipes = (TextView) findViewById(R.id.textView_greatRecipes);
             textView_greatRecipes.setTypeface(MyFonts.getInstance(this).getMotionPictureFont());
 
             containerResId = R.id.layout_listContainer;
@@ -403,19 +397,19 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 public boolean onQueryTextChange(String newText) {
                     String englishLetters = "abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ1234567890";
                     char[] chars = newText.toCharArray();
-                    int errorCharPoition = -1;
+                    int errorCharPosition = -1;
                     for (int i = 0; i < chars.length; i++) {
                         char mChar = chars[i];
                         if (!englishLetters.contains(String.valueOf(mChar))) {
-                            errorCharPoition = i;
+                            errorCharPosition = i;
 
                             AppHelper.hideKeyboardFrom(OnlineSearchActivity.this, getCurrentFocus());
                         }
                     }
                     String oldQuery = "";
-                    if (errorCharPoition != -1) {
+                    if (errorCharPosition != -1) {
                         for (int i = 0; i < chars.length; i++) {
-                            if (i!=errorCharPoition) {
+                            if (i!=errorCharPosition) {
                                 oldQuery += chars[i];
                             }
                         }
@@ -424,13 +418,10 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
                         // Relocating the selection in the right place
                         EditText editText = (EditText)searchView.findViewById(R.id.search_src_text);
-                        editText.setSelection(errorCharPoition);
+                        editText.setSelection(errorCharPosition);
 
                         View rootView = OnlineSearchActivity.this.findViewById(android.R.id.content);
-                        Snackbar snack = Snackbar.make(rootView, R.string.english_letters_only, Snackbar.LENGTH_LONG);
-                        ViewGroup group = (ViewGroup) snack.getView();
-                        group.setBackgroundColor(Color.RED);
-                        snack.show();
+                        AppHelper.showSnackBar(rootView, R.string.english_letters_only, Color.RED);
                     }
 
                     return true;
@@ -535,11 +526,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                         AnalyticsHelper.sendEvent(OnlineSearchActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
 
                         View view = this.findViewById(android.R.id.content);
-                        Snackbar snack = Snackbar.make(view, R.string.you_exceeded_the_downloaded_recipes_limit, Snackbar.LENGTH_LONG);
-                        ViewGroup group = (ViewGroup) snack.getView();
-                        group.setBackgroundColor(ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial));
-                        snack.show();
-
+                        AppHelper.showSnackBar(view, R.string.you_exceeded_the_downloaded_recipes_limit, ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial));
                         break;
 
                     } else {
@@ -662,10 +649,8 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             if (!isPremium && (position != 4 && position != 11 && position != 12)) {
                 Activity mainActivity = OnlineSearchActivity.this;
                 View mainView = mainActivity.findViewById(android.R.id.content);
-                Snackbar snack = Snackbar.make(mainView, R.string.this_item_is_not_available_in_free_trial, Snackbar.LENGTH_SHORT);
-                ViewGroup group = (ViewGroup) snack.getView();
-                group.setBackgroundColor(ActivityCompat.getColor(mainActivity, R.color.colorSnackbarFreeTrial));
-                snack.show();
+                AppHelper.showSnackBar(mainView, R.string.this_item_is_not_available_in_free_trial, ActivityCompat.getColor(mainActivity, R.color.colorSnackbarFreeTrial));
+
                 mDrawerList.setItemChecked(position, false);
                 return;
             }
@@ -698,19 +683,16 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             case 2:
                 // Vegan filter
                 editor.putBoolean(AppConsts.SharedPrefs.VEGAN, isChosen);
-                //fragment = new NavBarFragOpt1();
                 break;
 
             case 3:
                 // Vegetarian filter
                 editor.putBoolean(AppConsts.SharedPrefs.VEGETARIAN, isChosen);
-                //fragment = new NavBarFragOpt2();
                 break;
 
             case 4:
                 // Paleo filter
                 editor.putBoolean(AppConsts.SharedPrefs.PALEO, isChosen);
-                //fragment = new NavBarFragOpt3();
                 break;
 
             // 5 Allergies Title
@@ -857,12 +839,10 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
         if (getResources().getBoolean(R.bool.isTablet)) {
             // tablet
-
             ft.replace(R.id.layout_detailsContainer, webViewFragment, AppConsts.Fragments.WEB_VIEW);
 
         } else {
             // phone
-
             ft.replace(R.id.layout_container, webViewFragment, AppConsts.Fragments.WEB_VIEW);
 
             // Remove the Hamburger icon

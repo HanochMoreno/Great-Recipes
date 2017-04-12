@@ -10,7 +10,6 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.net.Uri;
 import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -22,7 +21,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.CheckBox;
@@ -664,11 +662,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                         AnalyticsHelper.sendEvent(RecipesListsActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
 
                         View view = this.findViewById(android.R.id.content);
-                        Snackbar snack = Snackbar.make(view, R.string.you_exceeded_the_downloaded_recipes_limit, Snackbar.LENGTH_LONG);
-                        ViewGroup group = (ViewGroup) snack.getView();
-                        group.setBackgroundColor(ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial));
-                        snack.show();
-
+                        AppHelper.showSnackBar(view, R.string.you_exceeded_the_downloaded_recipes_limit, ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial));
                         break;
                     }
                 }
@@ -689,11 +683,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                         AnalyticsHelper.sendEvent(RecipesListsActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
 
                         View view = this.findViewById(android.R.id.content);
-                        Snackbar snack = Snackbar.make(view, R.string.you_exceeded_the_recipes_creation_limit, Snackbar.LENGTH_LONG);
-                        ViewGroup group = (ViewGroup) snack.getView();
-                        group.setBackgroundColor(ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial));
-                        snack.show();
-
+                        AppHelper.showSnackBar(view, R.string.you_exceeded_the_recipes_creation_limit, ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial));
                         break;
                     }
                 }
@@ -1153,12 +1143,9 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
         final Dialog dialog = new Dialog(this);
 
-        // hide to default title for Dialog
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
         LayoutInflater inflater = LayoutInflater.from(context);
 
-        // inflate the layout dialog_layout.xml and set it as contentView
         final View view = inflater.inflate(R.layout.dialog_warning, null, false);
 
         dialog.setCancelable(false);
@@ -1183,67 +1170,55 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 + getString(R.string.the_operation_is_irreversible));
 
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
-        button_yes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        button_yes.setOnClickListener(v -> {
 
-                FragmentManager fm = getSupportFragmentManager();
-                FragmentTransaction ft = fm.beginTransaction();
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
 
-                recipeReviewFragment = (RecipeReviewFragment) fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
+            recipeReviewFragment = (RecipeReviewFragment) fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
 
-                if (toolbar_closeWebView.isVisible()) {
-                    // Tablet only
+            if (toolbar_closeWebView.isVisible()) {
+                // Tablet only
 
-                    fm.popBackStack();
-                }
-
-                if (recipeReviewFragment != null) {
-                    // Tablet only
-
-                    ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
-                    ft.remove(recipeReviewFragment);
-                    ft.commit();
-
-                    AppHelper.animateViewFadingIn(context, layout_logo, 500, 500);
-                }
-
-                for (final Integer checkedItemId : checkedItemsId) {
-                    dbManager.deleteRecipeById(context, checkedItemId);
-                }
-
-                setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
-
-                listFragment.backToDefaultDisplay(false);
-
-                String toastMessage;
-
-                if (checkedItemsId.size() == 1) {
-                    toastMessage = getString(R.string.the_recipe_was_deleted);
-
-                } else {
-                    toastMessage = checkedItemsId.size() + " " + getString(R.string.recipes_were_deleted);
-                }
-
-                Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show();
-
-                checkedItemsId.clear();
-
-                // Close the dialog
-                dialog.dismiss();
+                fm.popBackStack();
             }
+
+            if (recipeReviewFragment != null) {
+                // Tablet only
+
+                ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
+                ft.remove(recipeReviewFragment);
+                ft.commit();
+
+                AppHelper.animateViewFadingIn(context, layout_logo, 500, 500);
+            }
+
+            for (final Integer checkedItemId : checkedItemsId) {
+                dbManager.deleteRecipeById(context, checkedItemId);
+            }
+
+            setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
+
+            listFragment.backToDefaultDisplay(false);
+
+            String toastMessage;
+
+            if (checkedItemsId.size() == 1) {
+                toastMessage = getString(R.string.the_recipe_was_deleted);
+
+            } else {
+                toastMessage = checkedItemsId.size() + " " + getString(R.string.recipes_were_deleted);
+            }
+
+            Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show();
+
+            checkedItemsId.clear();
+
+            dialog.dismiss();
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Close the dialog
-                dialog.dismiss();
-            }
-        });
-
-        // Display the dialog
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
 
@@ -1387,10 +1362,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         LayoutInflater inflater = LayoutInflater.from(this);
-
         final Context context = RecipesListsActivity.this;
-
-        // inflate the layout dialog_layout.xml and set it as contentView
         final View view = inflater.inflate(R.layout.dialog_warning, null, false);
 
         dialog.setCancelable(false);
@@ -1404,74 +1376,62 @@ public class RecipesListsActivity extends AppCompatActivity implements
         textView_dialogContent.setText(R.string.are_you_sure);
 
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
-        button_yes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        button_yes.setOnClickListener(v -> {
 
-                FragmentManager fm = getSupportFragmentManager();
-                FragmentTransaction ft = fm.beginTransaction();
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
 
-                if (action.equals(AppConsts.Actions.ACTION_ADD_NEW)) {
+            if (action.equals(AppConsts.Actions.ACTION_ADD_NEW)) {
 
-                    editRecipeFragment = (EditRecipeFragment) fm.findFragmentByTag(AppConsts.Fragments.EDIT_RECIPE);
-                    ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
-                    ft.remove(editRecipeFragment);
-                    ft.commit();
+                editRecipeFragment = (EditRecipeFragment) fm.findFragmentByTag(AppConsts.Fragments.EDIT_RECIPE);
+                ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
+                ft.remove(editRecipeFragment);
+                ft.commit();
 
-                    setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
+                setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
 
-                    AppHelper.animateViewFadingIn(context, layout_logo, 500, 500);
+                AppHelper.animateViewFadingIn(context, layout_logo, 500, 500);
 
-                    listFragment.backToDefaultDisplay(true);
+                listFragment.backToDefaultDisplay(true);
 
+            } else {
+                // action = ACTION_EDIT
+
+                ListView listView = (ListView) listFragment.getView().findViewById(R.id.listView_recipesList);
+                listView.setEnabled(true);
+
+                recipeReviewFragment = RecipeReviewFragment.newInstance(mRecipeId, null, null);
+                ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_up);
+
+                if (getResources().getBoolean(R.bool.isTablet)) {
+                    ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
                 } else {
-                    // action = ACTION_EDIT
-
-                    ListView listView = (ListView) listFragment.getView().findViewById(R.id.listView_recipesList);
-                    listView.setEnabled(true);
-
-                    recipeReviewFragment = RecipeReviewFragment.newInstance(mRecipeId, null, null);
-                    ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_up);
-
-                    if (getResources().getBoolean(R.bool.isTablet)) {
-                        ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
-                    } else {
-                        ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
-                    }
-
-                    ft.commit();
-
-                    Recipe recipe = dbManager.queryRecipeObjectById(mRecipeId);
-
-                    ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
-
-                    if (recipe.favouriteIndex == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
-                        toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
-
-                    } else {
-                        toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
-                    }
-
-                    toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
-
-                    setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);
+                    ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
                 }
 
-                // Dismiss the dialog
-                dialog.dismiss();
+                ft.commit();
+
+                Recipe recipe = dbManager.queryRecipeObjectById(mRecipeId);
+
+                ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
+
+                if (recipe.favouriteIndex == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
+                    toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
+
+                } else {
+                    toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
+                }
+
+                toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
+
+                setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);
             }
+
+            dialog.dismiss();
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Close the dialog
-                dialog.dismiss();
-            }
-        });
-
-        // Display the dialog
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
         dialog.show();
     }
 
@@ -1550,6 +1510,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
 //-------------------------------------------------------------------------------------------------
 
+    // Replaced by Bus
     public class TabChangedReceiver extends BroadcastReceiver {
 
         @Override

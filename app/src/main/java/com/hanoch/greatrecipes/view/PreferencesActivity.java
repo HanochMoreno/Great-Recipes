@@ -8,7 +8,6 @@ import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
-import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
@@ -16,9 +15,9 @@ import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
-import android.view.ViewGroup;
 
 import com.hanoch.greatrecipes.AppConsts;
+import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 
@@ -161,10 +160,7 @@ public class PreferencesActivity extends AppCompatActivity
         ft.commit();
 
         View rootView = findViewById(android.R.id.content);
-        Snackbar snack = Snackbar.make(rootView, R.string.purchase_complete_successfully, Snackbar.LENGTH_LONG);
-        ViewGroup group = (ViewGroup) snack.getView();
-        group.setBackgroundColor(ActivityCompat.getColor(this, R.color.colorSnackbarGreen));
-        snack.show();
+        AppHelper.showSnackBar(rootView, R.string.purchase_complete_successfully, ActivityCompat.getColor(this, R.color.colorSnackbarGreen));
     }
 
 //-------------------------------------------------------------------------------------------------
