@@ -37,6 +37,7 @@ public class GreatRecipesApplication extends Application {
     private YummlyService yummlyService;
     private Retrofit retrofit;
 
+
     /**
      * Gets the default {@link Tracker} for this {@link Application}.
      * @return tracker

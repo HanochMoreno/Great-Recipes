@@ -344,6 +344,7 @@ public abstract class AppHelper {
 //-------------------------------------------------------------------------------------------------
 
     public static String convertListToString(ArrayList<String> list) {
+
         if (list == null || list.isEmpty()) {
             list = new ArrayList<>();
             list.add(AppConsts.Category.NO_INFO);
@@ -354,6 +355,7 @@ public abstract class AppHelper {
 //-------------------------------------------------------------------------------------------------
 
     public static ArrayList<String> convertStringToList(String listAsString) {
+
         ArrayList<String> list = new Gson().fromJson(listAsString, new TypeToken<ArrayList<String>>() {
         }.getType());
 

@@ -55,21 +55,6 @@ public class DbManager {
 
 //-------------------------------------------------------------------------------------------------
 
-    public Uri addNewResult(RecipeSearchResult result) {
-
-        Uri contentUri = RecipesContract.SearchResults.CONTENT_URI;
-
-        ContentValues values = new ContentValues();
-
-        values.put(RecipesContract.SearchResults.YUMMLY_ID, result.yummlyId);
-        values.put(RecipesContract.SearchResults.TITLE, result.title);
-        values.put(RecipesContract.SearchResults.IMAGE_URL, result.imageUrl);
-
-        return context.getContentResolver().insert(contentUri, values);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
     public void addSearchResults(List<ThinRecipeSearchResult> results) {
 
         Uri contentUri = RecipesContract.SearchResults.CONTENT_URI;

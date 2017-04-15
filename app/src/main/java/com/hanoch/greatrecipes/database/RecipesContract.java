@@ -5,6 +5,7 @@ import android.net.Uri;
 public class RecipesContract {
 
     public static final String AUTHORITY = "com.hanoch.recipesdbprovider.provider.recipes";
+    public static final String _ID = "_id";
 
 //-------------------------------------------------------------------------------------------------
 
@@ -12,7 +13,7 @@ public class RecipesContract {
 
         public static final String TABLE_NAME  = "recipes";
         public static final Uri CONTENT_URI  = Uri.parse("content://"+AUTHORITY+"/"+TABLE_NAME);
-        public static final String _ID  = "_id";
+        public static final String _ID  = RecipesContract._ID;
         public static final String TITLE = "title";
         public static final String YIELD = "yield";
         public static final String SRC_URL = "sourceUrl";
@@ -34,7 +35,7 @@ public class RecipesContract {
 
         public static final String TABLE_NAME  = "searchResults";
         public static final Uri CONTENT_URI  = Uri.parse("content://"+AUTHORITY+"/"+TABLE_NAME);
-        public static final String _ID  = "_id";
+        public static final String _ID  = RecipesContract._ID;
         public static final String YUMMLY_ID = "yummlyId";
         public static final String IMAGE_URL = "imageUrl";
         public static final String TITLE = "title";
@@ -53,7 +54,7 @@ public class RecipesContract {
 
         public static final String TABLE_NAME  = "mealPlanning";
         public static final Uri CONTENT_URI  = Uri.parse("content://"+AUTHORITY+"/"+TABLE_NAME);
-        public static final String _ID  = "_id";
+        public static final String _ID  = RecipesContract._ID;
         public static final String RECIPE_ID  = "recipeId";
         public static final String SERVING_TYPE = "servingType";
     }
