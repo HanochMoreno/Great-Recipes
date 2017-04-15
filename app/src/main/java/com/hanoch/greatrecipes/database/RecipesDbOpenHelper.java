@@ -14,7 +14,6 @@ import java.util.Collections;
 
 public class RecipesDbOpenHelper extends SQLiteOpenHelper {
 
-    private static final String TAG = "RecipesDbOpenHelper";
     private static final String DB_NAME = "RecipesList.db";
     private static final int DB_VERSION = 2;
 

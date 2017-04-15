@@ -24,8 +24,6 @@ public class PreferencesListsFragment extends PreferenceFragment implements
         Preference.OnPreferenceClickListener,
         Preference.OnPreferenceChangeListener {
 
-    private static final String TAG = "PrefsListsFragment";
-
     private Preference maxOnlineSearchResults;
     private View view;
     private boolean premium;

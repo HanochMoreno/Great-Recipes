@@ -27,7 +27,7 @@ public class FreeTrialPreference extends Preference implements Preference.OnPref
     protected View onCreateView(ViewGroup parent) {
         root = (ViewGroup) super.onCreateView(parent);
         ((TextView)root.findViewById(android.R.id.title)).setTextColor(ActivityCompat.getColor(getContext(), R.color.colorFreeTrialDisabledPreference));
-        ((TextView)root.findViewById(android.R.id.summary)).setTextColor(parent.getResources().getColor(R.color.colorFreeTrialDisabledPreference));
+        ((TextView)root.findViewById(android.R.id.summary)).setTextColor(ActivityCompat.getColor(getContext(), R.color.colorFreeTrialDisabledPreference));
         return root;
     }
 

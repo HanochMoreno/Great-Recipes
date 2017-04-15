@@ -49,9 +49,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         RecipeReviewFragment.FragmentRecipeReviewListener,
         ToolbarMenuSetting {
 
-
-    private static final String TAG = "OnlineSearchActivity";
-
     private LinearLayout layout_logo;
 
     private DrawerLayout mDrawerLayout;
@@ -157,7 +154,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             }
         };
 
-        mDrawerLayout.setDrawerListener(mDrawerToggle);
+        mDrawerLayout.addDrawerListener(mDrawerToggle);
 
         ObjectDrawerItem[] drawerItems = new ObjectDrawerItem[15];
 
@@ -184,7 +181,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         } else {
             DrawerItemAdapterLimited adapter = new DrawerItemAdapterLimited(this, drawerItems);
             mDrawerList.setAdapter(adapter);
-            ColorDrawable color = new ColorDrawable(getResources().getColor(android.R.color.transparent));
+            ColorDrawable color = new ColorDrawable(ActivityCompat.getColor(this, android.R.color.transparent));
             mDrawerList.setDivider(color);
         }
 

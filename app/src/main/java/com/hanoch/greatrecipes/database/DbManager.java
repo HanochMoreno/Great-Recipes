@@ -17,9 +17,7 @@ import java.util.List;
 
 public class DbManager {
 
-    private static final String TAG = "DbManager";
     private Context context;
-
 
 //-------------------------------------------------------------------------------------------------
 

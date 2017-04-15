@@ -3,9 +3,6 @@ package com.hanoch.greatrecipes.view.adapters;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import android.support.v4.app.FragmentTransaction;
-
-import com.hanoch.greatrecipes.model.MyFragment;
 import com.hanoch.greatrecipes.view.ListFavouriteFragment;
 import com.hanoch.greatrecipes.view.ListMyOwnFragment;
 import com.hanoch.greatrecipes.view.ListOnlineFragment;
