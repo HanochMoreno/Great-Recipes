@@ -71,4 +71,10 @@
         android:icon="@drawable/ic_toolbar_action_add_to_list"
         app:showAsAction="always" />
 
+    <item
+        android:id="@+id/action_refresh"
+        android:title="Refresh"
+        android:icon="@drawable/ic_toolbar_action_refresh"
+        app:showAsAction="always" />
+
 </menu>

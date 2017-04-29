@@ -1,6 +1,7 @@
 package com.hanoch.greatrecipes.view;
 
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
@@ -55,6 +56,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
     private MenuItem toolbar_addServing;
     private MenuItem toolbar_ok;
     private MenuItem toolbar_closeWebView;
+    private MenuItem toolbar_refresh;
 
     private ArrayList<ObjectAnimator> fadingInAnimationsList;
     private Bundle savedInstanceState;
@@ -156,6 +158,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
         buttons.add(AppConsts.ToolbarButtons.ADD_SERVING);
         buttons.add(AppConsts.ToolbarButtons.OK);
         buttons.add(AppConsts.ToolbarButtons.CLOSE_WEBVIEW);
+        buttons.add(AppConsts.ToolbarButtons.REFRESH);
 
         ArrayList<Integer> displayedButtons = new ArrayList<>();
 
@@ -293,6 +296,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
         toolbar_addServing = menu.findItem(R.id.action_addServing).setVisible(false);
         toolbar_ok = menu.findItem(R.id.action_ok).setVisible(false);
         toolbar_closeWebView = menu.findItem(R.id.action_closeWebview).setVisible(false);
+        toolbar_refresh = menu.findItem(R.id.action_refresh).setVisible(false);
 
         if (savedInstanceState == null) {
 
@@ -371,8 +375,8 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
         ArrayList<Integer> toolbarButtonsList;
 
         FragmentManager fm = getSupportFragmentManager();
-        RecipeReviewFragment recipeReviewFragment = (RecipeReviewFragment) fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
-        EditRecipeFragment editRecipeFragment = (EditRecipeFragment) fm.findFragmentByTag(AppConsts.Fragments.EDIT_RECIPE);
+        RecipeReviewFragment2 recipeReviewFragment = (RecipeReviewFragment2) fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
+        EditRecipeFragment2 editRecipeFragment = (EditRecipeFragment2) fm.findFragmentByTag(AppConsts.Fragments.EDIT_RECIPE);
 
         switch (itemId) {
 
@@ -381,7 +385,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
                 fm = getSupportFragmentManager();
                 FragmentTransaction ft = fm.beginTransaction();
 
-                editRecipeFragment = EditRecipeFragment.newInstance(mRecipeId);
+                editRecipeFragment = EditRecipeFragment2.newInstance(mRecipeId);
                 ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right, R.anim.slide_in_left, R.anim.slide_out_left);
                 ft.replace(R.id.layout_container, editRecipeFragment, AppConsts.Fragments.EDIT_RECIPE);
                 ft.commit();
@@ -450,9 +454,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
                 }
 
                 recipeReviewFragment.setFavouriteImage(AppConsts.FavouriteIndex.FAVOURITE);
-
                 setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);
-
                 break;
 
             case R.id.action_removeFromFavourites:
@@ -471,7 +473,6 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
                 recipeReviewFragment.setFavouriteImage(AppConsts.FavouriteIndex.NOT_FAVOURITE);
 
                 setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);
-
                 break;
 
             case R.id.action_ok:
@@ -479,17 +480,17 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
                 CategoriesChooserFragment categoriesChooserFragment = (CategoriesChooserFragment) fm.findFragmentByTag("categoriesChooserFragment");
                 ArrayList<String> categoriesList = categoriesChooserFragment.getSelectedCategoriesNamesList();
-                editRecipeFragment = (EditRecipeFragment) fm.findFragmentByTag(AppConsts.Fragments.EDIT_RECIPE);
                 editRecipeFragment.updateCategoriesList(this, categoriesList);
 
                 onBackPressed();
-
                 break;
 
             case R.id.action_closeWebview:
-
                 onBackPressed();
+                break;
 
+            case R.id.action_refresh:
+                editRecipeFragment.onSaveUserRecipeClicked();
                 break;
 
             default:
@@ -518,13 +519,10 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
             fadingInAnimationsList = new ArrayList<>();
 
-            for (Integer button : allButtons) {
-
-                if (toolbarButtonsList.contains(button)) {
-                    MenuItem toolbarButton = toolbar.getMenu().findItem(button);
-                    fadingInAnimationsList.add(AppHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 600));
-                }
-            }
+            allButtons.stream().filter(toolbarButtonsList::contains).forEach(button -> {
+                MenuItem toolbarButton = toolbar.getMenu().findItem(button);
+                fadingInAnimationsList.add(AppHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 600));
+            });
         }
     }
 
@@ -542,14 +540,13 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
         buttons.add(AppConsts.ToolbarButtons.ADD_SERVING);
         buttons.add(AppConsts.ToolbarButtons.OK);
         buttons.add(AppConsts.ToolbarButtons.CLOSE_WEBVIEW);
+        buttons.add(AppConsts.ToolbarButtons.REFRESH);
 
         // Resetting all buttons to invisible
 
         if (fadingInAnimationsList != null) {
             // Cancelling all buttons "fading-in" animations, if exists
-            for (ObjectAnimator animation : fadingInAnimationsList) {
-                animation.cancel();
-            }
+            fadingInAnimationsList.forEach(ValueAnimator::cancel);
         }
 
         MenuItem toolBarButton;

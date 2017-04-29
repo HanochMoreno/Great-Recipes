@@ -27,7 +27,7 @@ import com.hanoch.greatrecipes.database.DbManager;
 import com.hanoch.greatrecipes.model.AllergensAndDietPrefItem;
 import com.hanoch.greatrecipes.model.RecipeSearchResult;
 import com.hanoch.greatrecipes.AppConsts;
-import com.hanoch.greatrecipes.model.RecipeSearchResultsResponse;
+import com.hanoch.greatrecipes.api.yummly_api.SearchResultsResponse;
 import com.hanoch.greatrecipes.view.adapters.SearchResultsAdapter;
 
 import java.io.UnsupportedEncodingException;
@@ -54,7 +54,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
     private View view;
 
     private DbManager dbManager;
-    private Subscriber<RecipeSearchResultsResponse> subscriber;
+    private Subscriber<SearchResultsResponse> subscriber;
     private boolean isToScrollToTop;
 
 //-------------------------------------------------------------------------------------------------
@@ -251,7 +251,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
                 allergensList.add(URLEncoder.encode(allergenItem.searchKeyName, "utf-8"));
             }
 
-            subscriber = new Subscriber<RecipeSearchResultsResponse>() {
+            subscriber = new Subscriber<SearchResultsResponse>() {
                 @Override
                 public final void onCompleted() {
                 }
@@ -268,7 +268,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
                 }
 
                 @Override
-                public final void onNext(RecipeSearchResultsResponse response) {
+                public final void onNext(SearchResultsResponse response) {
                     progressDialog.dismiss();
 
                     if (response.matches == null || response.matches.isEmpty()) {
@@ -287,7 +287,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
                 }
             };
 
-            Single<RecipeSearchResultsResponse> getSearchResults = ((GreatRecipesApplication) getActivity().getApplication()).getYummlyService().getSearchResults(query, dietList, allergensList);
+            Single<SearchResultsResponse> getSearchResults = ((GreatRecipesApplication) getActivity().getApplication()).getYummlyApi().getSearchResults(query, dietList, allergensList);
             getSearchResults
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())

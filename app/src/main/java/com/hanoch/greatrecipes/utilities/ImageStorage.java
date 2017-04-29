@@ -7,11 +7,14 @@ import android.graphics.Matrix;
 import android.media.ExifInterface;
 import android.net.Uri;
 import android.os.Environment;
+import android.util.Base64;
 import android.util.Log;
 
+import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.nio.ByteBuffer;
 
 /**
  * Image storage to SD card (External Memory).
@@ -245,6 +248,26 @@ public class ImageStorage {
 
     public static Uri getTempUri(Context context) {
         return Uri.fromFile(getTempFile(context));
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public static String convertBitmapToByteArrayAsString(Bitmap bitmap) {
+        ByteArrayOutputStream stream = new ByteArrayOutputStream();
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
+        byte[] bytes = stream.toByteArray();
+        return Base64.encodeToString(bytes, Base64.DEFAULT);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public static Bitmap convertByteArrayAsStrigAsToBitmap(String base64Str) {
+        if (base64Str.isEmpty()) {
+            return null;
+        }
+
+        byte[] decodedBytes = Base64.decode(base64Str.substring(base64Str.indexOf(",")  + 1), Base64.DEFAULT);
+        return BitmapFactory.decodeByteArray(decodedBytes, 0, decodedBytes.length);
     }
 
 //-------------------------------------------------------------------------------------------------

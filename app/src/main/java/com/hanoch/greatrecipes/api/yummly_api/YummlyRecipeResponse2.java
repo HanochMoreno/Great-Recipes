@@ -1,4 +1,4 @@
-package com.hanoch.greatrecipes.model;
+package com.hanoch.greatrecipes.api.yummly_api;
 
 import com.google.gson.annotations.SerializedName;
 
@@ -10,7 +10,7 @@ import java.util.HashMap;
  Represents one result of a recipe online search.
  */
 
-public class YummlyRecipe implements Serializable {
+public class YummlyRecipeResponse2 implements Serializable {
 
     @SerializedName("name")
     public String title;

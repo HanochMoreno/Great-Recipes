@@ -29,9 +29,10 @@ import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.DbManager;
+import com.hanoch.greatrecipes.model.ApiProvider;
 import com.hanoch.greatrecipes.model.Recipe;
 import com.hanoch.greatrecipes.model.RecipeSearchResult;
-import com.hanoch.greatrecipes.model.YummlyRecipe;
+import com.hanoch.greatrecipes.api.yummly_api.YummlyRecipeResponse2;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 import com.squareup.picasso.Picasso;
 import com.squareup.picasso.Target;
@@ -495,7 +496,9 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
             }
         };
 
-        Single<YummlyRecipe> getRecipeDetails = ((GreatRecipesApplication) getActivity().getApplication()).getYummlyService().getRecipeInfo(mOnlineSearchResultId, query);
+        Single<YummlyRecipeResponse2> getRecipeDetails =
+                ApiProvider.getYummlyApi().getYummlyRecipe(mOnlineSearchResultId, query);
+
         getRecipeDetails
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -514,7 +517,7 @@ public class RecipeReviewFragment extends Fragment implements View.OnClickListen
 
 //-------------------------------------------------------------------------------------------------
 
-    private RecipeSearchResult generateRecipeResult(YummlyRecipe yummlyRecipe) {
+    private RecipeSearchResult generateRecipeResult(YummlyRecipeResponse2 yummlyRecipe) {
         RecipeSearchResult searchResult = new RecipeSearchResult();
 
         searchResult.recipeId = mRecipeId;

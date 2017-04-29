@@ -2,6 +2,7 @@ package com.hanoch.greatrecipes.view;
 
 import android.animation.ObjectAnimator;
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
@@ -22,6 +23,7 @@ import android.os.Bundle;
 
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -34,19 +36,33 @@ import android.widget.TextView;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.R;
+import com.hanoch.greatrecipes.api.YummlyRecipe;
+import com.hanoch.greatrecipes.api.yummly_api.YummlyRecipeResponse2;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.AllergensAndDietPrefItem;
+import com.hanoch.greatrecipes.model.ApiProvider;
 import com.hanoch.greatrecipes.model.ObjectDrawerItem;
 import com.hanoch.greatrecipes.utilities.MyFonts;
 import com.hanoch.greatrecipes.view.adapters.DrawerItemAdapter;
 import com.hanoch.greatrecipes.view.adapters.DrawerItemAdapterLimited;
 
+import java.io.UnsupportedEncodingException;
+import java.net.ConnectException;
+import java.net.URLEncoder;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.HashMap;
+
+import rx.Single;
+import rx.Subscriber;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Func0;
+import rx.schedulers.Schedulers;
 
 public class OnlineSearchActivity extends AppCompatActivity implements
         OnlineSearchResultsFragment.OnFragmentOnlineSearchListener,
-        RecipeReviewFragment.FragmentRecipeReviewListener,
+        RecipeReviewFragment2.FragmentRecipeReviewListener,
         ToolbarMenuSetting {
 
     private LinearLayout layout_logo;
@@ -72,7 +88,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
     private ArrayList<String> drawerCheckedItemsPositionList;
     private String extra_serving;
-    private long mRecipeId;
+    private String mRecipeId;
     private String mResultYummlyId;
 
     /**
@@ -84,6 +100,9 @@ public class OnlineSearchActivity extends AppCompatActivity implements
     private boolean isPremium;
 
     private boolean afterRestoreState;
+    private ArrayList<Subscriber<YummlyRecipe>> subscribersList = new ArrayList<>();
+    private ProgressDialog progressDialog;
+    private boolean isActivityPaused;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -92,6 +111,10 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
 
         setContentView(R.layout.activity_online_search);
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle(getString(R.string.loading_info));
+        progressDialog.setMessage(getString(R.string.please_wait));
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         isPremium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
@@ -242,6 +265,8 @@ public class OnlineSearchActivity extends AppCompatActivity implements
     protected void onResume() {
         super.onResume();
 
+        isActivityPaused = false;
+
         if (getResources().getBoolean(R.bool.isTablet)) {
 
             if (getResources().getBoolean(R.bool.isSmallTablet))
@@ -359,6 +384,21 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
+    protected void onPause() {
+        super.onPause();
+
+        isActivityPaused = true;
+        subscribersList.stream()
+                .filter(subscriber -> subscriber != null && !subscriber.isUnsubscribed())
+                .forEach(subscriber -> {
+                    Log.d("OnlineSearchActivity", "onPause: subscriber is going to get unSubscribed");
+                    subscriber.unsubscribe();
+                });
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Override
     public void setTitle(CharSequence title) {
         activityToolbarTitle = (String) title;
         toolbar.setTitle(activityToolbarTitle);
@@ -406,7 +446,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                     String oldQuery = "";
                     if (errorCharPosition != -1) {
                         for (int i = 0; i < chars.length; i++) {
-                            if (i!=errorCharPosition) {
+                            if (i != errorCharPosition) {
                                 oldQuery += chars[i];
                             }
                         }
@@ -414,7 +454,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                         searchView.setQuery(oldQuery, false);
 
                         // Relocating the selection in the right place
-                        EditText editText = (EditText)searchView.findViewById(R.id.search_src_text);
+                        EditText editText = (EditText) searchView.findViewById(R.id.search_src_text);
                         editText.setSelection(errorCharPosition);
 
                         View rootView = OnlineSearchActivity.this.findViewById(android.R.id.content);
@@ -494,14 +534,14 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         }
 
         FragmentManager fm = getSupportFragmentManager();
-        RecipeReviewFragment recipeReviewFragment;
+        RecipeReviewFragment2 recipeReviewFragment;
 
         switch (item.getItemId()) {
 
             case R.id.action_addServing:
 
-                recipeReviewFragment = (RecipeReviewFragment) fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
-                recipeReviewFragment.onSaveOnlineRecipe();
+                recipeReviewFragment = (RecipeReviewFragment2) fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
+                recipeReviewFragment.onSaveOnlineRecipe(mRecipeId);
 
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, mRecipeId);
@@ -536,7 +576,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 }
 
                 recipeReviewFragment = (RecipeReviewFragment) fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
-                recipeReviewFragment.onSaveOnlineRecipe();
+                recipeReviewFragment.onSaveOnlineRecipe(mRecipeId);
 
                 // After saving the recipe to the user 'Online List', the recipeReviewFragment
                 // will call onRecipeWasSaved() method of this activity
@@ -586,13 +626,10 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
             fadingInAnimationsList = new ArrayList<>();
 
-            for (Integer button : allButtons) {
-
-                if (toolbarButtonsList.contains(button)) {
-                    MenuItem toolbarButton = toolbar.getMenu().findItem(button);
-                    fadingInAnimationsList.add(AppHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 600));
-                }
-            }
+            allButtons.stream().filter(toolbarButtonsList::contains).forEach(button -> {
+                MenuItem toolbarButton = toolbar.getMenu().findItem(button);
+                fadingInAnimationsList.add(AppHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 600));
+            });
         } else {
             if (!toolbar_search.isVisible()) {
                 AppHelper.animateToolbarButtonFadingIn(toolbar_search, 500, 600);
@@ -748,47 +785,233 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
 //-------------------------------------------------------------------------------------------------
 
+    public void downloadYummlyRecipeFromGreatRecipesApi(String resultYummlyId) {
+
+        String tempEncoded = resultYummlyId;
+        try {
+            tempEncoded = URLEncoder.encode(resultYummlyId, "utf-8");
+        } catch (UnsupportedEncodingException e) {
+        }
+        final String encoded = tempEncoded;
+
+        progressDialog.show();
+
+        Subscriber<YummlyRecipe> subscriber = new Subscriber<YummlyRecipe>() {
+            @Override
+            public void onCompleted() {
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                onDownloadRecipeCompleted(false, null, t);
+            }
+
+            @Override
+            public void onNext(YummlyRecipe recipe) {
+                if (!OnlineSearchActivity.this.isActivityPaused) {
+                    if (recipe == null) {
+                        downloadRecipeFromYummlyApi(encoded);
+                    } else {
+                        onDownloadRecipeCompleted(true, recipe, null);
+                    }
+                }
+            }
+        };
+
+        subscribersList.add(subscriber);
+
+        Single<YummlyRecipe> getRecipeDetails =
+                ApiProvider.getGreatRecipesApi().getYummlyRecipe(resultYummlyId);
+
+        getRecipeDetails
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+
+//        if (recipeImage == null) {
+//            // Retry to download the recipe's image
+//            String imageUrl = dbManager.queryResultObjectById(mRecipeId).imageUrl;
+//            if (imageUrl != null && !imageUrl.isEmpty()) {
+//                tryToGetRecipeImage(imageUrl);
+//            }
+//        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public void downloadRecipeFromYummlyApi(String resultYummlyId) {
+        // For Example:
+        // http://api.yummly.com/v1/api/recipe/French-Onion-Soup-1292648?_app_id=417b707a&_app_key=249ec501a990bd7d5fa5dd5218bf7e14
+
+        String appId = AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL;
+        String appKey = AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL;
+        String requiredPictureValue = "true";
+
+        try {
+            appId = URLEncoder.encode(AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL, "utf-8");
+            appKey = URLEncoder.encode(AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL, "utf-8");
+            requiredPictureValue = URLEncoder.encode("true", "utf-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+
+        HashMap<String, String> query = new HashMap<>();
+        query.put("_app_id", appId);
+        query.put("_app_key", appKey);
+        query.put("requirePictures", requiredPictureValue);
+
+        Subscriber<YummlyRecipe> subscriber = new Subscriber<YummlyRecipe>() {
+            @Override
+            public void onCompleted() {
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                onDownloadRecipeCompleted(false, null, t);
+            }
+
+            @Override
+            public void onNext(YummlyRecipe yummlyRecipe) {
+                onDownloadRecipeCompleted(true, yummlyRecipe, null);
+            }
+        };
+
+        subscribersList.add(subscriber);
+
+        Single<YummlyRecipeResponse2> getYummlyRecipe =
+                ApiProvider.getYummlyApi().getYummlyRecipe(resultYummlyId, query);
+
+        Single.defer((Func0<Single<YummlyRecipeResponse2>>) () -> getYummlyRecipe)
+                .subscribeOn(Schedulers.io())
+                .map(this::generateRecipeResult)
+                .flatMap(yummlyRecipe -> ApiProvider.getGreatRecipesApi().addYummlyRecipe(yummlyRecipe))
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+
+//        if (recipeImage == null) {
+//            // Retry to download the recipe's image
+//            String imageUrl = dbManager.queryResultObjectById(mRecipeId).imageUrl;
+//            if (imageUrl != null && !imageUrl.isEmpty()) {
+//                tryToGetRecipeImage(imageUrl);
+//            }
+//        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    private void onDownloadRecipeCompleted(boolean isSuccess, YummlyRecipe recipe, Throwable t) {
+        if (!isActivityPaused) {
+            progressDialog.dismiss();
+
+            if (isSuccess) {
+                FragmentManager fm = getSupportFragmentManager();
+                FragmentTransaction ft = fm.beginTransaction();
+                Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(recipe._id, false, extra_serving);
+
+                if (getResources().getBoolean(R.bool.isTablet)) {
+                    // tablet
+
+                    if (layout_logo.getVisibility() == View.VISIBLE) {
+                        AppHelper.animateViewFadingOut(this, layout_logo, 500, 0);
+                    }
+
+                    Boolean recipeDetailsIsShawn = (toolbar_addServing.isVisible() || toolbar_addToList.isVisible() || toolbar_closeWebView.isVisible());
+                    if (mResultYummlyId.equals(recipe.yummlyId) && recipeDetailsIsShawn) return;
+
+                    mResultYummlyId = recipe.yummlyId;
+                    mRecipeId = recipe._id;
+
+                    Fragment webViewFragment = fm.findFragmentByTag(AppConsts.Fragments.WEB_VIEW);
+                    if (webViewFragment != null) {
+                        fm.popBackStack();
+                    }
+
+                    ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
+                    ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
+
+                } else {
+                    // phone
+
+                    mResultYummlyId = recipe.yummlyId;
+                    mRecipeId = recipe._id;
+
+                    ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left, R.anim.slide_in_right, R.anim.slide_out_right);
+                    ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
+                    ft.addToBackStack(null);
+
+                    // Remove the Hamburger icon
+                    mDrawerToggle.setDrawerIndicatorEnabled(false);
+                }
+
+                ft.commit();
+            } else {
+                View rootView = findViewById(android.R.id.content);
+                if (t instanceof UnknownHostException || t instanceof ConnectException) {
+                    AppHelper.showSnackBar(rootView, R.string.internet_error, Color.RED);
+                } else {
+                    AppHelper.showSnackBar(rootView, R.string.unexpected_error, Color.RED);
+                }
+
+                ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
+                toolbarButtonsList.add(AppConsts.ToolbarButtons.REFRESH);
+
+                setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.PRIMARY, getString(R.string.internet_error));
+            }
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    private YummlyRecipe generateRecipeResult(YummlyRecipeResponse2 yummlyRecipe) {
+        YummlyRecipe searchResult = new YummlyRecipe();
+
+        searchResult.yummlyId = mResultYummlyId;
+
+        searchResult.recipeTitle = yummlyRecipe.title;
+        searchResult.yield = yummlyRecipe.yield;
+        searchResult.cookingTime = yummlyRecipe.time;
+
+        searchResult.author = AppConsts.Category.NO_INFO;
+        searchResult.url = AppConsts.Category.NO_INFO;
+
+        if (yummlyRecipe.source != null) {
+            if (yummlyRecipe.source.containsKey("sourceDisplayName")) {
+                searchResult.author = yummlyRecipe.source.get("sourceDisplayName");
+            }
+
+            if (yummlyRecipe.source.containsKey("sourceRecipeUrl")) {
+                searchResult.url = yummlyRecipe.source.get("sourceRecipeUrl");
+            }
+        }
+
+        searchResult.ingredientsList = yummlyRecipe.ingredients;
+
+        ArrayList<String> categories = new ArrayList<>();
+        if (yummlyRecipe.attributes != null) {
+            categories = yummlyRecipe.attributes.get("course");
+        }
+        searchResult.categoriesList = categories;
+
+        searchResult.energy = -1;
+        if (yummlyRecipe.nutritions != null) {
+            for (HashMap<String, Object> nutrition : yummlyRecipe.nutritions) {
+                if (nutrition.containsKey("attribute") && nutrition.get("attribute").equals("ENERC_KCAL")) {
+                    double calories = (double) nutrition.get("value");
+                    searchResult.energy = (int) calories;
+                    break;
+                }
+            }
+        }
+
+        return searchResult;
+    }
+
+//-------------------------------------------------------------------------------------------------
+
     @Override
     public void onSearchResultClick(long resultId, String resultYummlyId) {
 
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
-        Fragment recipeReviewFragment = RecipeReviewFragment.newInstance(resultId, resultYummlyId, extra_serving);
-
-        if (getResources().getBoolean(R.bool.isTablet)) {
-            // tablet
-
-            if (layout_logo.getVisibility() == View.VISIBLE) {
-                AppHelper.animateViewFadingOut(this, layout_logo, 500, 0);
-            }
-
-            Boolean recipeDetailsIsShawn = (toolbar_addServing.isVisible() || toolbar_addToList.isVisible() || toolbar_closeWebView.isVisible());
-            if (this.mResultYummlyId.equals(resultYummlyId) && recipeDetailsIsShawn) return;
-
-            this.mResultYummlyId = resultYummlyId;
-
-            Fragment webViewFragment = fm.findFragmentByTag(AppConsts.Fragments.WEB_VIEW);
-            if (webViewFragment != null) {
-                fm.popBackStack();
-            }
-
-            ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
-            ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
-
-        } else {
-            // phone
-
-            this.mResultYummlyId = resultYummlyId;
-
-            ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left, R.anim.slide_in_right, R.anim.slide_out_right);
-            ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
-            ft.addToBackStack(null);
-
-            // Remove the Hamburger icon
-            mDrawerToggle.setDrawerIndicatorEnabled(false);
-        }
-
-        ft.commit();
+        downloadYummlyRecipeFromGreatRecipesApi(resultYummlyId);
     }
 
 //-------------------------------------------------------------------------------------------------

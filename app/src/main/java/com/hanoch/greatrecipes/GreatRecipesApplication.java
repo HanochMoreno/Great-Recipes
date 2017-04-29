@@ -21,7 +21,8 @@ import android.app.Application;
 import com.google.android.gms.analytics.GoogleAnalytics;
 import com.google.android.gms.analytics.Tracker;
 import com.hanoch.greatrecipes.database.DbManager;
-import com.hanoch.greatrecipes.retrofit.YummlyService;
+import com.hanoch.greatrecipes.api.great_recipes_api.GreatRecipesApi;
+import com.hanoch.greatrecipes.api.yummly_api.YummlyApi;
 
 import retrofit2.Retrofit;
 import retrofit2.adapter.rxjava.RxJavaCallAdapterFactory;
@@ -34,9 +35,6 @@ import retrofit2.converter.gson.GsonConverterFactory;
 public class GreatRecipesApplication extends Application {
     private Tracker mTracker;
     private DbManager dbManager;
-    private YummlyService yummlyService;
-    private Retrofit retrofit;
-
 
     /**
      * Gets the default {@link Tracker} for this {@link Application}.
@@ -51,26 +49,7 @@ public class GreatRecipesApplication extends Application {
         return mTracker;
     }
 
-    public Retrofit getRetrofit() {
-        if (retrofit == null) {
-            retrofit =  new Retrofit.Builder()
-                    .baseUrl(AppConsts.ApiAccess.YUMMLY_BASE_URL)
-                    .addCallAdapterFactory(RxJavaCallAdapterFactory.create())
-                    .addConverterFactory(GsonConverterFactory.create())
-                    .build();
-        }
-        return retrofit;
-    }
-
-    public YummlyService getYummlyService() {
-        if (yummlyService == null) {
-            yummlyService = getRetrofit().create(YummlyService.class);
-        }
-        return yummlyService;
-    }
-
     public DbManager getDbManager() {
-
         if (dbManager == null) {
             dbManager = new DbManager(this);
         }

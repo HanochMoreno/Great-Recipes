@@ -6,7 +6,8 @@ import android.util.SparseArray;
 
 public class AppConsts {
 
-    public static final int NEW_RECIPE = -1;
+//    public static final int NEW_RECIPE = -1;
+    public static final String NEW_RECIPE = "NEW_RECIPE";
     public static final float NO_RATING = 0;
     public static final int NO_SELECTION = -1;
     public static final int REQ_CODE_PURCHASE = 1000;
@@ -217,8 +218,10 @@ public class AppConsts {
     public class Images {
 
         public static final String RESULT_IMAGE_PREFIX = "result_image_";
-        public static final String RECIPE_IMAGE_PREFIX = "recipe_image_";
-        public static final String RECIPE_THUMBNAIL_PREFIX = "recipe_thumbnail_";
+//        public static final String RECIPE_IMAGE_PREFIX = "recipe_image_";
+        public static final String RECIPE_IMAGE = "recipe_image";
+//        public static final String RECIPE_THUMBNAIL_PREFIX = "recipe_thumbnail_";
+        public static final String RECIPE_THUMBNAIL = "recipe_thumbnail";
     }
 
 //-------------------------------------------------------------------------------------------------

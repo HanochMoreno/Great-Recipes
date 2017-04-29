@@ -46,7 +46,7 @@ public class RecipesListAdapter extends CursorAdapter {
 
         private ImageView imageView_image;
         private ImageView imageView_checked;
-        public TextView textView_noImageAvailable;
+        private TextView textView_noImageAvailable;
     }
 
 //----------------------------------------------------------------------------------------------

@@ -25,7 +25,6 @@ import android.widget.TextView;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import com.hanoch.greatrecipes.model.AllergensAndDietPrefItem;
-import com.hanoch.greatrecipes.model.Category;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -405,51 +404,6 @@ public abstract class AppHelper {
         }
 
         return stringServing;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    public static ArrayList<Category> getDefaultCategoriesList() {
-
-        ArrayList<Category> categories = new ArrayList<>();
-
-        Category category = new Category(AppConsts.Category.BREADS, R.drawable.cat_breads, 0, false);
-        categories.add(category);
-
-        category = new Category(AppConsts.Category.DESSERTS, R.drawable.cat_desserts, 1, false);
-        categories.add(category);
-
-        category = new Category(AppConsts.Category.SIDE_DISHES, R.drawable.cat_side_dishes, 2, false);
-        categories.add(category);
-
-        category = new Category(AppConsts.Category.LUNCH_AND_SNACKS, R.drawable.cat_lunch_and_snacks, 3, false);
-        categories.add(category);
-
-        category = new Category(AppConsts.Category.APPETIZERS, R.drawable.cat_appetizers, 4, false);
-        categories.add(category);
-
-        category = new Category(AppConsts.Category.SALADS, R.drawable.cat_salads, 5, false);
-        categories.add(category);
-
-        category = new Category(AppConsts.Category.MAIN_DISHES, R.drawable.cat_main_dishes, 6, false);
-        categories.add(category);
-
-        category = new Category(AppConsts.Category.BREAKFAST_AND_BRUNCH, R.drawable.cat_breakfast_and_brunch, 7, false);
-        categories.add(category);
-
-        category = new Category(AppConsts.Category.SOUPS, R.drawable.cat_soups, 8, false);
-        categories.add(category);
-
-        category = new Category(AppConsts.Category.BEVERAGES, R.drawable.cat_beverages, 9, false);
-        categories.add(category);
-
-        category = new Category(AppConsts.Category.CONDIMENTS_AND_SAUCES, R.drawable.cat_condiments_and_sauces, 10, false);
-        categories.add(category);
-
-        category = new Category(AppConsts.Category.COCKTAILS, R.drawable.cat_cocktails, 11, false);
-        categories.add(category);
-
-        return categories;
     }
 
 //-------------------------------------------------------------------------------------------------

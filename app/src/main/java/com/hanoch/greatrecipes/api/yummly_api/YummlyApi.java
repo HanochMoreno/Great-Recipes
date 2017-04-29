@@ -1,8 +1,6 @@
-package com.hanoch.greatrecipes.retrofit;
+package com.hanoch.greatrecipes.api.yummly_api;
 
 import com.hanoch.greatrecipes.AppConsts;
-import com.hanoch.greatrecipes.model.RecipeSearchResultsResponse;
-import com.hanoch.greatrecipes.model.YummlyRecipe;
 
 import java.util.List;
 import java.util.Map;
@@ -14,15 +12,16 @@ import retrofit2.http.QueryMap;
 import rx.Single;
 
 
-public interface YummlyService {
+public interface YummlyApi {
+
     @GET(AppConsts.ApiAccess.YUMMLY_KEY_SEARCH)
-    Single<RecipeSearchResultsResponse> getSearchResults(
+    Single<SearchResultsResponse> getSearchResults(
             @QueryMap Map<String, String> queries,
             @Query("allowedDiet[]") List<String> dietItems,
             @Query("allowedAllergy[]") List<String> allergensItems);
 
     @GET(AppConsts.ApiAccess.YUMMLY_RECIPE_SEARCH + "{recipeId}")
-    Single<YummlyRecipe> getRecipeInfo(
+    Single<YummlyRecipeResponse2> getYummlyRecipe(
             @Path("recipeId") String recipeId,
             @QueryMap Map<String, String> queries);
 }

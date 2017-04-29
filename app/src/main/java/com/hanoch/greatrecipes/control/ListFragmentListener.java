@@ -4,9 +4,9 @@ import com.hanoch.greatrecipes.model.MyFragment;
 
 
 public interface ListFragmentListener {
-    void onRecipeClick(MyFragment listFragment, long id);
+    void onRecipeClick(MyFragment listFragment, String id);
 
-    void onListItemChecked(MyFragment listFragment, long id, boolean isChecked);
+    void onListItemChecked(MyFragment listFragment, String id, boolean isChecked);
 
     void onAddNewRecipeClick(MyFragment listFragment, int listTypeIndex);
 
