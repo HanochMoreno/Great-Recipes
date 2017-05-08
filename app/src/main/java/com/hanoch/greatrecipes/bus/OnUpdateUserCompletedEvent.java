@@ -1,8 +1,17 @@
 package com.hanoch.greatrecipes.bus;
 
-/**
- * Created by Hanoc_000 on 30/04/2017.
- */
+import com.hanoch.greatrecipes.api.great_recipes_api.User;
 
-class OnUpdateUserCompleted {
+
+public class OnUpdateUserCompletedEvent {
+
+    public boolean isSuccess;
+    public User user;
+    public Throwable t;
+
+    public OnUpdateUserCompletedEvent(boolean isSuccess, User user, Throwable t) {
+        this.isSuccess = isSuccess;
+        this.user = user;
+        this.t = t;
+    }
 }

@@ -204,5 +204,10 @@
     <string name="error_purchasing">תקלה ברכישה</string>
     <string name="Billing_unavailable_for_device">שירות החיוב של גוגל אינו זמין למכשיר זה</string>
     <string name="loading_info">טוען נתונים</string>
+    <string name="email">אי-מייל</string>
+    <string name="password">סיסמא</string>
+    <string name="retype_password">הקש סיסמא בשנית</string>
+    <string name="username">שם משתמש</string>
+    <string name="added_to_your_list">המתכון הוסף בהצלחה לרשימות המתכונים שלך</string>
 
 </resources>

@@ -1,16 +1,20 @@
 package com.hanoch.greatrecipes.bus;
 
 
-import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
+import com.hanoch.greatrecipes.api.YummlyRecipe;
 
-public class OnUpdateUserRecipeCompletedEvent {
+import java.util.HashMap;
+
+public class OnUpdateUserYummlyRecipesEvent {
+    public int action;
     public boolean isSuccess;
-    public UserRecipe recipe;
+    public HashMap<String, YummlyRecipe> recipesMap;
     public Throwable t;
 
-    public OnUpdateUserRecipeCompletedEvent(boolean isSuccess, UserRecipe recipe, Throwable t) {
+    public OnUpdateUserYummlyRecipesEvent(int action, boolean isSuccess, HashMap<String, YummlyRecipe> recipesMap, Throwable t) {
+        this.action = action;
         this.isSuccess = isSuccess;
-        this.recipe = recipe;
+        this.recipesMap = recipesMap;
         this.t = t;
     }
 }

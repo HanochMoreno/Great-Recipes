@@ -261,7 +261,7 @@ public class ImageStorage {
 
 //-------------------------------------------------------------------------------------------------
 
-    public static Bitmap convertByteArrayAsStrigAsToBitmap(String base64Str) {
+    public static Bitmap convertByteArrayAsStringAsToBitmap(String base64Str) {
         if (base64Str.isEmpty()) {
             return null;
         }

@@ -1,9 +1,7 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:gravity="center"
-    tools:context=".FavouriteRecipesActivity">
+    android:gravity="center">
 
     <include
         android:id="@+id/layout_dialogBubble"
@@ -17,7 +15,7 @@
         android:dividerHeight="2dp"/>
 
     <android.support.design.widget.FloatingActionButton
-        android:id="@+id/floatingButton_addMyOwnRecipe"
+        android:id="@+id/floatingButton_addRecipe"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:layout_gravity="end|bottom"

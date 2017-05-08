@@ -13,7 +13,6 @@
         android:background="@android:color/black"
         android:orientation="horizontal"
         android:weightSum="1">
-        <!--android:background="@drawable/background_black"-->
 
         <FrameLayout
             android:id="@+id/layout_image"
@@ -47,8 +46,8 @@
                 android:layout_height="50dp"
                 android:layout_gravity="center"
                 android:src="@drawable/ic_checked"
-                tools:visibility="visible"
-                android:visibility="invisible" />
+                android:visibility="invisible"
+                tools:visibility="visible" />
         </FrameLayout>
 
         <TextView
@@ -58,9 +57,9 @@
             android:gravity="top|start|center"
             android:paddingLeft="10dp"
             android:paddingRight="10dp"
-            tools:text="Recipe Title\nRecipe Title\nRecipe Title\nRecipe Title"
             android:textColor="@android:color/white"
-            android:textSize="@dimen/text_size_list_item_recipe_name" />
+            android:textSize="@dimen/text_size_list_item_recipe_name"
+            tools:text="Recipe Title\nRecipe Title\nRecipe Title\nRecipe Title" />
 
     </LinearLayout>
 

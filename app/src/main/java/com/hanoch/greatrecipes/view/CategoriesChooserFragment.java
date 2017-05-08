@@ -15,6 +15,7 @@ import android.view.animation.ScaleAnimation;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.R;
@@ -240,12 +241,12 @@ public class CategoriesChooserFragment extends Fragment
         if (selectedCategoriesNamesList.contains(categoryOriginalName)) {
             // Checked category was unchecked
             selectedCategoriesNamesList.remove(categoryOriginalName);
-            AppHelper.animateUncheckedCategory(v, getContext());
+            AnimationHelper.animateUncheckedCategory(v, getContext());
 
         } else {
             // Unchecked category was checked
             selectedCategoriesNamesList.add(categoryOriginalName);
-            AppHelper.animateCheckedCategory(v, getContext());
+            AnimationHelper.animateCheckedCategory(v, getContext());
         }
     }
 

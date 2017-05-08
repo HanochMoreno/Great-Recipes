@@ -1,18 +1,12 @@
 <FrameLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:gravity="center">
 
     <include
         android:id="@+id/layout_dialogBubble"
-        layout="@layout/dialog_bubble"/>
-
-    <ListView
-        android:id="@+id/listView_recipesList"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:layout_gravity="center_horizontal"
-        android:dividerHeight="2dp"/>
+        layout="@layout/dialog_bubble" />
 
     <android.support.design.widget.FloatingActionButton
         android:id="@+id/floatingButton_addRecipe"
@@ -22,5 +16,13 @@
         android:layout_margin="25dp"
         android:clickable="true"
         android:src="@drawable/btn_flt_add" />
+
+    <ListView
+        android:id="@+id/listView_recipesList"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_gravity="center_horizontal"
+        android:dividerHeight="2dp"
+        tools:listitem="@layout/listitem_recipes_list" />
 
 </FrameLayout>

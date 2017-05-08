@@ -33,6 +33,7 @@
     <string name="dessert">Dessert</string>
     <string name="does_recipe_exist">Does the recipe exist?</string>
     <string name="added_to_my_own">The recipe was added to \'My Own Recipes\' list</string>
+    <string name="added_to_your_list">The recipe was added to your recipes lists</string>
     <string name="saved_successfully">The recipe was saved successfully</string>
     <string name="servings">Servings</string>
     <string name="enter_ingredient_detail">Enter the ingredient details</string>
@@ -207,5 +208,10 @@
     <string name="error_purchasing">"Error purchasing"</string>
     <string name="Billing_unavailable_for_device">Billing service is not available for this device</string>
     <string name="loading_info">Loading info</string>
+    <string name="email">e-Mail</string>
+    <string name="username">Username</string>
+    <string name="password">Password</string>
+    <string name="retype_password">Retype password</string>
+    <string name="passwords_are_not_identical">Passwords are not identical</string>
 
 </resources>

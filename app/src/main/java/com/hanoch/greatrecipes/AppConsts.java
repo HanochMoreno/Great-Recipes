@@ -7,9 +7,9 @@ import android.util.SparseArray;
 public class AppConsts {
 
 //    public static final int NEW_RECIPE = -1;
-    public static final String NEW_RECIPE = "NEW_RECIPE";
+//    public static final String NEW_RECIPE = "NEW_RECIPE";
     public static final float NO_RATING = 0;
-    public static final int NO_SELECTION = -1;
+//    public static final int NO_SELECTION = -1;
     public static final int REQ_CODE_PURCHASE = 1000;
 
     public static final String SIGNATURE_BASE_64_LICENSE_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoB80Hzf+3qCy8wVXsCtqPh7BjTtFIfolF28MYCOYqLDb2nsiET+V599lG8KDw/JhgQd6SfvknoVWEnV4uuMXdBpeJh+hKW4bJgAQhtpg6P27pg9C+g08tP1/R9nq+vnNONoY3T+wTmhTn0mqeAijqbghke6Rx5hJv6RPgt60KYFnxmwAffk6xg9HRn9rLNP3v1okhfOqNzQjXyrs+h5Mr2S5WaU52tewGZ1W4258ts2B8bxca0adJNl4R86lxS3GliFnS9NA/tb7BEo3SAJzFoQ9GSnWCABXwNkX/1UtH1BTTkps1imjQRBT921qjWMBM2caHZGAXZB8FmejwtVcFwIDAQAB";
@@ -34,8 +34,6 @@ public class AppConsts {
 
     public class Actions {
 
-        public static final String ACTION_TAB_CHANGED = "receiverAction_tabChanged";
-
         public static final String ACTION_ADD_NEW = "action_addNew";
         public static final String ACTION_EDIT = "action_edit";
         public static final String ACTION_REVIEW = "action_review";
@@ -46,6 +44,7 @@ public class AppConsts {
     public class Extras {
 
         public static final String EXTRA_RECIPE_ID = "extra_recipeId";
+        public static final String EXTRA_IS_USER_RECIPE = "extra_isUserRecipe";
 
         public static final String EXTRA_SERVING = "extra_serving";
         public static final String ADD_SERVING = "addServing";
@@ -168,6 +167,7 @@ public class AppConsts {
         public static final String WHEAT_FREE = "Wheat-free";
 
         public static final String USER_NAME = "userName";
+        public static final String PASSWORD = "password";
         public static final String MAIN_MENU_DISPLAY = "mainMenuDisplay";
         public static final String MAX_ONLINE_SEARCH_RESULTS = "maxOnlineSearchResults";
         public static final String DELETE_ALL = "deleteAll";

@@ -12,8 +12,8 @@ import android.view.ViewGroup;
 
 //import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.model.MyBus;
-import com.hanoch.greatrecipes.model.TabChangedEvent;
+import com.hanoch.greatrecipes.bus.MyBus;
+import com.hanoch.greatrecipes.bus.OnTabChangedEvent;
 import com.hanoch.greatrecipes.view.adapters.PagerAdapter;
 
 
@@ -73,7 +73,7 @@ public class TabsFragment extends Fragment {
             @Override
             public void onTabUnselected(TabLayout.Tab tab) {
 
-                bus.post(new TabChangedEvent());
+                bus.post(new OnTabChangedEvent());
 
                 /*broadcastIntent = new Intent(AppConsts.Actions.ACTION_TAB_CHANGED);
                 LocalBroadcastManager lbm = LocalBroadcastManager.getInstance(getContext());

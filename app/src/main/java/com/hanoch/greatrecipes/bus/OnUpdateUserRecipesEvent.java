@@ -1,20 +1,18 @@
 package com.hanoch.greatrecipes.bus;
 
 
-import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
+import com.hanoch.greatrecipes.api.great_recipes_api.User;
 
-import java.util.HashMap;
-
-public class OnUpdateUserUserRecipesEvent {
+public class OnUpdateUserRecipesEvent {
     public int action;
     public boolean isSuccess;
-    public HashMap<String, UserRecipe> recipesMap;
+    public User user;
     public Throwable t;
 
-    public OnUpdateUserUserRecipesEvent(int action, boolean isSuccess, HashMap<String, UserRecipe> recipesMap, Throwable t) {
+    public OnUpdateUserRecipesEvent(int action, boolean isSuccess, User user, Throwable t) {
         this.action = action;
         this.isSuccess = isSuccess;
-        this.recipesMap = recipesMap;
+        this.user = user;
         this.t = t;
     }
 }

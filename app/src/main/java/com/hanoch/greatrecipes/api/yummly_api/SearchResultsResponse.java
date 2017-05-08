@@ -5,7 +5,7 @@ import com.hanoch.greatrecipes.model.ThinRecipeSearchResult;
 import java.util.List;
 
 /**
- Represents one result of a recipe online search.
+ Represents one result of a Yummly recipes online search.
  */
 
 public class SearchResultsResponse {

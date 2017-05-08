@@ -1,109 +1,72 @@
 package com.hanoch.greatrecipes.view.adapters;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.CursorAdapter;
+import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
-import com.hanoch.greatrecipes.GreatRecipesApplication;
+import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.database.RecipesContract;
+import com.hanoch.greatrecipes.api.GGGRecipe2;
+import com.hanoch.greatrecipes.api.YummlyRecipe;
+import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
+import com.hanoch.greatrecipes.model.ApiProvider;
+import com.hanoch.greatrecipes.model.Serving2;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+
+import rx.Single;
+import rx.android.schedulers.AndroidSchedulers;
+import rx.functions.Action1;
+import rx.schedulers.Schedulers;
 
 /**
  * Custom adapter for the 'Online recipes' list
  */
 
-public class ServingsCursorAdapter extends CursorAdapter {
+public class ServingsListAdapter extends BaseAdapter {
 
-    int MAX_ITEMS = 100;
+    final int MAX_ITEMS = 100;
+
+    private ArrayList<Serving2> servingsList;
+    private Context context;
+    private AppStateManager appStateManager;
 
     private ArrayList<String> selectedIds;
     private HashMap<String, View> viewsMap = new HashMap<>();
 
 //-------------------------------------------------------------------------------------------------
 
-    private class ViewHolder {
+    public class ViewHolder {
 
-        private long id;
-        private long recipeId;
-        private TextView textView_recipeTitle;
-        private TextView textView_servingType;
+        public String recipeId;
+        public String servingId;
+        public TextView tv_recipeTitle;
+        public TextView tv_servingType;
 
-        private ImageView imageView_image;
-        private ImageView imageView_checked;
-        public TextView textView_noImageAvailable;
+        public ImageView iv_image;
+        public ImageView iv_checked;
+        public TextView tv_noImageAvailable;
     }
 
 //----------------------------------------------------------------------------------------------
 
-    public ServingsCursorAdapter(Context context, Cursor c, ArrayList<String> selectedIds) {
-        super(context, c, 0);
+    public ServingsListAdapter(Context context, ArrayList<String> selectedIds) {
 
+        appStateManager = AppStateManager.getInstance();
+        servingsList = new ArrayList<>(appStateManager.user.servingsList);
+        this.context = context;
         this.selectedIds = selectedIds;
     }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
-    public View newView(Context context, Cursor cursor, ViewGroup parent) {
-
-        View view = LayoutInflater.from(context).inflate(R.layout.listitem_serving, parent, false);
-        ViewHolder holder = new ViewHolder();
-
-        holder.textView_recipeTitle = (TextView) view.findViewById(R.id.textView_recipeTitle);
-        holder.textView_servingType = (TextView) view.findViewById(R.id.textView_servingType);
-
-        holder.imageView_image = (ImageView) view.findViewById(R.id.imageView_servingImage);
-        holder.imageView_checked = (ImageView) view.findViewById(R.id.imageView_checkedIcon);
-        holder.textView_noImageAvailable = (TextView) view.findViewById(R.id.textView_noImageAvailable);
-
-        view.setTag(holder);
-
-        return view;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
-    public void bindView(View view, Context context, Cursor cursor) {
-
-        long id = cursor.getLong(cursor.getColumnIndex(RecipesContract.MealPlanning._ID));
-        long recipeId = cursor.getLong(cursor.getColumnIndex(RecipesContract.MealPlanning.RECIPE_ID));
-        String servingType = cursor.getString(cursor.getColumnIndex(RecipesContract.MealPlanning.SERVING_TYPE));
-
-        ViewHolder holder = (ViewHolder) view.getTag();
-
-        String title = ((GreatRecipesApplication) context.getApplicationContext()).getDbManager().queryRecipeObjectById(recipeId).title;
-        holder.textView_recipeTitle.setText(title);
-        holder.recipeId = recipeId;
-
-        holder.id = id;
-
-        String translatedServingTypeName = AppHelper.getTranslatedServingTypeName(context, servingType);
-        holder.textView_servingType.setText(translatedServingTypeName);
-
-        holder.imageView_image.setVisibility(View.INVISIBLE);
-        holder.textView_noImageAvailable.setVisibility(View.INVISIBLE);
-
-        viewsMap.put(id + "", view);
-
-        GetImageFromSdCard getImageFromSdCard = new GetImageFromSdCard(context, id,  recipeId, holder);
-        getImageFromSdCard.execute();
-    }
-
-//-------------------------------------------------------------------------------------------------
 
     public View getViewById(String id) {
 
@@ -130,6 +93,74 @@ public class ServingsCursorAdapter extends CursorAdapter {
 
 //----------------------------------------------------------------------------------------------
 
+
+    @Override
+    public int getCount() {
+        return servingsList.size();
+    }
+
+    @Override
+    public Serving2 getItem(int i) {
+        return servingsList.get(i);
+    }
+
+    @Override
+    public long getItemId(int i) {
+        return 0;
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Override
+    public View getView(int i, View convertedView, ViewGroup viewGroup) {
+        View view = LayoutInflater.from(context).inflate(R.layout.listitem_serving, viewGroup, false);
+
+        Serving2 serving = getItem(i);
+
+        ViewHolder holder = new ViewHolder();
+
+        holder.recipeId = serving.recipeId;
+        holder.servingId = serving.servingId;
+        holder.tv_recipeTitle = (TextView) view.findViewById(R.id.textView_recipeTitle);
+        holder.tv_servingType = (TextView) view.findViewById(R.id.textView_servingType);
+        holder.iv_image = (ImageView) view.findViewById(R.id.imageView_servingImage);
+        holder.iv_checked = (ImageView) view.findViewById(R.id.imageView_checkedIcon);
+        holder.tv_noImageAvailable = (TextView) view.findViewById(R.id.textView_noImageAvailable);
+
+        UserRecipesResponse userRecipes = appStateManager.userRecipes;
+        GGGRecipe2 recipe;
+
+        if (serving.isUserRecipe) {
+            recipe = userRecipes.userRecipesMap.get(serving.recipeId);
+            if (recipe == null) {
+                getUserRecipeFromGreatRecipesApi(holder, serving);
+            } else {
+                onRecipeDataReceived(holder, serving, recipe);
+            }
+        } else {
+            recipe = userRecipes.yummlyRecipesMap.get(serving.recipeId);
+            if (recipe == null) {
+                getYummlyRecipeFromGreatRecipesApi(holder, serving);
+            } else {
+                onRecipeDataReceived(holder, serving, recipe);
+            }
+        }
+//        holder = (ViewHolder) view.getTag();
+
+        String translatedServingTypeName = AppHelper.getTranslatedServingTypeName(context, serving.servingType);
+        holder.tv_servingType.setText(translatedServingTypeName);
+        holder.iv_image.setVisibility(View.INVISIBLE);
+        holder.tv_noImageAvailable.setVisibility(View.INVISIBLE);
+
+        view.setTag(holder);
+
+        viewsMap.put(serving.servingId, view);
+
+        return view;
+    }
+
+//-------------------------------------------------------------------------------------------------
+
     // The next two methods are a trick to cancel the adapter recycling system:
 
     @Override
@@ -145,56 +176,75 @@ public class ServingsCursorAdapter extends CursorAdapter {
 
 //-------------------------------------------------------------------------------------------------
 
-    class GetImageFromSdCard extends AsyncTask<String, Integer, Bitmap> {
+    public void getUserRecipeFromGreatRecipesApi(ViewHolder holder, Serving2 serving) {
 
-        private Context context;
-        private long id;
-        private long recipeId;
-        private ViewHolder holder;
-
-        public GetImageFromSdCard(Context context, long id, long recipeId, ViewHolder holder) {
-
-            this.context = context;
-            this.id = id;
-            this.recipeId = recipeId;
-            this.holder = holder;
+        String encoded = serving.recipeId;
+        try {
+            encoded = URLEncoder.encode(serving.recipeId, "utf-8");
+        } catch (UnsupportedEncodingException e) {
         }
 
-        @Override
-        protected Bitmap doInBackground(String... params) {
+        Action1<UserRecipe> subscriber = (recipe -> onRecipeDataReceived(holder, serving, recipe));
 
-            String imageName = AppConsts.Images.RECIPE_IMAGE_PREFIX + recipeId;
-            return ImageStorage.getImageBitmapByName(context, imageName);
+        Single<UserRecipe> getUserRecipe =
+                ApiProvider.getGreatRecipesApi().getUserRecipe(encoded);
+
+        getUserRecipe
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public void getYummlyRecipeFromGreatRecipesApi(ViewHolder holder, Serving2 serving) {
+
+        String encoded = serving.recipeId;
+        try {
+            encoded = URLEncoder.encode(serving.recipeId, "utf-8");
+        } catch (UnsupportedEncodingException e) {
         }
 
-        @Override
-        protected void onPostExecute(Bitmap image) {
+        Action1<YummlyRecipe> subscriber = (recipe -> onRecipeDataReceived(holder, serving, recipe));
 
-            if (image != null) {
+        Single<YummlyRecipe> getYummlyRecipe =
+                ApiProvider.getGreatRecipesApi().getYummlyRecipe(encoded);
 
-                if (holder.id == id) {
+        getYummlyRecipe
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
 
-                    if (selectedIds.contains(id + "")) {
-                        holder.imageView_checked.setVisibility(View.VISIBLE);
-                        holder.imageView_image.setAlpha(0.5f);
-                    }
+//-------------------------------------------------------------------------------------------------
 
-                    holder.imageView_image.setImageBitmap(image);
-                    holder.imageView_image.setVisibility(View.VISIBLE);
-                }
+    private void onRecipeDataReceived(ViewHolder holder, Serving2 serving, GGGRecipe2 recipe){
+        if (holder.servingId.equals(serving.servingId)) {
+            holder.tv_recipeTitle.setText(recipe.recipeTitle);
+            String translatedServingTypeName = AppHelper.getTranslatedServingTypeName(context, serving.servingType);
+            holder.tv_servingType.setText(translatedServingTypeName);
+            holder.iv_image.setVisibility(View.INVISIBLE);
+            holder.tv_noImageAvailable.setVisibility(View.INVISIBLE);
 
-            } else if (holder.id == id) {
+            if (selectedIds.contains(serving.servingId)) {
+                holder.iv_checked.setVisibility(View.VISIBLE);
+                holder.iv_image.setAlpha(0.5f);
+            }
 
-                if (selectedIds.contains(id + "")) {
-                    holder.imageView_checked.setVisibility(View.VISIBLE);
-                    holder.imageView_image.setAlpha(0.5f);
-                }
-
-                holder.imageView_image.setImageBitmap(null);
-                holder.textView_noImageAvailable.setVisibility(View.VISIBLE);
-                holder.imageView_image.setVisibility(View.VISIBLE);
+            Bitmap image = ImageStorage.convertByteArrayAsStringAsToBitmap(recipe.imageByteArrayAsString);
+            if (image == null) {
+                holder.tv_noImageAvailable.setVisibility(View.VISIBLE);
+            } else {
+                holder.iv_image.setImageBitmap(image);
+                holder.iv_image.setVisibility(View.VISIBLE);
             }
         }
     }
 
+//-------------------------------------------------------------------------------------------------
+
+    public void refreshAdapter(){
+        servingsList = new ArrayList<>(appStateManager.user.servingsList);
+        notifyDataSetChanged();
+    }
 }

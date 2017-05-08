@@ -15,8 +15,6 @@ import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
-import android.util.Log;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
 import android.view.MenuItem;
@@ -34,37 +32,32 @@ import android.widget.LinearLayout;
 import android.widget.NumberPicker;
 import android.widget.TextView;
 
+import com.google.gson.Gson;
+import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
+import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
-import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipesResponse;
-import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
+import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
-import com.hanoch.greatrecipes.model.ApiProvider;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 import com.hanoch.greatrecipes.utilities.PicUtils;
 
 import java.io.File;
 import java.io.FileDescriptor;
-import java.net.ConnectException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-
-import rx.Single;
-import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 
 public class EditRecipeFragment2 extends Fragment implements View.OnClickListener {
 
-    private static final String ARG_RECIPE_ID = "recipeId";
+    private static final String ARG_RECIPE_ID = "ARG_RECIPE_ID";
+    private static final String ARG_ACTION = "ARG_ACTION";
+
     private static final int REQ_CODE_PICK_IMAGE = 1;
 
     private View mainView;
-    private ToolbarMenuSetting mToolbarMenuSetting;
 
     private ImageView imageView_recipeImage;
     private View image_favourite;
@@ -90,14 +83,9 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
     private OnFragmentEditRecipeListener mListener;
     private LayoutInflater inflater;
 
-    private ArrayList<String> ingredientsList;
-    private ArrayList<String> categoriesList;
-
     private String mRecipeId;
+    private UserRecipe userRecipe;
 
-    private int totalTimeInSeconds;
-    private int yield;
-    private String author;
     private boolean isFavourite;
 
     private boolean imageWasDeleted;
@@ -109,12 +97,12 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
     private Dialog totalTimeDialog;
 
     private ProgressDialog progressDialog;
-    private Subscriber<UserRecipe> subscriber;
+    private GreatRecipesDbManager dbManager;
+//    private Subscriber<UserRecipe> subscriber;
 
 //-------------------------------------------------------------------------------------------------
 
     public interface OnFragmentEditRecipeListener {
-        void onRecipeWasSaved(String recipeId);
 
         void onCancelLoginButtonClicked();
 
@@ -123,10 +111,11 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
 //-------------------------------------------------------------------------------------------------
 
-    public static EditRecipeFragment2 newInstance(String recipeId) {
+    public static EditRecipeFragment2 newInstance(String action, String recipeId) {
 
         EditRecipeFragment2 fragment = new EditRecipeFragment2();
         Bundle args = new Bundle();
+        args.putString(ARG_ACTION, action);
         args.putString(ARG_RECIPE_ID, recipeId);
         fragment.setArguments(args);
         return fragment;
@@ -138,7 +127,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-//        dbManager = ((GreatRecipesApplication) getActivity().getApplication()).getDbManager();
+        dbManager = GreatRecipesDbManager.getInstance();
 
         progressDialog = new ProgressDialog(getActivity());
         progressDialog.setTitle(getString(R.string.loading_info));
@@ -161,8 +150,11 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
                 boolean loginDialogIsShowing = savedInstanceState.getBoolean("loginDialogIsShowing");
                 if (loginDialogIsShowing) {
-                    String currentUserInput = savedInstanceState.getString("currentUserInput");
-                    showLoginDialog(currentUserInput);
+                    String currentEmail = savedInstanceState.getString("currentEmail");
+                    String currentUsername = savedInstanceState.getString("currentUsername");
+                    String currentPassword = savedInstanceState.getString("currentPassword");
+                    String currentRetypePassword = savedInstanceState.getString("currentRetypePassword");
+                    showLoginDialog(currentEmail, currentUsername, currentPassword, currentRetypePassword);
 
                 } else {
                     boolean servingDialogIsShowing = savedInstanceState.getBoolean("servingDialogIsShowing");
@@ -230,59 +222,40 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
         AppHelper.hideTheKeyboard(getActivity());
 
-        if (savedInstanceState != null) {
+        if (savedInstanceState == null) {
 
-            ingredientsList = savedInstanceState.getStringArrayList("ingredientsList");
-            categoriesList = savedInstanceState.getStringArrayList("categoriesList");
+            Bundle args = getArguments();
+            mRecipeId = args.getString(ARG_RECIPE_ID, null);
+            User user = AppStateManager.getInstance().user;
+
+            if (mRecipeId == null || !user.userRecipes.containsKey(mRecipeId)) {
+                // Adding a new recipe to 'My Own Recipes' list
+
+                // TODO: cannot happen, unless in test mode:
+                if (user.author == null) {
+                    showLoginDialog("", "", "", "");
+                }
+
+                userRecipe = new UserRecipe();
+            } else {
+                // Editing an existing recipe from 'My Own Recipes' list
+
+                userRecipe = new UserRecipe(user.userRecipes.get(mRecipeId));
+
+                editText_recipeTitle.setText(userRecipe.recipeTitle);
+                editText_recipeInstructions.setText(userRecipe.instructions);
+                editText_notes.setText(userRecipe.notes);
+                recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(userRecipe.imageByteArrayAsString);
+                isFavourite = isRecipeFavourite(mRecipeId);
+            }
+        } else {
+
+            userRecipe = new Gson().fromJson(savedInstanceState.getString("userRecipeAsJson"), UserRecipe.class);
             mRecipeId = savedInstanceState.getString("mRecipeId");
-            totalTimeInSeconds = savedInstanceState.getInt("totalTimeInSeconds");
-            yield = savedInstanceState.getInt("yield");
             imageWasDeleted = savedInstanceState.getBoolean("imageWasDeleted");
             isFavourite = savedInstanceState.getBoolean("isFavourite");
             recipeImage = savedInstanceState.getParcelable("recipeImage");
             selectedImage = savedInstanceState.getParcelable("selectedImage");
-            author = savedInstanceState.getString("author");
-
-        } else {
-
-            //get the arguments bundle:
-            Bundle args = getArguments();
-            mRecipeId = args.getString(ARG_RECIPE_ID, AppConsts.NEW_RECIPE);
-
-            UserRecipesResponse userRecipesResponse = AppStateManager.getInstance().userRecipes;
-            if (mRecipeId.equals(AppConsts.NEW_RECIPE) || !userRecipesResponse.userRecipesMap.containsKey(mRecipeId)) {
-                // Adding a new recipe to 'My Own Recipes' list
-
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                author = sp.getString(AppConsts.SharedPrefs.USER_NAME, AppConsts.SharedPrefs.NEW_USER);
-
-                if (author.equals(AppConsts.SharedPrefs.NEW_USER)) {
-                    showLoginDialog("");
-                }
-
-                yield = 0;
-                totalTimeInSeconds = 0;
-
-                ingredientsList = new ArrayList<String>();
-                ingredientsList.add(AppConsts.Category.NO_INFO);
-
-                categoriesList = new ArrayList<String>();
-            } else {
-                // Editing an existing recipe from 'My Own Recipes' list
-
-                UserRecipe recipe = userRecipesResponse.userRecipesMap.get(mRecipeId);
-
-                author = recipe.author;
-                editText_recipeTitle.setText(recipe.recipeTitle);
-                totalTimeInSeconds = recipe.cookingTime;
-                yield = recipe.yield;
-                editText_recipeInstructions.setText(recipe.instructions);
-                editText_notes.setText(recipe.notes);
-                ingredientsList = recipe.ingredientsList;
-                categoriesList = recipe.categoriesList;
-                recipeImage = ImageStorage.convertByteArrayAsStrigAsToBitmap(recipe.imageByteArrayAsString);
-                isFavourite = userRecipesResponse.favouriteRecipesIds.contains(mRecipeId);
-            }
         }
 
         setRecipeView();
@@ -309,26 +282,24 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         }
 
         if (isFavourite) {
-            AppHelper.animateViewFadingIn(getContext(), image_favourite, 500, 0);
+            AnimationHelper.animateViewFadingIn(getContext(), image_favourite, 500, 0);
         }
 
-//        setFavouriteImage();
-
-        if (totalTimeInSeconds > 0) {
+        if (userRecipe.cookingTime > 0) {
             textView_totalTime.setTextColor(Color.BLACK);
         }
 
-        textView_totalTime.setText(AppHelper.getStringRecipeTotalTime(getContext(), totalTimeInSeconds));
+        textView_totalTime.setText(AppHelper.getStringRecipeTotalTime(getContext(), userRecipe.cookingTime));
 
-        if (yield > 0) {
+        if (userRecipe.yield > 0) {
             textView_servings.setTextColor(Color.BLACK);
         }
 
-        textView_servings.setText(AppHelper.getStringRecipeServings(getContext(), yield));
+        textView_servings.setText(AppHelper.getStringRecipeServings(getContext(), userRecipe.yield));
 
         fillIngredientsList();
 
-        updateCategoriesList(getContext(), categoriesList);
+        updateCategoriesList(userRecipe.categoriesList);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -345,13 +316,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
             throw new ClassCastException(context.toString()
                     + " must implement OnFragmentEditRecipeListener");
         }
-
-        try {
-            mToolbarMenuSetting = (ToolbarMenuSetting) context;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(context.toString()
-                    + " must implement FragmentToolbarMenuListener");
-        }
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -360,12 +324,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
     public void onDetach() {
         super.onDetach();
         mListener = null;
-        mToolbarMenuSetting = null;
-
-        if (subscriber != null && !subscriber.isUnsubscribed()) {
-            Log.d("EditRecipeFragment", "onDetach: subscriber is going to get unSubscribed");
-            subscriber.unsubscribe();
-        }
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -393,20 +351,30 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putStringArrayList("ingredientsList", ingredientsList);
-        outState.putStringArrayList("categoriesList", categoriesList);
         outState.putString("mRecipeId", mRecipeId);
-        outState.putInt("totalTimeInSeconds", totalTimeInSeconds);
-        outState.putInt("yield", yield);
+        outState.putString("userRecipeAsJson", new Gson().toJson(userRecipe, UserRecipe.class));
         outState.putBoolean("imageWasDeleted", imageWasDeleted);
         outState.putBoolean("isFavourite", isFavourite);
 
         if (loginDialog != null && loginDialog.isShowing()) {
             outState.putBoolean("loginDialogIsShowing", true);
 
-            EditText editText_userInput = (EditText) loginDialog.findViewById(R.id.editText_userInput);
-            String currentUserInput = editText_userInput.getText().toString();
-            outState.putString("currentUserInput", currentUserInput);
+            EditText editText_email = (EditText) loginDialog.findViewById(R.id.editText_email);
+            EditText editText_username = (EditText) loginDialog.findViewById(R.id.editText_username);
+            EditText editText_password = (EditText) loginDialog.findViewById(R.id.editText_password);
+            EditText editText_repeatPassword = (EditText) loginDialog.findViewById(R.id.editText_repeatPassword);
+
+            String currentEmail = editText_email.getText().toString();
+            outState.putString("currentEmail", currentEmail);
+
+            String currentUsername = editText_username.getText().toString();
+            outState.putString("currentUsername", currentUsername);
+
+            String currentPassword = editText_password.getText().toString();
+            outState.putString("currentPassword", currentPassword);
+
+            String currentRetypePassword = editText_repeatPassword.getText().toString();
+            outState.putString("currentRetypePassword", currentRetypePassword);
 
         } else if (servingsDialog != null && servingsDialog.isShowing()) {
             outState.putBoolean("servingDialogIsShowing", true);
@@ -435,8 +403,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         if (selectedImage != null && !selectedImage.isRecycled()) {
             outState.putParcelable("selectedImage", selectedImage);
         }
-
-        outState.putString("author", author);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -537,26 +503,26 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
         String permissionToCheck = AppConsts.permissionsMap.get(permissionCode);
 
-        if (permissionToCheck == null)
+        if (permissionToCheck == null) {
             return false; // Permission is not in the map - should never happen
+        }
 
         if (activity.checkSelfPermission(permissionToCheck) == PackageManager.PERMISSION_GRANTED) {
             return true;
+        }
 
+        if (activity.shouldShowRequestPermissionRationale(permissionToCheck)) {
+            // Currently will show the android generic request permissionCode popup again,
+            // unless the user clicked the "don't show again" button last time.
+            // TODO: replace with my dialog, explaining why I need his permissionCode
+
+            activity.requestPermissions(new String[]{permissionToCheck}, permissionCode);
+
+            return false;
         } else {
-            if (activity.shouldShowRequestPermissionRationale(permissionToCheck)) {
-                // Currently will show the android generic request permissionCode popup again,
-                // unless the user clicked the "don't show again" button last time.
-                // TODO: replace with my dialog, explaining why I need his permissionCode
-
-                activity.requestPermissions(new String[]{permissionToCheck}, permissionCode);
-
-                return false;
-            } else {
-                // Permission not granted yet, requesting generic permissionCode
-                activity.requestPermissions(new String[]{permissionToCheck}, permissionCode);
-                return false;
-            }
+            // Permission not granted yet, requesting generic permissionCode
+            activity.requestPermissions(new String[]{permissionToCheck}, permissionCode);
+            return false;
         }
     }
 
@@ -565,16 +531,17 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
     public void setFavouriteImage() {
 
         if (isFavourite) {
-            AppHelper.animateViewFadingIn(getContext(), image_favourite, 500, 0);
+            AnimationHelper.animateViewFadingIn(getContext(), image_favourite, 500, 0);
 
         } else {
-            AppHelper.animateViewFadingOut(getContext(), image_favourite, 500, 0);
+            AnimationHelper.animateViewFadingOut(getContext(), image_favourite, 500, 0);
         }
     }
 
 //-------------------------------------------------------------------------------------------------
 
-    public void onSaveUserRecipeClicked() {
+    public UserRecipe onSaveUserRecipeClicked() {
+        User user = AppStateManager.getInstance().user;
 
         // Get the user's inputs:
         String title = editText_recipeTitle.getText().toString();
@@ -592,40 +559,17 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
             notes = "";
         }
 
-        final String recipeId = getArguments().getString(ARG_RECIPE_ID, AppConsts.NEW_RECIPE);
-
-        UserRecipe userRecipe = new UserRecipe();
+        final String recipeId = getArguments().getString(ARG_RECIPE_ID);
 
         userRecipe._id = recipeId;
+        userRecipe.author = user.author;
+        userRecipe.userId = user._id;
         userRecipe.recipeTitle = title;
-        userRecipe.author = author;
-        userRecipe.yield = yield;
         userRecipe.instructions = instructions;
         userRecipe.notes = notes;
-        userRecipe.cookingTime = totalTimeInSeconds;
-        userRecipe.ingredientsList = ingredientsList;
-        userRecipe.categoriesList = categoriesList;
 
-        subscriber = new Subscriber<UserRecipe>() {
-            @Override
-            public void onCompleted() {
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                onSaveRecipeCompleted(false, recipeId.equals(AppConsts.NEW_RECIPE), null, t);
-            }
-
-            @Override
-            public void onNext(UserRecipe recipe) {
-                onSaveRecipeCompleted(true, recipeId.equals(AppConsts.NEW_RECIPE), recipe, null);
-            }
-        };
-
-        Single<UserRecipe> addOrUpdateUserRecipe;
-
-        if (recipeId.equals(AppConsts.NEW_RECIPE)) {
-
+        if (recipeId == null) {
+            // Adding a new recipe
             if (selectedImage == null || imageWasDeleted) {
                 // No image selected
                 userRecipe.imageByteArrayAsString = "";
@@ -644,9 +588,8 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
                 selectedImage.recycle();
             }
 
-            addOrUpdateUserRecipe = ApiProvider.getGreatRecipesApi().addUserRecipe(userRecipe);
-
         } else {
+            // Editing an existing recipe
 
             if (imageWasDeleted) {
                 // No image selected as a replacement
@@ -669,18 +612,13 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
                 }
                 selectedImage.recycle();
             }
-
-            addOrUpdateUserRecipe = ApiProvider.getGreatRecipesApi().updateUserRecipe(userRecipe);
         }
-
-        addOrUpdateUserRecipe
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(subscriber);
 
         if (recipeImage != null) {
             recipeImage.recycle();
         }
+
+        return userRecipe;
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -711,21 +649,17 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
                 TextView textView_ingredient = (TextView) selectedIngredientView.findViewById(R.id.textView_listItem);
                 String ingredientText = textView_ingredient.getText().toString();
-                final int position = ingredientsList.indexOf(ingredientText);
+                final int position = userRecipe.ingredientsList.indexOf(ingredientText);
 
-                ingredientsList.remove(position);
+                userRecipe.ingredientsList.remove(position);
                 layout_ingredientsList.removeView(selectedIngredientView);
 
-                if (ingredientsList.size() == 1) {
+                if (userRecipe.ingredientsList.size() == 1) {
                     FrameLayout listSeparator = (FrameLayout) selectedIngredientView.findViewById(R.id.listSeparator);
                     listSeparator.setVisibility(View.INVISIBLE);
                 }
 
-                if (ingredientsList.isEmpty()) {
-                    ingredientsList.add(AppConsts.Category.NO_INFO);
-
-                    fillIngredientsList();
-                }
+                fillIngredientsList();
 
                 break;
 
@@ -743,7 +677,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
             case R.id.cardView_yield:
 
-                int currentValue = yield;
+                int currentValue = userRecipe.yield;
 
                 showServingsChooserDialog(currentValue);
 
@@ -751,8 +685,8 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
             case R.id.cardView_totalTime:
 
-                int currentHours = totalTimeInSeconds / 3600;
-                int currentMinutes = (totalTimeInSeconds % 3600) / 60;
+                int currentHours = userRecipe.cookingTime / 3600;
+                int currentMinutes = (userRecipe.cookingTime % 3600) / 60;
 
                 showTimeChooserDialog(currentHours, currentMinutes);
 
@@ -792,8 +726,8 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
                 ArrayList<String> selectedCategoriesNamesList = new ArrayList<>();
 
-                for (int i = 0; i < categoriesList.size(); i++) {
-                    selectedCategoriesNamesList.add(categoriesList.get(i));
+                for (int i = 0; i < userRecipe.categoriesList.size(); i++) {
+                    selectedCategoriesNamesList.add(userRecipe.categoriesList.get(i));
                 }
 
                 mListener.onAddCategoriesClick(selectedCategoriesNamesList);
@@ -830,15 +764,15 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
         buttonSet.setOnClickListener(v -> {
             totalTimeDialog.dismiss();
-            totalTimeInSeconds = (hoursPicker.getValue() * 3600 + minutesPicker.getValue() * 60);
+            userRecipe.cookingTime = (hoursPicker.getValue() * 3600 + minutesPicker.getValue() * 60);
 
-            if (totalTimeInSeconds > 0) {
+            if (userRecipe.cookingTime > 0) {
                 textView_totalTime.setTextColor(Color.BLACK);
             } else {
                 textView_totalTime.setTextColor(Color.RED);
             }
 
-            textView_totalTime.setText(AppHelper.getStringRecipeTotalTime(getContext(), totalTimeInSeconds));
+            textView_totalTime.setText(AppHelper.getStringRecipeTotalTime(getContext(), userRecipe.cookingTime));
         });
 
         totalTimeDialog.show();
@@ -863,10 +797,10 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
         buttonSet.setOnClickListener(v -> {
 
-            yield = servingsPicker.getValue();
-            textView_servings.setText(AppHelper.getStringRecipeServings(getContext(), yield));
+            userRecipe.yield = servingsPicker.getValue();
+            textView_servings.setText(AppHelper.getStringRecipeServings(getContext(), userRecipe.yield));
 
-            if (yield > 0) {
+            if (userRecipe.yield > 0) {
                 textView_servings.setTextColor(Color.BLACK);
             } else {
                 textView_servings.setTextColor(Color.RED);
@@ -902,11 +836,10 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
             // Get the input text and add it to the list
             String ing = editText_inputIngredient.getText().toString();
 
-            if (ingredientsList.get(0).equals(AppConsts.Category.NO_INFO)) {
-                ingredientsList.set(0, ing);
-
+            if (userRecipe.ingredientsList.get(0).equals(AppConsts.Category.NO_INFO)) {
+                userRecipe.ingredientsList.set(0, ing);
             } else {
-                ingredientsList.add(ing);
+                userRecipe.ingredientsList.add(ing);
             }
 
             fillIngredientsList();
@@ -927,7 +860,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
         TextView textView_ingredient = (TextView) ingredientView.findViewById(R.id.textView_listItem);
         String ingredientText = textView_ingredient.getText().toString();
-        final int position = ingredientsList.indexOf(ingredientText);
+        final int position = userRecipe.ingredientsList.indexOf(ingredientText);
 
         final Dialog dialog = new Dialog(getActivity());
 
@@ -946,7 +879,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
             // Get the input text and add it to the list
             String ing = editText_inputIngredient.getText().toString();
-            ingredientsList.set(position, ing);
+            userRecipe.ingredientsList.set(position, ing);
 
             fillIngredientsList();
             dialog.dismiss();
@@ -959,26 +892,23 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
 //-------------------------------------------------------------------------------------------------
 
-    public void updateCategoriesList(Context context, ArrayList<String> updatedCategoriesList) {
+    public void updateCategoriesList(ArrayList<String> updatedCategoriesList) {
 
-        if (!updatedCategoriesList.isEmpty()
-                && updatedCategoriesList.get(0).equals(AppConsts.Category.NO_INFO)) {
+        if (updatedCategoriesList == null || updatedCategoriesList.isEmpty()
+                || updatedCategoriesList.get(0).equals(AppConsts.Category.NO_INFO)) {
 
-            updatedCategoriesList.clear();
+            updatedCategoriesList = new ArrayList<>();
         }
 
-        categoriesList = updatedCategoriesList;
+        userRecipe.categoriesList = updatedCategoriesList;
 
-        if (categoriesList.isEmpty()) {
-            categoriesList.add(AppConsts.Category.NO_INFO);
-
+        if (userRecipe.categoriesList.isEmpty()) {
             button_addCategory.setImageResource(R.mipmap.btn_add_categories_chooser);
-
         } else {
             button_addCategory.setImageResource(R.mipmap.btn_open_categories_chooser);
         }
 
-        fillCategoriesList(context);
+        fillCategoriesList();
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -987,10 +917,15 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
         layout_ingredientsList.removeAllViews();
 
+        if (userRecipe.ingredientsList == null || userRecipe.ingredientsList.isEmpty()) {
+            userRecipe.ingredientsList = new ArrayList<>();
+            userRecipe.ingredientsList.add(AppConsts.Category.NO_INFO);
+        }
+
         LinearLayout listItem;
         TextView listItemText;
-        for (int i = 0; i < ingredientsList.size(); i++) {
-            String ingredient = ingredientsList.get(i);
+        for (int i = 0; i < userRecipe.ingredientsList.size(); i++) {
+            String ingredient = userRecipe.ingredientsList.get(i);
             listItem = (LinearLayout) inflater.inflate(R.layout.listitem_simple_textview, null);
             listItemText = (TextView) listItem.findViewById(R.id.textView_listItem);
 
@@ -1004,7 +939,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
                 listItem.setOnClickListener(this);
             }
 
-            if (i == ingredientsList.size() - 1) {
+            if (i == userRecipe.ingredientsList.size() - 1) {
                 FrameLayout listSeparator = (FrameLayout) listItem.findViewById(R.id.listSeparator);
                 listSeparator.setVisibility(View.INVISIBLE);
             }
@@ -1015,11 +950,15 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
 //-------------------------------------------------------------------------------------------------
 
-    public void fillCategoriesList(Context context) {
-
-        ArrayList<String> translatedCategories = AppHelper.getTranslatedCategoriesList(context, categoriesList);
-
+    public void fillCategoriesList() {
         layout_categoriesList.removeAllViews();
+
+        if (userRecipe.categoriesList == null || userRecipe.categoriesList.isEmpty()) {
+            userRecipe.categoriesList = new ArrayList<>();
+            userRecipe.categoriesList.add(AppConsts.Category.NO_INFO);
+        }
+
+        ArrayList<String> translatedCategories = AppHelper.getTranslatedCategoriesList(getContext(), userRecipe.categoriesList);
 
         LinearLayout listItem;
         TextView listItemText;
@@ -1029,11 +968,11 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
             listItemText = (TextView) listItem.findViewById(R.id.textView_listItem);
             listItemText.setText(category);
 
-            if (categoriesList.get(0).equals(AppConsts.Category.NO_INFO)) {
+            if (userRecipe.categoriesList.get(0).equals(AppConsts.Category.NO_INFO)) {
                 listItemText.setTextColor(Color.RED);
             }
 
-            if (i == categoriesList.size() - 1) {
+            if (i == userRecipe.categoriesList.size() - 1) {
                 FrameLayout listSeparator = (FrameLayout) listItem.findViewById(R.id.listSeparator);
                 listSeparator.setVisibility(View.INVISIBLE);
             }
@@ -1044,54 +983,14 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
 //-------------------------------------------------------------------------------------------------
 
-    private void onSaveRecipeCompleted(boolean isSuccess, boolean isNewRecipe, UserRecipe recipe, Throwable t) {
-        if (isFragmentAttached()) {
-            progressDialog.dismiss();
-
-            if (isSuccess) {
-                if (isNewRecipe) {
-                    AppHelper.showSnackBar(mainView, R.string.added_to_my_own, ContextCompat.getColor(getContext(), R.color.colorSnackbarGreen));
-                } else {
-                    AppHelper.showSnackBar(mainView, R.string.saved_successfully, ContextCompat.getColor(getContext(), R.color.colorSnackbarGreen));
-                }
-
-                mListener.onRecipeWasSaved(recipe._id);
-
-            } else {
-                if (t instanceof UnknownHostException || t instanceof ConnectException) {
-                    AppHelper.showSnackBar(mainView, R.string.internet_error, Color.RED);
-                } else {
-                    AppHelper.showSnackBar(mainView, R.string.unexpected_error, Color.RED);
-                }
-
-                ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
-                toolbarButtonsList.add(AppConsts.ToolbarButtons.REFRESH);
-
-                mToolbarMenuSetting.setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.PRIMARY, getString(R.string.internet_error));
-            }
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private boolean isFragmentAttached() {
-        return (!isDetached() && !isRemoving() && isVisible());
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private void showLoginDialog(String currentUserName) {
+    private void showLoginDialog(String currentEmail, String currentUsername, String  currentPassword, String currentRetypePassword) {
+        // TODO: handle register
 
         loginDialog = new Dialog(getContext());
-
-        // hide to default title for Dialog
         loginDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        // inflate the layout dialog_layout.xml and set it as contentView
         final View view = inflater.inflate(R.layout.dialog_login, null, false);
 
         loginDialog.setCancelable(false);
-
         loginDialog.setContentView(view);
 
         TextView textView_dialogTitleNote = (TextView) loginDialog.findViewById(R.id.textView_titleNote);
@@ -1101,39 +1000,71 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
         textView_dialogTitleNote.setText(titleNote);
 
-        final EditText editText_userInput = (EditText) loginDialog.findViewById(R.id.editText_userInput);
-        editText_userInput.setText(currentUserName);
+        final EditText editText_email = (EditText) loginDialog.findViewById(R.id.editText_email);
+        final EditText editText_username = (EditText) loginDialog.findViewById(R.id.editText_username);
+        final EditText editText_password = (EditText) loginDialog.findViewById(R.id.editText_password);
+        final EditText editText_repeatPassword = (EditText) loginDialog.findViewById(R.id.editText_repeatPassword);
+
+        editText_email.setText(currentEmail);
+        editText_username.setText(currentUsername);
+        editText_password.setText(currentPassword);
+        editText_repeatPassword.setText(currentRetypePassword);
 
         // Relocating the selection after the last char of the editText
-        int pos = editText_userInput.getText().length();
-        editText_userInput.setSelection(pos);
+        int pos = editText_email.getText().length();
+        editText_email.setSelection(pos);
+
+        pos = editText_username.getText().length();
+        editText_username.setSelection(pos);
+
+        pos = editText_password.getText().length();
+        editText_password.setSelection(pos);
+
+        pos = editText_repeatPassword.getText().length();
+        editText_repeatPassword.setSelection(pos);
 
         Button button_save = (Button) loginDialog.findViewById(R.id.button_save);
         button_save.setOnClickListener(v -> {
 
             // Get the input text
-            author = editText_userInput.getText().toString();
+            String email = editText_email.getText().toString();
+            String author = editText_username.getText().toString();
+            String password = editText_password.getText().toString();
+            String retypePassword = editText_repeatPassword.getText().toString();
 
-            if (usernameTooShort(author)) {
-                // Less than 6 letters
-                AppHelper.showSnackBar(view, R.string.at_least_6_characters_are_required, Color.RED);
-                return;
+//            if (usernameTooShort(author)) {
+//                // Less than 6 letters
+//                AppHelper.showSnackBar(view, R.string.at_least_6_characters_are_required, Color.RED);
+//                return;
+//            }
+//
+//            if (usernameTooLong(author)) {
+//                // More than 20 letters
+//                AppHelper.showSnackBar(view, R.string.max_20_chars_are_allowed, Color.RED);
+//                return;
+//            }
+
+            if (areFieldsValid(email, author, password, retypePassword)) {
+                dbManager.register(email, author, password);
+
+                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+                SharedPreferences.Editor editor = sp.edit();
+                editor.putString(AppConsts.SharedPrefs.USER_NAME, author);
+                editor.apply();
+
+                AnalyticsHelper.sendEvent(EditRecipeFragment2.this, AppConsts.Analytics.CATEGORY_LOGIN, "Register successfully", author);
+
+                loginDialog.dismiss();
             }
 
-            if (usernameTooLong(author)) {
-                // More than 20 letters
-                AppHelper.showSnackBar(view, R.string.max_20_chars_are_allowed, Color.RED);
-                return;
-            }
-
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-            SharedPreferences.Editor editor = sp.edit();
-            editor.putString(AppConsts.SharedPrefs.USER_NAME, author);
-            editor.commit();
-
-            AnalyticsHelper.sendEvent(EditRecipeFragment2.this, AppConsts.Analytics.CATEGORY_LOGIN, "Login successfully", author);
-
-            loginDialog.dismiss();
+//            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
+//            SharedPreferences.Editor editor = sp.edit();
+//            editor.putString(AppConsts.SharedPrefs.USER_NAME, author);
+//            editor.apply();
+//
+//            AnalyticsHelper.sendEvent(EditRecipeFragment2.this, AppConsts.Analytics.CATEGORY_LOGIN, "Register successfully", author);
+//
+//            loginDialog.dismiss();
         });
 
         Button btnCancel = (Button) loginDialog.findViewById(R.id.button_cancel);
@@ -1144,6 +1075,24 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         });
 
         loginDialog.show();
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    private boolean areFieldsValid(String email, String author, String password, String retypePassword) {
+        //TODO: Handle validation
+        if (usernameTooShort(author)) {
+            AppHelper.showSnackBar(getView(), R.string.at_least_6_characters_are_required, Color.RED);
+            return false;
+        } else if (usernameTooLong(author)) {
+            AppHelper.showSnackBar(getView(), R.string.max_20_chars_are_allowed, Color.RED);
+            return false;
+        } else if (!password.equals(retypePassword)) {
+            AppHelper.showSnackBar(getView(), R.string.passwords_are_not_identical, Color.RED);
+            return false;
+        }
+
+        return true;
     }
 
 //-------------------------------------------------------------------------------------------------

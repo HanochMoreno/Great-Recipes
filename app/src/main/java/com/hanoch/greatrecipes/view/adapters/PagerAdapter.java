@@ -3,14 +3,16 @@ package com.hanoch.greatrecipes.view.adapters;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
-import com.hanoch.greatrecipes.view.ListFavouriteFragment;
-import com.hanoch.greatrecipes.view.ListMyOwnFragment;
-import com.hanoch.greatrecipes.view.ListOnlineFragment;
+
+import com.hanoch.greatrecipes.model.MyListFragment;
+import com.hanoch.greatrecipes.view.ListFavouriteFragment2;
+import com.hanoch.greatrecipes.view.ListMyOwnFragment2;
+import com.hanoch.greatrecipes.view.ListOnlineFragment2;
 
 public class PagerAdapter extends FragmentStatePagerAdapter {
 
-    int mNumOfTabs;
-    String extra_serving;
+    private int mNumOfTabs;
+    private String extra_serving;
 
     public PagerAdapter(FragmentManager fm, int NumOfTabs, String extra_serving) {
         super(fm);
@@ -26,13 +28,13 @@ public class PagerAdapter extends FragmentStatePagerAdapter {
         switch (position) {
 
             case 0:
-                return ListOnlineFragment.newInstance(extra_serving);
+                return MyListFragment.newInstance(new ListOnlineFragment2(), extra_serving);
 
             case 1:
-                return ListMyOwnFragment.newInstance(extra_serving);
+                return MyListFragment.newInstance(new ListMyOwnFragment2(), extra_serving);
 
             case 2:
-                return ListFavouriteFragment.newInstance(extra_serving);
+                return MyListFragment.newInstance(new ListFavouriteFragment2(), extra_serving);
 
             default:
                 return null;

@@ -22,9 +22,11 @@ import android.widget.ListView;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
+import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.database.RecipesContract;
-import com.hanoch.greatrecipes.database.DbManager;
+import com.hanoch.greatrecipes.database.SqLiteDbManager;
 import com.hanoch.greatrecipes.model.AllergensAndDietPrefItem;
+import com.hanoch.greatrecipes.model.ApiProvider;
 import com.hanoch.greatrecipes.model.RecipeSearchResult;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.api.yummly_api.SearchResultsResponse;
@@ -53,7 +55,8 @@ public class OnlineSearchResultsFragment extends Fragment implements
 
     private View view;
 
-    private DbManager dbManager;
+    private GreatRecipesDbManager dbManager;
+    private SqLiteDbManager sqliteManager;
     private Subscriber<SearchResultsResponse> subscriber;
     private boolean isToScrollToTop;
 
@@ -77,7 +80,8 @@ public class OnlineSearchResultsFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        dbManager = ((GreatRecipesApplication) getActivity().getApplication()).getDbManager();
+        dbManager = GreatRecipesDbManager.getInstance();
+        sqliteManager = new SqLiteDbManager(getContext());
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -156,7 +160,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
 
         AppHelper.hideKeyboardFrom(getActivity(), getActivity().getCurrentFocus());
 
-        RecipeSearchResult result = dbManager.queryResultObjectById(id);
+        RecipeSearchResult result = sqliteManager.queryResultObjectById(id);
         String recipeYummlyId = result.yummlyId;
         mListener.onSearchResultClick(id, recipeYummlyId);
     }
@@ -278,16 +282,16 @@ public class OnlineSearchResultsFragment extends Fragment implements
                     }
 
                     // Deleting old search results
-                    dbManager.deleteAllSearchResults();
+                    sqliteManager.deleteAllSearchResults();
 
                     // Adding the new search results
-                    dbManager.addSearchResults(response.matches);
+                    sqliteManager.addSearchResults(response.matches);
 
                     isToScrollToTop = true;
                 }
             };
 
-            Single<SearchResultsResponse> getSearchResults = ((GreatRecipesApplication) getActivity().getApplication()).getYummlyApi().getSearchResults(query, dietList, allergensList);
+            Single<SearchResultsResponse> getSearchResults = ApiProvider.getYummlyApi().getSearchResults(query, dietList, allergensList);
             getSearchResults
                     .subscribeOn(Schedulers.io())
                     .observeOn(AndroidSchedulers.mainThread())

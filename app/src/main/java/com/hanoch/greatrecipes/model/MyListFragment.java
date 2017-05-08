@@ -2,31 +2,36 @@ package com.hanoch.greatrecipes.model;
 
 import android.content.Context;
 import android.os.Bundle;
+import android.os.Parcelable;
 import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.WindowManager;
 import android.widget.AdapterView;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.ListView;
 import android.widget.TextView;
 
+import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
-import com.hanoch.greatrecipes.AppHelper;
+import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.GGGRecipe2;
-import com.hanoch.greatrecipes.bus.RecipesListsDownloadedEvent;
+import com.hanoch.greatrecipes.bus.RecipesListsUpdatedEvent;
 import com.hanoch.greatrecipes.control.ListFragmentListener;
+import com.hanoch.greatrecipes.view.ListFavouriteFragment2;
+import com.hanoch.greatrecipes.view.SearchInListsFragment2;
 import com.hanoch.greatrecipes.view.adapters.RecipesListAdapter2;
 import com.squareup.otto.Subscribe;
 
 import java.util.ArrayList;
 
 
-public abstract class MyFragment extends Fragment
+public abstract class MyListFragment extends Fragment
         implements AdapterView.OnItemClickListener,
         View.OnClickListener,
         AdapterView.OnItemLongClickListener {
@@ -38,7 +43,6 @@ public abstract class MyFragment extends Fragment
     protected ListView listView_recipes;
     protected FloatingActionButton floatingButton_addRecipe;
 
-    //    private RecipesListAdapter adapter;
     protected RecipesListAdapter2 adapter;
 
     protected FrameLayout layout_dialogBubble;
@@ -50,21 +54,31 @@ public abstract class MyFragment extends Fragment
 
     protected String extra_serving;
     protected String selectedId;
-
-    public static final String NO_SELECTION = "NO_SELECTION";
+    protected AppStateManager appStateManager;
 
     public int getContainedListType() {
         return 0;
     }
 
+    public abstract void refreshAdapter();
+
 //-------------------------------------------------------------------------------------------------
 
-    public static MyFragment newInstance(MyFragment fragment, String extra_serving) {
+    public static MyListFragment newInstance(MyListFragment fragment, String extra_serving) {
         Bundle args = new Bundle();
         args.putString(ARG_EXTRA_SERVING, extra_serving);
         fragment.setArguments(args);
 
         return fragment;
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Override
+    public void onCreate(@Nullable Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        appStateManager = AppStateManager.getInstance();
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -110,6 +124,10 @@ public abstract class MyFragment extends Fragment
             boolean isListViewEnabled = savedInstanceState.getBoolean("isListViewEnabled");
             listView_recipes.setEnabled(isListViewEnabled);
 
+            // TODO: Make sure that works- if not, execute it after the view is fully created
+            Parcelable listViewState = savedInstanceState.getParcelable("listViewState");
+            listView_recipes.onRestoreInstanceState(listViewState);
+
             checkedItemsIdList = savedInstanceState.getStringArrayList("checkedItemsIdList");
 
             int floatingButton_addRecipeVisibility = savedInstanceState.getInt("floatingButton_addRecipeVisibility");
@@ -154,10 +172,10 @@ public abstract class MyFragment extends Fragment
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
+        outState.putBoolean("isListViewEnabled", listView_recipes.isEnabled());
         outState.putParcelable("listViewState", listView_recipes.onSaveInstanceState());
 
         outState.putString("selectedId", selectedId);
-
         outState.putStringArrayList("checkedItemsIdList", checkedItemsIdList);
 
         int floatingButton_addRecipeVisibility = floatingButton_addRecipe.getVisibility();
@@ -173,7 +191,8 @@ public abstract class MyFragment extends Fragment
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
         String recipeId = ((RecipesListAdapter2.ViewHolder) view.getTag()).id;
-        if (checkedItemsIdList.isEmpty()) {
+
+        if (this instanceof ListFavouriteFragment2 || checkedItemsIdList.isEmpty()) {
             // The user wants to review a recipe
 
             mListListener.onRecipeClick(this, recipeId);
@@ -182,10 +201,10 @@ public abstract class MyFragment extends Fragment
 
                 // Tablet only
 
-                if (selectedId.equals(recipeId)) {
+                if (selectedId != null && selectedId.equals(recipeId)) {
                     // The selected recipe was clicked
 
-                    AppHelper.setUnselectedRecipe(view);
+                    AnimationHelper.animateUnselectedRecipe(view);
 
                     selectedId = null;
                     adapter.onNoSelection();
@@ -200,11 +219,11 @@ public abstract class MyFragment extends Fragment
 
                         View prevSelectedItemView = adapter.getViewById(selectedId);
                         if (prevSelectedItemView != null) {
-                            AppHelper.setUnselectedRecipe(prevSelectedItemView);
+                            AnimationHelper.animateUnselectedRecipe(prevSelectedItemView);
                         }
                     }
 
-                    AppHelper.setSelectedRecipe(view, getContext());
+                    AnimationHelper.animateSelectedRecipe(view, getContext());
 
                     selectedId = recipeId;
                     adapter.onRecipeSelected(recipeId);
@@ -213,7 +232,7 @@ public abstract class MyFragment extends Fragment
                 floatingButton_addRecipe.setEnabled(false);
 
                 if (floatingButton_addRecipe.getVisibility() == View.VISIBLE) {
-                    AppHelper.animateViewFadingOut(getContext(), floatingButton_addRecipe, 1000, 0);
+                    AnimationHelper.animateViewFadingOut(getContext(), floatingButton_addRecipe, 1000, 0);
                 }
             }
 
@@ -223,7 +242,7 @@ public abstract class MyFragment extends Fragment
             if (checkedItemsIdList.contains(recipeId)) {
                 // Checked item was unchecked
 
-                AppHelper.animateUncheckedRecipe(view, getContext());
+                AnimationHelper.animateUncheckedRecipe(view, getContext());
                 checkedItemsIdList.remove(recipeId);
 
                 if (getResources().getBoolean(R.bool.isTablet)) {
@@ -231,14 +250,14 @@ public abstract class MyFragment extends Fragment
                     if (checkedItemsIdList.isEmpty()) {
                         // The last checked item was unchecked
 
-                        AppHelper.setUnselectedRecipe(view);
+                        AnimationHelper.animateUnselectedRecipe(view);
 
                     } else {
 
-                        if (selectedId.equals(recipeId)) {
+                        if (selectedId != null && selectedId.equals(recipeId)) {
                             // The selected item was unchecked
 
-                            AppHelper.setUnselectedRecipe(view);
+                            AnimationHelper.animateUnselectedRecipe(view);
 
                             String prevCheckedItemId = checkedItemsIdList.get(checkedItemsIdList.size() - 1);
 
@@ -247,13 +266,15 @@ public abstract class MyFragment extends Fragment
                             adapter.onRecipeSelected(selectedId);
                             View prevSelectedItemView = adapter.getViewById(prevCheckedItemId);
                             if (prevSelectedItemView != null) {
-                                AppHelper.setSelectedRecipe(prevSelectedItemView, getContext());
+                                AnimationHelper.animateSelectedRecipe(prevSelectedItemView, getContext());
                             }
                         }
                     }
                 }
 
                 if (checkedItemsIdList.isEmpty()) {
+                    // The last checked item was unchecked
+
                     backToDefaultDisplay(true);
                 }
 
@@ -265,11 +286,11 @@ public abstract class MyFragment extends Fragment
 
                 if (getResources().getBoolean(R.bool.isTablet)) {
 
-                    AppHelper.setSelectedRecipe(view, getContext());
+                    AnimationHelper.animateSelectedRecipe(view, getContext());
 
                     View previousSelectedItemView = adapter.getViewById(selectedId);
                     if (previousSelectedItemView != null) {
-                        AppHelper.setUnselectedRecipe(previousSelectedItemView);
+                        AnimationHelper.animateUnselectedRecipe(previousSelectedItemView);
                     }
 
                     selectedId = recipeId;
@@ -278,7 +299,7 @@ public abstract class MyFragment extends Fragment
 
                 checkedItemsIdList.add(recipeId);
 
-                AppHelper.animateCheckedRecipe(view, getContext());
+                AnimationHelper.animateCheckedRecipe(view, getContext());
 
                 mListListener.onListItemChecked(this, recipeId, true);
             }
@@ -290,7 +311,7 @@ public abstract class MyFragment extends Fragment
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 
-        if (!checkedItemsIdList.isEmpty()) {
+        if (this instanceof ListFavouriteFragment2 || !checkedItemsIdList.isEmpty()) {
             return false;
         }
 
@@ -300,7 +321,7 @@ public abstract class MyFragment extends Fragment
 
             // Tablet only
 
-            if (selectedId.equals(recipeId)) {
+            if (selectedId != null && selectedId.equals(recipeId)) {
                 // The selected item isn't the one that checked
 
                 if (selectedId != null) {
@@ -308,22 +329,24 @@ public abstract class MyFragment extends Fragment
 
                     View previousSelectedItemView = adapter.getViewById(selectedId);
                     if (previousSelectedItemView != null) {
-                        AppHelper.setUnselectedRecipe(previousSelectedItemView);
+                        AnimationHelper.animateUnselectedRecipe(previousSelectedItemView);
                     }
                 }
 
                 selectedId = recipeId;
 
-                AppHelper.setSelectedRecipe(view, getContext());
+                AnimationHelper.animateSelectedRecipe(view, getContext());
 
                 adapter.onRecipeSelected(selectedId);
             }
         }
 
-        floatingButton_addRecipe.setEnabled(false);
-        AppHelper.animateViewFadingOut(getContext(), floatingButton_addRecipe, 1000, 0);
+        if (floatingButton_addRecipe.getVisibility() == View.VISIBLE) {
+            floatingButton_addRecipe.setEnabled(false);
+            AnimationHelper.animateViewFadingOut(getContext(), floatingButton_addRecipe, 1000, 0);
+        }
 
-        AppHelper.animateCheckedRecipe(view, getContext());
+        AnimationHelper.animateCheckedRecipe(view, getContext());
 
         checkedItemsIdList.add(recipeId);
 
@@ -347,10 +370,10 @@ public abstract class MyFragment extends Fragment
 
                     floatingButton_addRecipe.setEnabled(false);
 
-                    AppHelper.animateViewFadingOut(getContext(), floatingButton_addRecipe, 1000, 0);
+                    AnimationHelper.animateViewFadingOut(getContext(), floatingButton_addRecipe, 1000, 0);
 
                     if (layout_dialogBubble.getVisibility() == View.VISIBLE) {
-                        AppHelper.animateViewFadingOut(getContext(), layout_dialogBubble, 1000, 0);
+                        AnimationHelper.animateViewFadingOut(getContext(), layout_dialogBubble, 1000, 0);
                     }
                 }
 
@@ -370,73 +393,73 @@ public abstract class MyFragment extends Fragment
             if (selectedId != null) {
                 View selectedView = adapter.getViewById(selectedId);
                 if (selectedView != null) {
-                    AppHelper.setUnselectedRecipe(selectedView);
+                    AnimationHelper.animateUnselectedRecipe(selectedView);
                 }
                 adapter.onNoSelection();
                 selectedId = null;
             }
         }
 
-        listView_recipes.setEnabled(true);
+        if (!(this instanceof ListFavouriteFragment2)) {
 
-        floatingButton_addRecipe.setEnabled(true);
+            listView_recipes.setEnabled(true);
 
-        if (includeAnimation) {
+            floatingButton_addRecipe.setEnabled(true);
 
-            for (String selectedItemId : checkedItemsIdList) {
+            if (includeAnimation) {
 
-                View selectedItemView = adapter.getViewById(selectedItemId);
-                if (selectedItemView != null) {
-                    AppHelper.animateUncheckedRecipe(selectedItemView, getContext());
+                for (String selectedItemId : checkedItemsIdList) {
+
+                    View selectedItemView = adapter.getViewById(selectedItemId);
+                    if (selectedItemView != null) {
+                        AnimationHelper.animateUncheckedRecipe(selectedItemView, getContext());
+                    }
+                }
+
+                if (!(this instanceof SearchInListsFragment2) && floatingButton_addRecipe.getVisibility() != View.VISIBLE) {
+                    AnimationHelper.animateViewFadingIn(getContext(), floatingButton_addRecipe, 1000, 1000);
+                }
+
+                if (adapter.getCount() == 0) {
+                    if (!(this instanceof SearchInListsFragment2) && layout_dialogBubble.getVisibility() != View.VISIBLE) {
+                        AnimationHelper.animateViewFadingIn(getContext(), layout_dialogBubble, 1000, 1000);
+                    }
+                }
+
+            } else {
+                // No need for unchecked items animation
+
+                for (String selectedItemId : checkedItemsIdList) {
+
+                    View selectedItemView = adapter.getViewById(selectedItemId);
+                    if (selectedItemView != null) {
+                        ImageView selectedItemImage = (ImageView) selectedItemView.findViewById(R.id.imageView_itemImage);
+                        ImageView checkedIcon = (ImageView) selectedItemView.findViewById(R.id.imageView_checkedIcon);
+                        checkedIcon.setAlpha(0f);
+                        selectedItemImage.setAlpha(1f);
+                    }
+                }
+
+                if (!(this instanceof SearchInListsFragment2)) {
+
+                    if (floatingButton_addRecipe.getVisibility() != View.VISIBLE) {
+                        floatingButton_addRecipe.setVisibility(View.VISIBLE);
+                        floatingButton_addRecipe.setAlpha(1f);
+                    }
+
+                    if (adapter.getCount() == 0) {
+                        if (layout_dialogBubble.getVisibility() != View.VISIBLE) {
+                            layout_dialogBubble.setVisibility(View.VISIBLE);
+                            layout_dialogBubble.setAlpha(1f);
+                        }
+                    }
+                } else {
+                    getActivity().getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
                 }
             }
 
-            if (floatingButton_addRecipe.getVisibility() != View.VISIBLE) {
-                AppHelper.animateViewFadingIn(getContext(), floatingButton_addRecipe, 1000, 1000);
-            }
-
-            if (adapter.getCount() == 0) {
-                if (layout_dialogBubble.getVisibility() != View.VISIBLE) {
-                    AppHelper.animateViewFadingIn(getContext(), layout_dialogBubble, 1000, 1000);
-                }
-            }
-
-        } else {
-            // No need for unchecked items animation
-
-            for (String selectedItemId : checkedItemsIdList) {
-
-                View selectedItemView = adapter.getViewById(selectedItemId);
-                if (selectedItemView != null) {
-                    ImageView selectedItemImage = (ImageView) selectedItemView.findViewById(R.id.imageView_itemImage);
-                    ImageView checkedIcon = (ImageView) selectedItemView.findViewById(R.id.imageView_checkedIcon);
-                    checkedIcon.setAlpha(0f);
-                    selectedItemImage.setAlpha(1f);
-                }
-            }
-
-            if (floatingButton_addRecipe.getVisibility() != View.VISIBLE) {
-                floatingButton_addRecipe.setVisibility(View.VISIBLE);
-                floatingButton_addRecipe.setAlpha(1f);
-            }
-
-            if (adapter.getCount() == 0) {
-                if (layout_dialogBubble.getVisibility() != View.VISIBLE) {
-                    layout_dialogBubble.setVisibility(View.VISIBLE);
-                    layout_dialogBubble.setAlpha(1f);
-                }
-            }
+            checkedItemsIdList.clear();
         }
-
-        checkedItemsIdList.clear();
     }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
-    public void onEvent(RecipesListsDownloadedEvent event) {
-        adapter.notifyDataSetChanged();
-    }
-//-------------------------------------------------------------------------------------------------
 
 }

@@ -2,20 +2,20 @@ package com.hanoch.greatrecipes.bus;
 
 import com.hanoch.greatrecipes.model.Serving2;
 
-import java.util.ArrayList;
+import java.util.HashMap;
 
 
-public class OnUpdateServingsListCompleted {
+public class OnUpdateServingsListCompletedEvent {
 
-    public String action;
+    public int action;
     public boolean isSuccess;
-    public ArrayList<Serving2> servingsList;
+    public HashMap<String, Serving2> servingsMap;
     public Throwable t;
 
-    public OnUpdateServingsListCompleted(String action, boolean isSuccess, ArrayList<Serving2> servingsList, Throwable t) {
+    public OnUpdateServingsListCompletedEvent(int action, boolean isSuccess, HashMap<String, Serving2> servingsMap, Throwable t) {
         this.action = action;
         this.isSuccess = isSuccess;
-        this.servingsList = servingsList;
+        this.servingsMap = servingsMap;
         this.t = t;
     }
 }

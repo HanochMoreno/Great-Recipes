@@ -1,4 +1,4 @@
-package com.hanoch.greatrecipes.model;
+package com.hanoch.greatrecipes.bus;
 
 import com.squareup.otto.Bus;
 

@@ -1,17 +1,12 @@
 package com.hanoch.greatrecipes.view;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
-import android.net.Uri;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
-import android.support.v4.content.ContextCompat;
 import android.support.v7.widget.CardView;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -24,44 +19,24 @@ import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import com.google.gson.Gson;
+import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
-import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
-import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
-import com.hanoch.greatrecipes.database.DbManager;
-import com.hanoch.greatrecipes.model.ApiProvider;
-import com.hanoch.greatrecipes.model.Recipe;
-import com.hanoch.greatrecipes.model.RecipeSearchResult;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
-import com.hanoch.greatrecipes.api.yummly_api.YummlyRecipeResponse2;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
-import java.io.File;
-import java.io.UnsupportedEncodingException;
-import java.net.ConnectException;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.HashMap;
-
-import rx.Single;
-import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
 
 
 public class RecipeReviewFragment2 extends Fragment implements View.OnClickListener {
 
-    private static final String ARG_EXTRA_SERVING = "serving";
-    private static final String ARG_RECIPE_ID = "recipeId";
-//    private static final String ARG_ONLINE_SEARCH_RESULT_ID = "onlineSearchResultId";
-    private static final String ARG_IS_USER_RECIPE = "isUserRecipe";
+    private static final String ARG_EXTRA_SERVING = "ARG_EXTRA_SERVING";
+    private static final String ARG_RECIPE_AS_JSON = "ARG_RECIPE_AS_JSON";
+    private static final String ARG_IS_USER_RECIPE = "ARG_IS_USER_RECIPE";
 
     private FragmentRecipeReviewListener mListener;
 
@@ -85,43 +60,19 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 
     private LayoutInflater inflater;
 
-    private ToolbarMenuSetting mToolbarMenuSetting;
-
     private boolean viewsHaveBeenDestroyed;
 
-//    private String mOnlineSearchResultId;
-    private String mRecipeId;
     private boolean isUserRecipe;
-
     private UserRecipe mUserRecipe;
     private YummlyRecipe mYummlyRecipe;
 
-    //    private String recipeUrl;
     private String extra_serving;
 
-//    private ArrayList<String> ingredientsList;
-//    private ArrayList<String> categoriesList;
-//    private ArrayList<String> translatedCategories;
-
-    //    private int recipeTotalTime;
     private Bitmap recipeImage;
-//    private String recipeAuthor;
-//    private String recipeTitle;
-//    private int recipeYield;
-//    private int recipeTotalCalories;
-//    private int recipeFavouriteIndex;
-//    private String recipeInstructions;
-//    private String recipeNotes;
-//    private int recipeOriginIndex;
-
-//    private DbManager dbManager;
-    private ArrayList<Subscriber<YummlyRecipe>> subscribersList = new ArrayList<>();
-    private ProgressDialog progressDialog;
 
 //-------------------------------------------------------------------------------------------------
 
     public interface FragmentRecipeReviewListener {
-        void onRecipeWasSaved(long recipeId);
 
         void onGetInstructionsClick(String url);
     }
@@ -130,27 +81,24 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 
     public static RecipeReviewFragment2 newInstance(String recipeId, boolean isUserRecipe, String extra_serving) {
 
+        User user = AppStateManager.getInstance().user;
+        String recipeAsJson;
+        if (isUserRecipe) {
+            UserRecipe userRecipe = user.userRecipes.get(recipeId);
+            recipeAsJson = new Gson().toJson(userRecipe, UserRecipe.class);
+        } else {
+            YummlyRecipe yummlyRecipe = user.yummlyRecipes.get(recipeId);
+            recipeAsJson = new Gson().toJson(yummlyRecipe, YummlyRecipe.class);
+        }
+
         RecipeReviewFragment2 fragment = new RecipeReviewFragment2();
         Bundle args = new Bundle();
         args.putString(ARG_EXTRA_SERVING, extra_serving);
-        args.putString(ARG_RECIPE_ID, recipeId);
+        args.putString(ARG_RECIPE_AS_JSON, recipeAsJson);
         args.putBoolean(ARG_IS_USER_RECIPE, isUserRecipe);
         fragment.setArguments(args);
 
         return fragment;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
-    public void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        dbManager = ((GreatRecipesApplication) getActivity().getApplication()).getDbManager();
-
-        progressDialog = new ProgressDialog(getActivity());
-        progressDialog.setTitle(getString(R.string.loading_info));
-        progressDialog.setMessage(getString(R.string.please_wait));
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -212,87 +160,29 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
         cardView_privateNotes = (CardView) view.findViewById(R.id.cardView_notes);
         cardView_energy = (CardView) view.findViewById(R.id.cardView_energy);
 
-//        ingredientsList = new ArrayList<>();
-//        categoriesList = new ArrayList<>();
-//        translatedCategories = new ArrayList<>();
-
         if (savedInstanceState == null) {
 
             Bundle args = getArguments();
 
-            // Getting the RecipeId argument from the bundle:
-            isUserRecipe = args.getBoolean(ARG_IS_USER_RECIPE);
-            mRecipeId = args.getString(ARG_RECIPE_ID, null);
             extra_serving = getArguments().getString(ARG_EXTRA_SERVING);
+            isUserRecipe = args.getBoolean(ARG_IS_USER_RECIPE);
 
             if (isUserRecipe) {
-
-                recipeImage = ImageStorage.convertByteArrayAsStrigAsToBitmap(mUserRecipe.imageByteArrayAsString);
+                mUserRecipe = new Gson().fromJson(getArguments().getString(ARG_EXTRA_SERVING), UserRecipe.class);
+                recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(mUserRecipe.imageByteArrayAsString);
                 setUserRecipeDetailsView();
-
-//                Recipe recipe = dbManager.queryRecipeObjectById(mRecipeId);
-//
-//                recipeTitle = recipe.title;
-//                recipeTotalTime = recipe.time;
-//                recipeYield = recipe.yield;
-//                recipeAuthor = recipe.author;
-//                ingredientsList = AppHelper.convertStringToList(recipe.ingredientsList);
-//                categoriesList = AppHelper.convertStringToList(recipe.categoriesList);
-//                translatedCategories = AppHelper.getTranslatedCategoriesList(getContext(), categoriesList);
-//                recipeOriginIndex = recipe.originIndex;
-//                recipeFavouriteIndex = recipe.favouriteIndex;
-
-//                switch (recipeOriginIndex) {
-//
-//                    case AppConsts.RecipeOrigin.FROM_ONLINE_SEARCH:
-//
-//                        recipeTotalCalories = recipe.energy;
-//                        recipeUrl = recipe.url;
-//
-//                        break;
-//
-//                    case AppConsts.RecipeOrigin.ADDED_MANUALLY:
-//
-//                        recipeInstructions = recipe.instructions;
-//                        recipeNotes = recipe.notes;
-//
-//                        break;
-//                }
-//
-//                setRecipeDetailsView();
-
             } else {
                 // Going to show an online search result
 
-                recipeImage = ImageStorage.convertByteArrayAsStrigAsToBitmap(mYummlyRecipe.imageByteArrayAsString);
+                mYummlyRecipe = new Gson().fromJson(getArguments().getString(ARG_EXTRA_SERVING), YummlyRecipe.class);
+                recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(mYummlyRecipe.imageByteArrayAsString);
                 setYummlyRecipeDetailsView();
-
-//                imageView_recipeImage.setImageBitmap(recipeImage);
-//                cardView_instructions.setVisibility(View.GONE);
-//                cardView_privateNotes.setVisibility(View.GONE);
-//
-//                RecipeSearchResult result = dbManager.queryResultObjectById(mRecipeId);
-//
-//                if (recipeImage == null) {
-//                    textView_noImageAvailable.setVisibility(View.VISIBLE);
-//                    if (result.imageUrl != null && !result.imageUrl.isEmpty()) {
-//                        tryToGetRecipeImage(result.imageUrl);
-//                    }
-//
-//                } else {
-//                    AppHelper.animateViewFadingIn(getContext(), imageView_recipeImage, 2500, 0);
-//                }
-//
-//                downloadYummlyRecipeFromGreatRecipesApi();
             }
         } else {
             // Restore recipe details from the state
 
             extra_serving = savedInstanceState.getString("extra_serving");
-//            mOnlineSearchResultId = savedInstanceState.getString("mOnlineSearchResultId");
-            mRecipeId = savedInstanceState.getString("mRecipeId");
             isUserRecipe = savedInstanceState.getBoolean("isUserRecipe");
-
             recipeImage = savedInstanceState.getParcelable("recipeImage");
 
             if (recipeImage == null) {
@@ -304,23 +194,6 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
             } else {
                 mYummlyRecipe = new Gson().fromJson(savedInstanceState.getString("mYummlyRecipeAsJson"), YummlyRecipe.class);
             }
-
-//            recipeTitle = savedInstanceState.getString("recipeTitle");
-//            recipeAuthor = savedInstanceState.getString("recipeAuthor");
-//            recipeTotalTime = savedInstanceState.getInt("recipeTotalTime");
-//            recipeYield = savedInstanceState.getInt("recipeYield");
-//            ingredientsList = savedInstanceState.getStringArrayList("ingredientsList");
-//            categoriesList = savedInstanceState.getStringArrayList("categoriesList");
-//            translatedCategories = savedInstanceState.getStringArrayList("translatedCategories");
-//
-//            recipeTotalCalories = savedInstanceState.getInt("recipeTotalCalories");
-//            recipeUrl = savedInstanceState.getString("recipeUrl");
-//
-//            recipeOriginIndex = savedInstanceState.getInt("recipeOriginIndex");
-//            recipeFavouriteIndex = savedInstanceState.getInt("recipeFavouriteIndex");
-//
-//            recipeInstructions = savedInstanceState.getString("recipeInstructions");
-//            recipeNotes = savedInstanceState.getString("recipeNotes");
 
             if (mUserRecipe != null) {
                 setUserRecipeDetailsView();
@@ -345,7 +218,7 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
         if (recipeImage == null) {
             textView_noImageAvailable.setVisibility(View.VISIBLE);
         } else {
-            AppHelper.animateViewFadingIn(getContext(), imageView_recipeImage, 2500, 0);
+            AnimationHelper.animateViewFadingIn(getContext(), imageView_recipeImage, 2500, 0);
         }
 
         if (mUserRecipe.recipeTitle != null) {
@@ -398,7 +271,7 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
             textView_noImageAvailable.setVisibility(View.VISIBLE);
 
         } else {
-            AppHelper.animateViewFadingIn(getContext(), imageView_recipeImage, 2500, 0);
+            AnimationHelper.animateViewFadingIn(getContext(), imageView_recipeImage, 2500, 0);
         }
 
         if (mYummlyRecipe.recipeTitle != null) {
@@ -420,14 +293,20 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
             textView_recipeAuthor.setText(getString(R.string.from) + "\n" + mYummlyRecipe.author);
         }
 
+        if (mYummlyRecipe.energy == 0) {
+            textView_totalCalories.setText(getString(R.string.no_info));
+        } else {
+            textView_totalCalories.setText(mYummlyRecipe.energy + " " + getString(R.string.calories));
+        }
+
         fillList(layout_ingredientsList, mYummlyRecipe.ingredientsList);
         fillList(layout_categoriesList, AppHelper.getTranslatedCategoriesList(getContext(), mYummlyRecipe.categoriesList));
 
         setFavouriteImage(mYummlyRecipe._id);
 
         floatingButton_getInstructions.setVisibility(View.VISIBLE);
-        AppHelper.animateViewFadingIn(getContext(), floatingButton_getInstructions, 1500, 0);
-        AppHelper.animateViewFlipping(getContext(), floatingButton_getInstructions, 1500, 0);
+        AnimationHelper.animateViewFadingIn(getContext(), floatingButton_getInstructions, 1500, 0);
+        AnimationHelper.animateViewFlipping(getContext(), floatingButton_getInstructions, 1500, 0);
 
         cardView_instructions.setVisibility(View.GONE);
         cardView_privateNotes.setVisibility(View.GONE);
@@ -435,320 +314,17 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 
 //-------------------------------------------------------------------------------------------------
 
-    public void downloadRecipeFromYummlyApi() {
-        // TODO: move this to the onlineSearchActivity
-        // For Example:
-        // http://api.yummly.com/v1/api/recipe/French-Onion-Soup-1292648?_app_id=417b707a&_app_key=249ec501a990bd7d5fa5dd5218bf7e14
-
-        String appId = AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL;
-        String appKey = AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL;
-        String requiredPictureValue = "true";
-
-        try {
-            appId = URLEncoder.encode(AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL, "utf-8");
-            appKey = URLEncoder.encode(AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL, "utf-8");
-            requiredPictureValue = URLEncoder.encode("true", "utf-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        HashMap<String, String> query = new HashMap<>();
-        query.put("_app_id", appId);
-        query.put("_app_key", appKey);
-        query.put("requirePictures", requiredPictureValue);
-
-        Subscriber<YummlyRecipe> subscriber = new Subscriber<YummlyRecipe>() {
-            @Override
-            public void onCompleted() {
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                onDownloadRecipeCompleted(false, null, t);
-            }
-
-            @Override
-            public void onNext(YummlyRecipe yummlyRecipe) {
-                onDownloadRecipeCompleted(true, yummlyRecipe, null);
-            }
-        };
-
-        subscribersList.add(subscriber);
-
-        Single<YummlyRecipeResponse2> getRecipeDetails =
-                ApiProvider.getYummlyApi().getYummlyRecipe(mOnlineSearchResultId, query);
-
-        getRecipeDetails
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .map(this::generateRecipeResult)
-                .subscribe(subscriber);
-
-        if (recipeImage == null) {
-            // Retry to download the recipe's image
-            String imageUrl = dbManager.queryResultObjectById(mRecipeId).imageUrl;
-            if (imageUrl != null && !imageUrl.isEmpty()) {
-                tryToGetRecipeImage(imageUrl);
-            }
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    public void downloadYummlyRecipeFromGreatRecipesApi() {
-
-        // TODO: delete
-        String recipeId = "yummly-id-7";
-
-        try {
-            recipeId = URLEncoder.encode(recipeId, "utf-8");
-        } catch (UnsupportedEncodingException e) {
-            e.printStackTrace();
-        }
-
-        HashMap<String, String> query = new HashMap<>();
-        query.put("yummlyId", recipeId);
-
-        progressDialog.show();
-
-        Subscriber<YummlyRecipe> subscriber = new Subscriber<YummlyRecipe>() {
-            @Override
-            public void onCompleted() {
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                onDownloadRecipeCompleted(false, null, t);
-            }
-
-            @Override
-            public void onNext(YummlyRecipe recipe) {
-                if (isFragmentAttached()) {
-                    if (recipe == null) {
-                        downloadRecipeFromYummlyApi();
-                    } else {
-                        onDownloadRecipeCompleted(true, recipe, null);
-                    }
-                }
-            }
-        };
-
-        subscribersList.add(subscriber);
-
-        Single<YummlyRecipe> getRecipeDetails =
-                ApiProvider.getGreatRecipesApi().getYummlyRecipe(mOnlineSearchResultId);
-
-        getRecipeDetails
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(subscriber);
-
-        if (recipeImage == null) {
-            // Retry to download the recipe's image
-            String imageUrl = dbManager.queryResultObjectById(mRecipeId).imageUrl;
-            if (imageUrl != null && !imageUrl.isEmpty()) {
-                tryToGetRecipeImage(imageUrl);
-            }
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private YummlyRecipe generateRecipeResult(YummlyRecipeResponse2 yummlyRecipe) {
-        YummlyRecipe searchResult = new YummlyRecipe();
-
-        searchResult.yummlyId = mOnlineSearchResultId;
-
-        searchResult.recipeTitle = yummlyRecipe.title;
-        searchResult.yield = yummlyRecipe.yield;
-        searchResult.cookingTime = yummlyRecipe.time;
-
-        searchResult.author = AppConsts.Category.NO_INFO;
-        searchResult.url = AppConsts.Category.NO_INFO;
-
-        if (yummlyRecipe.source != null) {
-            if (yummlyRecipe.source.containsKey("sourceDisplayName")) {
-                searchResult.author = yummlyRecipe.source.get("sourceDisplayName");
-            }
-
-            if (yummlyRecipe.source.containsKey("sourceRecipeUrl")) {
-                searchResult.url = yummlyRecipe.source.get("sourceRecipeUrl");
-            }
-        }
-
-        searchResult.ingredientsList = yummlyRecipe.ingredients;
-
-        ArrayList<String> categories = new ArrayList<>();
-        if (yummlyRecipe.attributes != null) {
-            categories = yummlyRecipe.attributes.get("course");
-        }
-        searchResult.categoriesList = categories;
-
-        searchResult.energy = -1;
-        if (yummlyRecipe.nutritions != null) {
-            for (HashMap<String, Object> nutrition : yummlyRecipe.nutritions) {
-                if (nutrition.containsKey("attribute") && nutrition.get("attribute").equals("ENERC_KCAL")) {
-                    double calories = (double) nutrition.get("value");
-                    searchResult.energy = (int) calories;
-                    break;
-                }
-            }
-        }
-
-        return searchResult;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private YummlyRecipe updateRecipeFields(YummlyRecipe searchResult) {
-        recipeTitle = searchResult.recipeTitle;
-        recipeAuthor = searchResult.author;
-        recipeUrl = searchResult.url;
-        recipeTotalTime = searchResult.cookingTime;
-        recipeYield = searchResult.yield;
-        recipeTotalCalories = searchResult.energy;
-
-        ingredientsList = searchResult.ingredientsList;
-        categoriesList = searchResult.categoriesList;
-        translatedCategories = AppHelper.getTranslatedCategoriesList(getContext(), categoriesList);
-
-        return searchResult;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private void tryToGetRecipeImage(String imageUrl) {
-        Target target = new Target() {
-            @Override
-            public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                imageView_recipeImage.setVisibility(View.VISIBLE);
-
-                if (bitmap == null) {
-                    textView_noImageAvailable.setVisibility(View.VISIBLE);
-                } else {
-                    String imageName = AppConsts.Images.RESULT_IMAGE_PREFIX + mRecipeId;
-                    ImageStorage.saveToSdCard(getContext(), bitmap, imageName);
-                    recipeImage = bitmap;
-                    imageView_recipeImage.setImageBitmap(bitmap);
-                    textView_noImageAvailable.setVisibility(View.INVISIBLE);
-                }
-            }
-
-            @Override
-            public void onBitmapFailed(Drawable errorDrawable) {
-            }
-
-            @Override
-            public void onPrepareLoad(Drawable placeHolderDrawable) {
-            }
-        };
-
-        Picasso.with(getContext()).load(imageUrl).into(target);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    public void onSaveOnlineRecipe(String _id) {
-
-        // Add the new recipe (from online search) to database
-
-        String resultStringIngredientsList = AppHelper.convertListToString(ingredientsList);
-        String resultStringCategoriesList = AppHelper.convertListToString(categoriesList);
-
-        Recipe recipe = new Recipe(recipeTitle, recipeAuthor, recipeYield, recipeUrl,
-                resultStringCategoriesList, resultStringIngredientsList, recipeTotalTime, recipeTotalCalories);
-
-        User user = new User();
-        user._id = AppStateManager.getInstance().user._id;
-
-        ArrayList<String> yummlyRecipesIds = AppStateManager.getInstance().user.yummlyRecipesIds;
-        yummlyRecipesIds.add(_id);
-
-        user.yummlyRecipesIds = yummlyRecipesIds;
-
-        // TODO: subsription an observable
-        ApiProvider.getGreatRecipesApi().updateUser(user);
-
-        Uri uri = dbManager.addNewRecipe(recipe);
-        long recipeId = dbManager.getRecipeIdFromUri(uri);
-
-        mListener.onRecipeWasSaved(recipeId);
-
-        if (recipeImage != null) {
-            String imageName = AppConsts.Images.RECIPE_IMAGE_PREFIX + recipeId;
-            File file = ImageStorage.saveToSdCard(getContext(), recipeImage, imageName);
-
-            if (file != null) {
-                Bitmap thumbnail = ImageStorage.decodeSampledBitmapFromFile(file.getPath(), Bitmap.Config.ARGB_8888, 100, 100);
-                imageName = AppConsts.Images.RECIPE_THUMBNAIL_PREFIX + recipeId;
-                ImageStorage.saveToSdCard(getContext(), thumbnail, imageName);
-                thumbnail.recycle();
-            }
-        }
-
-        AppHelper.showSnackBar(view, R.string.added_to_online_list, ContextCompat.getColor(getContext(), R.color.colorSnackbarGreen));
-    }
-
-//-------------------------------------------------------------------------------------------------
-
     public void setFavouriteImage(String recipeId) {
+        setFavouriteImage(AppStateManager.getInstance().isRecipeFavourite(recipeId));
+    }
 
-        ArrayList<String> favouriteRecipesIds = AppStateManager.getInstance().userRecipes.favouriteRecipesIds;
-        if (favouriteRecipesIds.contains(recipeId)) {
-            AppHelper.animateViewFadingIn(getContext(), imageView_favourite, 1000, 0);
+//-------------------------------------------------------------------------------------------------
+
+    public void setFavouriteImage(boolean isFavourite) {
+        if (isFavourite) {
+            AnimationHelper.animateViewFadingIn(getContext(), imageView_favourite, 1000, 0);
         } else {
-            AppHelper.animateViewFadingOut(getContext(), imageView_favourite, 1000, 0);
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private boolean isFragmentAttached() {
-        return (!isDetached() && !isRemoving() && isVisible());
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private void onDownloadRecipeCompleted(boolean isSuccess, YummlyRecipe recipe, Throwable t) {
-        if (isFragmentAttached()) {
-
-            if (isSuccess) {
-                updateRecipeFields(recipe);
-                setRecipeDetailsView();
-
-                progressDialog.dismiss();
-
-                ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
-
-                if (extra_serving != null && extra_serving.equals(AppConsts.Extras.ADD_SERVING)) {
-                    toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING);
-                } else {
-                    toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_LIST);
-                }
-
-                mToolbarMenuSetting.setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
-
-                floatingButton_getInstructions.setVisibility(View.VISIBLE);
-                AppHelper.animateViewFadingIn(getContext(), floatingButton_getInstructions, 1500, 0);
-                AppHelper.animateViewFlipping(getContext(), floatingButton_getInstructions, 1500, 0);
-            } else {
-                if (t instanceof UnknownHostException || t instanceof ConnectException) {
-                    AppHelper.showSnackBar(view, R.string.internet_error, Color.RED);
-                } else {
-                    AppHelper.showSnackBar(view, R.string.unexpected_error, Color.RED);
-                }
-
-                ArrayList<String> emptyList = new ArrayList<>();
-                fillList(layout_ingredientsList, emptyList);
-                fillList(layout_categoriesList, emptyList);
-
-                progressDialog.dismiss();
-
-                ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
-                toolbarButtonsList.add(AppConsts.ToolbarButtons.REFRESH);
-
-                mToolbarMenuSetting.setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.PRIMARY, getString(R.string.internet_error));
-            }
+            AnimationHelper.animateViewFadingOut(getContext(), imageView_favourite, 1000, 0);
         }
     }
 
@@ -764,13 +340,6 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
             throw new ClassCastException(context.toString()
                     + " must implement FragmentRecipeReviewListener");
         }
-
-        try {
-            mToolbarMenuSetting = (ToolbarMenuSetting) context;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(context.toString()
-                    + " must implement FragmentToolbarMenuListener");
-        }
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -780,15 +349,6 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
         super.onDetach();
 
         mListener = null;
-        mToolbarMenuSetting = null;
-
-        subscribersList.stream()
-                .filter(subscriber -> subscriber != null && !subscriber.isUnsubscribed())
-                .forEach(subscriber -> {
-                    Log.d("RecipeReviewFragment", "onDetach: subscriber is going to get unSubscribed");
-                    subscriber.unsubscribe();
-                });
-
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -817,8 +377,6 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
         super.onSaveInstanceState(outState);
 
         outState.putString("extra_serving", extra_serving);
-//        outState.putString("mOnlineSearchResultId", mOnlineSearchResultId);
-        outState.putString("mRecipeId", mRecipeId);
         outState.putBoolean("isUserRecipe", isUserRecipe);
         outState.putParcelable("recipeImage", recipeImage);
 
@@ -827,20 +385,6 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
         } else {
             outState.putString("mYummlyRecipeAsJson", new Gson().toJson(mYummlyRecipe, YummlyRecipe.class));
         }
-
-//        outState.putString("recipeTitle", recipeTitle);
-//        outState.putString("recipeAuthor", recipeAuthor);
-//        outState.putInt("recipeTotalTime", recipeTotalTime);
-//        outState.putInt("recipeYield", recipeYield);
-//        outState.putStringArrayList("ingredientsList", ingredientsList);
-//        outState.putStringArrayList("categoriesList", categoriesList);
-//        outState.putStringArrayList("translatedCategories", translatedCategories);
-//        outState.putInt("recipeTotalCalories", recipeTotalCalories);
-//        outState.putString("recipeUrl", recipeUrl);
-//        outState.putInt("recipeOriginIndex", recipeOriginIndex);
-//        outState.putInt("recipeFavouriteIndex", recipeFavouriteIndex);
-//        outState.putString("recipeInstructions", recipeInstructions);
-//        outState.putString("recipeNotes", recipeNotes);
     }
 
 //-------------------------------------------------------------------------------------------------

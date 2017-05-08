@@ -1,12 +1,14 @@
 package com.hanoch.greatrecipes.view;
 
 import android.animation.ObjectAnimator;
+import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
+import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -31,32 +33,38 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
+import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
-import com.hanoch.greatrecipes.GreatRecipesApplication;
+import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.control.ListFragmentListener;
+import com.hanoch.greatrecipes.bus.BusConsts;
+import com.hanoch.greatrecipes.bus.OnUpdateServingsListCompletedEvent;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
-import com.hanoch.greatrecipes.database.DbManager;
+import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
-import com.hanoch.greatrecipes.model.MyFragment;
-import com.hanoch.greatrecipes.model.Serving;
+import com.hanoch.greatrecipes.model.Serving2;
 import com.hanoch.greatrecipes.model.ServingType;
 import com.hanoch.greatrecipes.utilities.MyFonts;
 import com.hanoch.greatrecipes.view.adapters.ServingTypesAdapter;
+import com.squareup.otto.Subscribe;
 
+import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
 
 public class MealPlannerActivity extends AppCompatActivity implements
-        ServingsListFragment.FragmentServingsListListener,
-        ListFragmentListener,
-        RecipeReviewFragment.FragmentRecipeReviewListener,
+        ServingsListFragment2.FragmentServingsListListener,
+        RecipeReviewFragment2.FragmentRecipeReviewListener,
         ToolbarMenuSetting {
 
     private static final int REQ_CODE_ONLINE_SEARCH_ACTIVITY = 1;
     private static final int REQ_CODE_LISTS_ACTIVITY = 2;
 
-    private MyFragment listFragment;
+    private ServingsListFragment2 listFragment;
 
     private LinearLayout layout_logo;
     private Toolbar toolbar;
@@ -71,25 +79,27 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
     private Bundle savedInstanceState;
 
-    private ArrayList<Integer> selectedItemsId;
+    private ArrayList<String> selectedItemsId;
 
     private int listSize;
+    private Serving2 mServing;
     private String servingType;
 
-    private long mRecipeId;
+    private ArrayList<ServingType> servingTypesList = new ArrayList<>();;
+
     private int toolbarColor;
     private String toolbarTitle;
 
-    private DbManager dbManager;
+    private GreatRecipesDbManager dbManager;
+    private AppStateManager appStateManager;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_template);
 
-        dbManager = ((GreatRecipesApplication) getApplication()).getDbManager();
-
-        mRecipeId = AppConsts.NEW_RECIPE;
+        dbManager = GreatRecipesDbManager.getInstance();
+        appStateManager = AppStateManager.getInstance();
 
         selectedItemsId = new ArrayList<>();
 
@@ -124,7 +134,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
             // only add fragments if the state is null!
             // if there's a state - they will be re-attached automatically
 
-            Fragment servingsListFragment = ServingsListFragment.newInstance();
+            Fragment servingsListFragment = ServingsListFragment2.newInstance();
             FragmentManager fm = getSupportFragmentManager();
             FragmentTransaction ft = fm.beginTransaction();
             ft.add(containerResId, servingsListFragment, AppConsts.Fragments.SERVINGS_LIST);
@@ -156,7 +166,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         this.savedInstanceState = savedInstanceState;
 
-        listFragment = (MyFragment) getSupportFragmentManager().findFragmentByTag(AppConsts.Fragments.SERVINGS_LIST);
+        listFragment = (ServingsListFragment2) getSupportFragmentManager().findFragmentByTag(AppConsts.Fragments.SERVINGS_LIST);
 
         if (getResources().getBoolean(R.bool.isTablet)) {
 
@@ -164,11 +174,11 @@ public class MealPlannerActivity extends AppCompatActivity implements
             layout_logo.setVisibility(layout_logoVisibility);
         }
 
-        selectedItemsId = savedInstanceState.getIntegerArrayList("selectedItemsId");
-        mRecipeId = savedInstanceState.getLong("mRecipeId");
+        selectedItemsId = savedInstanceState.getStringArrayList("selectedItemsId");
+        servingType = savedInstanceState.getString("servingType");
+        mServing = new Gson().fromJson(savedInstanceState.getString("servingAsJson"), Serving2.class);
 
         listSize = savedInstanceState.getInt("listSize");
-        servingType = savedInstanceState.getString("servingType");
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -182,11 +192,13 @@ public class MealPlannerActivity extends AppCompatActivity implements
             outState.putInt("layout_logoVisibility", layout_logoVisibility);
         }
 
-        outState.putIntegerArrayList("selectedItemsId", selectedItemsId);
-        outState.putLong("mRecipeId", mRecipeId);
-        outState.putInt("listSize", listSize);
-        outState.putString("servingType", servingType);
+        if (mServing != null) {
+            outState.putString("servingAsJson", new Gson().toJson(mServing, Serving2.class));
+        }
 
+        outState.putStringArrayList("selectedItemsId", selectedItemsId);
+        outState.putString("servingType", servingType);
+        outState.putInt("listSize", listSize);
         outState.putInt("toolbarColor", toolbarColor);
         outState.putString("toolbarTitle", toolbarTitle);
 
@@ -215,7 +227,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void listSizeChanged(int listSize) {
+    public void onListSizeChanged(int listSize) {
         this.listSize = listSize;
 
         if (toolbar_clearServingsList != null) {
@@ -241,9 +253,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onRecipeClick(MyFragment listFragment, long recipeId) {
-
-        this.listFragment = listFragment;
+    public void showRecipeDetails(Serving2 serving) {
 
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
@@ -255,27 +265,29 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
             recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
 
-            if (mRecipeId == recipeId && recipeReviewFragment != null) return;
-
-            if (layout_logo.getVisibility() == View.VISIBLE) {
-                AppHelper.animateViewFadingOut(this, layout_logo, 500, 0);
+            if (mServing != null && mServing.recipeId.equals(serving.recipeId) && recipeReviewFragment != null) {
+                return;
             }
 
-            mRecipeId = recipeId;
+            if (layout_logo.getVisibility() == View.VISIBLE) {
+                AnimationHelper.animateViewFadingOut(this, layout_logo, 500, 0);
+            }
+
+            mServing = serving;
 
             Fragment webViewFragment = fm.findFragmentByTag(AppConsts.Fragments.WEB_VIEW);
             if (webViewFragment != null) {
                 onBackPressed();
             }
 
-            recipeReviewFragment = RecipeReviewFragment.newInstance(recipeId, null, AppConsts.Extras.REVIEW_SERVING);
+            recipeReviewFragment = RecipeReviewFragment2.newInstance(serving.recipeId, serving.isUserRecipe, AppConsts.Extras.REVIEW_SERVING);
             ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
             ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
 
         } else {
             // phone
 
-            recipeReviewFragment = RecipeReviewFragment.newInstance(recipeId, null, AppConsts.Extras.REVIEW_SERVING);
+            recipeReviewFragment = RecipeReviewFragment2.newInstance(serving.recipeId, serving.isUserRecipe, AppConsts.Extras.REVIEW_SERVING);
             ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left, R.anim.slide_in_right, R.anim.slide_out_right);
             ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
             ft.addToBackStack(null);
@@ -287,12 +299,10 @@ public class MealPlannerActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onListItemChecked(MyFragment listFragment, long id, boolean isChecked) {
-
-        this.listFragment = listFragment;
+    public void onServingChecked(Serving2 serving, boolean isChecked) {
 
         if (isChecked) {
-            selectedItemsId.add((int) id);
+            selectedItemsId.add(serving.servingId);
 
             if (selectedItemsId.size() == 1) {
                 ArrayList<Integer> toolbarButtons = new ArrayList<>();
@@ -301,7 +311,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
             }
 
         } else {
-            selectedItemsId.remove(Integer.valueOf((int) id));
+            selectedItemsId.remove(serving.servingId);
 
             if (selectedItemsId.isEmpty()) {
                 updateClearListButtonVisibility(listSize);
@@ -312,8 +322,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
             if (getResources().getBoolean(R.bool.isTablet)) {
 
-                long recipeId = dbManager.queryServingObjectById(selectedItemsId.get(0)).recipeId;
-                onRecipeClick(listFragment, recipeId);
+                showRecipeDetails(serving);
             }
         }
     }
@@ -321,20 +330,14 @@ public class MealPlannerActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onAddNewRecipeClick(MyFragment listFragment, int listTypeIndex) {
+    public void onAddNewServingClick() {
         // pop-up custom alert-dialog to insert a new ingredient:
-
-        this.listFragment = listFragment;
 
         final Activity thisActivity = this;
 
-        // Create custom dialog object
         final Dialog dialog = new Dialog(this);
-
-        // hide to default title for Dialog
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        // inflate the layout dialog_layout.xml and set it as contentView
         LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         final View view = inflater.inflate(R.layout.dialog_add_serving, null, false);
         dialog.setCanceledOnTouchOutside(false);
@@ -355,16 +358,16 @@ public class MealPlannerActivity extends AppCompatActivity implements
         layout_buttons.setVisibility(View.GONE);
         layout_servingType.setVisibility(View.GONE);
 
-        final ArrayList<ServingType> servingTypesList = new ArrayList<>();
-
-        servingTypesList.add(new ServingType(AppConsts.Serving.APPETIZER, R.drawable.cat_appetizers));
-        servingTypesList.add(new ServingType(AppConsts.Serving.SIDE_DISH, R.drawable.cat_side_dishes));
-        servingTypesList.add(new ServingType(AppConsts.Serving.MAIN_DISH, R.drawable.cat_main_dishes));
-        servingTypesList.add(new ServingType(AppConsts.Serving.SALAD, R.drawable.cat_salads));
-        servingTypesList.add(new ServingType(AppConsts.Serving.PASTRY, R.drawable.cat_breads));
-        servingTypesList.add(new ServingType(AppConsts.Serving.BEVERAGE, R.drawable.cat_beverages));
-        servingTypesList.add(new ServingType(AppConsts.Serving.SAUCE, R.drawable.cat_condiments_and_sauces));
-        servingTypesList.add(new ServingType(AppConsts.Serving.DESSERT, R.drawable.cat_desserts));
+        if (servingTypesList.isEmpty()) {
+            servingTypesList.add(new ServingType(AppConsts.Serving.APPETIZER, R.drawable.cat_appetizers));
+            servingTypesList.add(new ServingType(AppConsts.Serving.SIDE_DISH, R.drawable.cat_side_dishes));
+            servingTypesList.add(new ServingType(AppConsts.Serving.MAIN_DISH, R.drawable.cat_main_dishes));
+            servingTypesList.add(new ServingType(AppConsts.Serving.SALAD, R.drawable.cat_salads));
+            servingTypesList.add(new ServingType(AppConsts.Serving.PASTRY, R.drawable.cat_breads));
+            servingTypesList.add(new ServingType(AppConsts.Serving.BEVERAGE, R.drawable.cat_beverages));
+            servingTypesList.add(new ServingType(AppConsts.Serving.SAUCE, R.drawable.cat_condiments_and_sauces));
+            servingTypesList.add(new ServingType(AppConsts.Serving.DESSERT, R.drawable.cat_desserts));
+        }
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         final boolean premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
@@ -436,13 +439,6 @@ public class MealPlannerActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onRecipeWasSaved(long recipeId) {
-        // Irrelevant for this activity
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
     public void onGetInstructionsClick(String url) {
 
         FragmentManager fm = getSupportFragmentManager();
@@ -489,17 +485,14 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         if (toolbarButtonsList != null) {
 
-            for (Integer button : allButtons) {
-
-                if (toolbarButtonsList.contains(button)) {
-                    MenuItem toolbarButton = toolbar.getMenu().findItem(button);
-                    if (button == AppConsts.ToolbarButtons.CLEAR_SERVING_LIST) {
-                        toolbarButton.setVisible(true);
-                    } else {
-                        fadingInAnimationsList.add(AppHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 0));
-                    }
+            allButtons.stream().filter(toolbarButtonsList::contains).forEach(button -> {
+                MenuItem toolbarButton = toolbar.getMenu().findItem(button);
+                if (button == AppConsts.ToolbarButtons.CLEAR_SERVING_LIST) {
+                    toolbarButton.setVisible(true);
+                } else {
+                    fadingInAnimationsList.add(AnimationHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 0));
                 }
-            }
+            });
         }
     }
 
@@ -509,9 +502,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         if (fadingInAnimationsList != null) {
             // Cancelling all buttons "fading-in" animations, if exists
-            for (ObjectAnimator animation : fadingInAnimationsList) {
-                animation.cancel();
-            }
+            fadingInAnimationsList.forEach(ValueAnimator::cancel);
         }
 
         ArrayList<Integer> buttons = new ArrayList<>();
@@ -529,7 +520,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
                 if (button == AppConsts.ToolbarButtons.CLEAR_SERVING_LIST) {
                     toolBarButton.setVisible(false);
                 } else {
-                    AppHelper.animateToolbarButtonFadingOut(toolBarButton, 500, 0);
+                    AnimationHelper.animateToolbarButtonFadingOut(toolBarButton, 500, 0);
                 }
             }
         }
@@ -592,15 +583,11 @@ public class MealPlannerActivity extends AppCompatActivity implements
         switch (itemId) {
 
             case R.id.action_clearServingsList:
-
-                onClearServingsListClicked();
-
+                onDeleteItemsClicked(true);
                 break;
 
             case R.id.action_delete:
-
-                onDeleteItemsClicked();
-
+                onDeleteItemsClicked(false);
                 break;
 
             case R.id.action_closeWebview:
@@ -640,23 +627,96 @@ public class MealPlannerActivity extends AppCompatActivity implements
     public void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
+        // The user finished choosing a recipe
         if (resultCode == Activity.RESULT_OK) {
             // The request code doesn't matter in this case
 
-            long recipeId = data.getLongExtra(AppConsts.Extras.EXTRA_RECIPE_ID, -1);
-            Serving serving = new Serving(-1, recipeId, servingType, false, false);
-            dbManager.addNewServing(serving);
+            String recipeId = data.getStringExtra(AppConsts.Extras.EXTRA_RECIPE_ID);
+            boolean isUserRecipe = data.getBooleanExtra(AppConsts.Extras.EXTRA_IS_USER_RECIPE, false);
+
+            Serving2 serving = new Serving2();
+            serving.recipeId = recipeId;
+            serving.isUserRecipe = isUserRecipe;
+            serving.servingId = String.valueOf(System.currentTimeMillis());
+            serving.servingType = servingType;
+
+            ArrayList<Serving2> servingsList = new ArrayList<>();
+            servingsList.add(serving);
+            dbManager.updateUserServingsMap(servingsList, BusConsts.ACTION_ADD_NEW);
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
+    public void onEvent(OnUpdateServingsListCompletedEvent event) {
+        if (event.isSuccess) {
+            FragmentManager fm = getSupportFragmentManager();
+            ServingsListFragment2 servingsListFragment = (ServingsListFragment2) fm.findFragmentByTag(AppConsts.Fragments.SERVINGS_LIST);
+            servingsListFragment.adapter.refreshAdapter();
 
             if (getResources().getBoolean(R.bool.isTablet)) {
+                switch (event.action) {
+                    case BusConsts.ACTION_ADD_NEW:
+                        onListSizeChanged(event.servingsMap.size());
+                        mServing = event.servingsMap.get(mServing.servingId);
+                        showRecipeDetails(mServing);
+                        break;
+                    case BusConsts.ACTION_EDIT:
+                        mServing = event.servingsMap.get(mServing.servingId);
+                        showRecipeDetails(mServing);
+                        break;
+                    case BusConsts.ACTION_DELETE:
+                        onListSizeChanged(event.servingsMap.size());
+                        listFragment.backToDefaultDisplay(false);
 
-                onRecipeClick(listFragment, recipeId);
+                        Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
+
+                        if (recipeReviewFragment != null) {
+                            // Tablet only
+
+                            Fragment webViewFragment = fm.findFragmentByTag(AppConsts.Fragments.WEB_VIEW);
+
+                            if (webViewFragment != null) {
+                                fm.popBackStack();
+                            }
+
+                            FragmentTransaction ft = fm.beginTransaction();
+                            ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
+                            ft.remove(recipeReviewFragment);
+                            ft.commit();
+
+                            AnimationHelper.animateViewFadingIn(this, layout_logo, 500, 500);
+                        }
+
+                        String toastMessage;
+
+                        if (selectedItemsId.size() == 1) {
+                            toastMessage = getString(R.string.the_serving_was_deleted);
+
+                        } else {
+                            toastMessage = selectedItemsId.size() + " " + getString(R.string.servings_were_deleted);
+                        }
+
+                        Toast.makeText(this, toastMessage, Toast.LENGTH_LONG).show();
+
+                        selectedItemsId.clear();
+                        break;
+                }
+            }
+        } else {
+            View mainView = findViewById(android.R.id.content);
+            if (event.t instanceof UnknownHostException || event.t instanceof ConnectException) {
+                AppHelper.showSnackBar(mainView, R.string.internet_error, Color.RED);
+            } else {
+                AppHelper.showSnackBar(mainView, R.string.unexpected_error, Color.RED);
             }
         }
     }
 
 //-------------------------------------------------------------------------------------------------
 
-    public void onClearServingsListClicked() {
+    public void onDeleteItemsClicked(boolean isToDeleteAll) {
 
         AppHelper.vibrate(this);
 
@@ -664,82 +724,10 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         final Dialog dialog = new Dialog(this);
 
-        // hide to default title for Dialog
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         LayoutInflater inflater = LayoutInflater.from(context);
 
-        // inflate the layout dialog_layout.xml and set it as contentView
-        final View view = inflater.inflate(R.layout.dialog_warning, null, false);
-
-        dialog.setCancelable(false);
-
-        dialog.setContentView(view);
-
-        TextView textView_dialogTitle = (TextView) dialog.findViewById(R.id.textView_dialogTitle);
-        TextView textView_dialogContent = (TextView) dialog.findViewById(R.id.textView_dialogContent);
-
-        textView_dialogTitle.setText(R.string.deleting_all_servings);
-        textView_dialogContent.setText(getString(R.string.are_you_sure)
-                + "\n"
-                + getString(R.string.the_operation_is_irreversible));
-
-        Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
-        button_yes.setOnClickListener(v -> {
-
-            dbManager.deleteAllServings();
-
-            FragmentManager fm = getSupportFragmentManager();
-            Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
-
-            if (recipeReviewFragment != null) {
-
-                if (getResources().getBoolean(R.bool.isTablet)) {
-
-                    FragmentTransaction ft = fm.beginTransaction();
-                    ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
-                    ft.remove(recipeReviewFragment);
-                    ft.commit();
-
-                    AppHelper.animateViewFadingIn(context, layout_logo, 500, 500);
-
-                } else {
-                    fm.popBackStack();
-                }
-            }
-
-            selectedItemsId.clear();
-
-            dialog.dismiss();
-        });
-
-        Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
-        btnCancel.setOnClickListener(v -> {
-
-            String toastMessage = getString(R.string.the_operation_was_aborted);
-            Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show();
-            dialog.dismiss();
-        });
-
-        dialog.show();
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    public void onDeleteItemsClicked() {
-
-        AppHelper.vibrate(this);
-
-        final Context context = MealPlannerActivity.this;
-
-        final Dialog dialog = new Dialog(this);
-
-        // hide to default title for Dialog
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        LayoutInflater inflater = LayoutInflater.from(context);
-
-        // inflate the layout dialog_layout.xml and set it as contentView
         final View view = inflater.inflate(R.layout.dialog_warning, null, false);
 
         dialog.setCancelable(false);
@@ -751,9 +739,10 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         String dialogTitle;
 
-        if (selectedItemsId.size() > 1) {
+        if (isToDeleteAll) {
+            dialogTitle = getString(R.string.deleting_all_servings);
+        } else if (selectedItemsId.size() > 1) {
             dialogTitle = getString(R.string.deleting) + " " + selectedItemsId.size() + " " + getString(R.string.servings);
-
         } else {
             dialogTitle = getString(R.string.deleting) + " " + getString(R.string.a_serving);
         }
@@ -764,51 +753,51 @@ public class MealPlannerActivity extends AppCompatActivity implements
                 + getString(R.string.the_operation_is_irreversible));
 
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
-        button_yes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        button_yes.setOnClickListener(v -> {
 
-                for (int i = 0; i < selectedItemsId.size(); i++) {
-                    dbManager.deleteServingById(selectedItemsId.get(i));
-                }
+            ArrayList<Serving2> servingsList = new ArrayList<>(appStateManager.user.servings.values());
+            servingsList.stream()
+                    .filter(serving -> !selectedItemsId.contains(serving.servingId))
+                    .forEach(servingsList::remove);
 
-                listFragment.backToDefaultDisplay(false);
+            dbManager.updateUserServingsMap(servingsList, BusConsts.ACTION_DELETE);
 
-                FragmentManager fm = getSupportFragmentManager();
-                Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
+//            listFragment.backToDefaultDisplay(false);
+//
+//            FragmentManager fm = getSupportFragmentManager();
+//            Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
+//
+//            if (recipeReviewFragment != null) {
+//                // Tablet only
+//
+//                Fragment webViewFragment = fm.findFragmentByTag(AppConsts.Fragments.WEB_VIEW);
+//
+//                if (webViewFragment != null) {
+//                    fm.popBackStack();
+//                }
+//
+//                FragmentTransaction ft = fm.beginTransaction();
+//                ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
+//                ft.remove(recipeReviewFragment);
+//                ft.commit();
+//
+//                AnimationHelper.animateViewFadingIn(context, layout_logo, 500, 500);
+//            }
+//
+//            String toastMessage;
+//
+//            if (selectedItemsId.size() == 1) {
+//                toastMessage = getString(R.string.the_serving_was_deleted);
+//
+//            } else {
+//                toastMessage = selectedItemsId.size() + " " + getString(R.string.servings_were_deleted);
+//            }
+//
+//            Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show();
+//
+//            selectedItemsId.clear();
 
-                if (recipeReviewFragment != null) {
-                    // Tablet only
-
-                    Fragment webViewFragment = fm.findFragmentByTag(AppConsts.Fragments.WEB_VIEW);
-
-                    if (webViewFragment != null) {
-                        fm.popBackStack();
-                    }
-
-                    FragmentTransaction ft = fm.beginTransaction();
-                    ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
-                    ft.remove(recipeReviewFragment);
-                    ft.commit();
-
-                    AppHelper.animateViewFadingIn(context, layout_logo, 500, 500);
-                }
-
-                String toastMessage;
-
-                if (selectedItemsId.size() == 1) {
-                    toastMessage = getString(R.string.the_serving_was_deleted);
-
-                } else {
-                    toastMessage = selectedItemsId.size() + " " + getString(R.string.servings_were_deleted);
-                }
-
-                Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show();
-
-                selectedItemsId.clear();
-
-                dialog.dismiss();
-            }
+            dialog.dismiss();
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
@@ -840,7 +829,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
                 ft.remove(recipeReviewFragment);
                 ft.commit();
 
-                AppHelper.animateViewFadingIn(this, layout_logo, 500, 500);
+                AnimationHelper.animateViewFadingIn(this, layout_logo, 500, 500);
             }
 
             listFragment.backToDefaultDisplay(true);
@@ -864,7 +853,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
                 } else {
                     // Tablet only
-                    // The user was watching the recipe URL while selecting serving(s) to delete
+                    // The user was watching the recipe URL while selecting mServing(s) to delete
 
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.DELETE);
                     setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);
@@ -886,7 +875,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
                         ft.remove(recipeReviewFragment);
                         ft.commit();
 
-                        AppHelper.animateViewFadingIn(this, layout_logo, 500, 500);
+                        AnimationHelper.animateViewFadingIn(this, layout_logo, 500, 500);
 
                     } else {
                         fm.popBackStack();

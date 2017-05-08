@@ -12,6 +12,9 @@ import java.util.HashMap;
 
 public class YummlyRecipeResponse2 implements Serializable {
 
+    @SerializedName("id")
+    public String yummlyId;
+
     @SerializedName("name")
     public String title;
 

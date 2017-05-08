@@ -1,19 +1,16 @@
 package com.hanoch.greatrecipes.bus;
 
-import com.hanoch.greatrecipes.api.YummlyRecipe;
+import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 
-/**
- * Created by Hanoc_000 on 30/04/2017.
- */
 
-public class OnDownloadYummlyRecipeCompletedEvent {
+public class OnDownloadUserRecipeCompletedEvent {
     public boolean isSuccess;
-    public YummlyRecipe yummlyRecipe;
+    public UserRecipe userRecipe;
     public Throwable t;
 
-    public OnDownloadYummlyRecipeCompletedEvent(boolean isSuccess, YummlyRecipe yummlyRecipe, Throwable t) {
+    public OnDownloadUserRecipeCompletedEvent(boolean isSuccess, UserRecipe userRecipe, Throwable t) {
         this.isSuccess = isSuccess;
-        this.yummlyRecipe = yummlyRecipe;
+        this.userRecipe = userRecipe;
         this.t = t;
     }
 }

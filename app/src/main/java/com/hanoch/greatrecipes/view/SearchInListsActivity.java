@@ -3,6 +3,7 @@ package com.hanoch.greatrecipes.view;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
@@ -28,28 +29,33 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
-import com.hanoch.greatrecipes.GreatRecipesApplication;
+import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
+import com.hanoch.greatrecipes.api.GGGRecipe2;
+import com.hanoch.greatrecipes.api.YummlyRecipe;
+import com.hanoch.greatrecipes.api.great_recipes_api.User;
+import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 import com.hanoch.greatrecipes.control.ListFragmentListener;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
-import com.hanoch.greatrecipes.database.DbManager;
-import com.hanoch.greatrecipes.model.MyFragment;
+import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
+import com.hanoch.greatrecipes.model.MyListFragment;
 import com.hanoch.greatrecipes.model.Recipe;
 
 import java.util.ArrayList;
 
 public class SearchInListsActivity extends AppCompatActivity implements
         ListFragmentListener,
-        RecipeReviewFragment.FragmentRecipeReviewListener,
-        EditRecipeFragment.OnFragmentEditRecipeListener,
+        RecipeReviewFragment2.FragmentRecipeReviewListener,
+        EditRecipeFragment2.OnFragmentEditRecipeListener,
         ToolbarMenuSetting {
 
     private LinearLayout layout_logo;
 
     private Toolbar toolbar;
-    private MyFragment listFragment;
+    private MyListFragment listFragment;
 
     private ArrayList<ObjectAnimator> fadingInAnimationsList;
 
@@ -66,10 +72,10 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
     public SearchView searchView;
 
-    private ArrayList<Integer> checkedItemsId;
+    private ArrayList<String> checkedItemsId;
     private String activityToolbarTitle;
 
-    private long mRecipeId;
+    private String mRecipeId;
     private int toolbarColor;
     private String toolbarTitle;
     private String extra_serving;
@@ -77,7 +83,10 @@ public class SearchInListsActivity extends AppCompatActivity implements
     private CharSequence searchQuery;
     private boolean afterRestoreState;
 
-    private DbManager dbManager;
+    private GreatRecipesDbManager dbManager;
+    private AppStateManager appStateManager;
+    private ProgressDialog progressDialog;
+
 
 //-------------------------------------------------------------------------------------------------
 
@@ -86,9 +95,12 @@ public class SearchInListsActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_template);
 
-        dbManager = ((GreatRecipesApplication) getApplication()).getDbManager();
+        dbManager = GreatRecipesDbManager.getInstance();
+        appStateManager = AppStateManager.getInstance();
 
-        mRecipeId = AppConsts.NEW_RECIPE;
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle(getString(R.string.loading_info));
+        progressDialog.setMessage(getString(R.string.please_wait));
 
         checkedItemsId = new ArrayList<>();
 
@@ -104,7 +116,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
         Intent prevIntent = getIntent();
         // The only action exists is "ADD_SERVING"- otherwise action will be null;
         extra_serving = prevIntent.getStringExtra(AppConsts.Extras.EXTRA_SERVING);
-        int conteinerResId;
+        int containerResId;
 
         if (getResources().getBoolean(R.bool.isTablet)) {
             // Tablet:
@@ -115,22 +127,22 @@ public class SearchInListsActivity extends AppCompatActivity implements
             Typeface typeFace = Typeface.createFromAsset(getAssets(), "fonts/MotionPicture.ttf");
             textView_greatRecipes.setTypeface(typeFace);
 
-            conteinerResId = R.id.layout_listContainer;
+            containerResId = R.id.layout_listContainer;
 
         } else {
             // Phone
-            conteinerResId = R.id.layout_container;
+            containerResId = R.id.layout_container;
         }
 
         if (savedInstanceState == null) {
             // only add fragments if the state is null!
             // if there's a state - they will be re-attached automatically
 
-            Fragment searchInListsFragment = SearchInListsFragment.newInstance(extra_serving);
+            Fragment searchInListsFragment = SearchInListsFragment2.newInstance(extra_serving);
             FragmentManager fm = getSupportFragmentManager();
             FragmentTransaction ft = fm.beginTransaction();
 
-            ft.add(conteinerResId, searchInListsFragment, AppConsts.Fragments.SEARCH_IN_LISTS);
+            ft.add(containerResId, searchInListsFragment, AppConsts.Fragments.SEARCH_IN_LISTS);
             ft.commit();
         }
     }
@@ -145,7 +157,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
         afterRestoreState = true;
 
-        listFragment = (MyFragment) getSupportFragmentManager().findFragmentByTag(AppConsts.Fragments.SEARCH_IN_LISTS);
+        listFragment = (MyListFragment) getSupportFragmentManager().findFragmentByTag(AppConsts.Fragments.SEARCH_IN_LISTS);
 
         if (getResources().getBoolean(R.bool.isTablet)) {
 
@@ -153,8 +165,8 @@ public class SearchInListsActivity extends AppCompatActivity implements
             layout_logo.setVisibility(layout_logoVisibility);
         }
 
-        checkedItemsId = savedInstanceState.getIntegerArrayList("checkedItemsId");
-        mRecipeId = savedInstanceState.getLong("mRecipeId");
+        checkedItemsId = savedInstanceState.getStringArrayList("checkedItemsId");
+        mRecipeId = savedInstanceState.getString("mRecipeId");
         extra_serving = savedInstanceState.getString("extra_serving");
 
         searchQuery = savedInstanceState.getCharSequence("searchQuery");
@@ -179,8 +191,8 @@ public class SearchInListsActivity extends AppCompatActivity implements
             outState.putBoolean("searchViewHasFocus", searchViewHasFocus);
         }
 
-        outState.putIntegerArrayList("checkedItemsId", checkedItemsId);
-        outState.putLong("mRecipeId", mRecipeId);
+        outState.putStringArrayList("checkedItemsId", checkedItemsId);
+        outState.putString("mRecipeId", mRecipeId);
         outState.putString("extra_serving", extra_serving);
         outState.putInt("toolbarColor", toolbarColor);
         outState.putString("toolbarTitle", toolbarTitle);
@@ -221,8 +233,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
         if (getResources().getBoolean(R.bool.isTablet)) {
 
-            /*View v = findViewById(R.id.layout_7inTablet);
-            if (v != null) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);*/
             if (getResources().getBoolean(R.bool.isSmallTablet)) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -239,7 +249,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
             if (!afterRestoreState) {
                 String query = intent.getStringExtra(SearchManager.QUERY);
 
-                SearchInListsFragment searchInListsFragment = (SearchInListsFragment) getSupportFragmentManager().findFragmentByTag("searchInListsFragment");
+                SearchInListsFragment2 searchInListsFragment = (SearchInListsFragment2) getSupportFragmentManager().findFragmentByTag("searchInListsFragment");
                 searchInListsFragment.performSearch(query, true);
 
                 if (searchView != null) {
@@ -255,26 +265,33 @@ public class SearchInListsActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onRecipeClick(MyFragment listFragment, long recipeId) {
-
-        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
-
+    public void onRecipeClick(MyListFragment listFragment, String recipeId) {
         this.listFragment = listFragment;
 
-        Recipe recipe = dbManager.queryRecipeObjectById(recipeId);
+        User user = appStateManager.user;
+
+        boolean isUserRecipe;
+        if (user.userRecipes.containsKey(recipeId)) {
+            isUserRecipe = true;
+        } else if (user.yummlyRecipes.containsKey(recipeId)) {
+            isUserRecipe = false;
+        } else {
+            return;
+        }
+
+        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
 
         ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
 
         if (extra_serving == null) {
 
-            if (recipe.favouriteIndex == AppConsts.FavouriteIndex.FAVOURITE) {
+            if (isRecipeFavourite(recipeId)) {
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
-
             } else {
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
             }
 
-            if (recipe.originIndex == AppConsts.RecipeOrigin.ADDED_MANUALLY) {
+            if (isUserRecipe && user.userRecipes.get(recipeId).userId.equals(user._id)) {
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
             }
 
@@ -299,7 +316,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
             recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
 
-            if (mRecipeId == recipeId && recipeReviewFragment != null) {
+            if (mRecipeId != null && mRecipeId.equals(recipeId) && recipeReviewFragment != null) {
                 // The currently displayed recipe was clicked again
 
                 ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left);
@@ -307,18 +324,18 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
                 setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
 
-                AppHelper.animateViewFadingIn(this, layout_logo, 500, 500);
+                AnimationHelper.animateViewFadingIn(this, layout_logo, 500, 500);
 
-                mRecipeId = AppConsts.NEW_RECIPE;
+                mRecipeId = null;
 
             } else {
 
                 if (layout_logo.getVisibility() == View.VISIBLE) {
-                    AppHelper.animateViewFadingOut(this, layout_logo, 500, 0);
+                    AnimationHelper.animateViewFadingOut(this, layout_logo, 500, 0);
                 }
 
                 mRecipeId = recipeId;
-                recipeReviewFragment = RecipeReviewFragment.newInstance(recipeId, null, extra_serving);
+                recipeReviewFragment = RecipeReviewFragment2.newInstance(recipeId, isUserRecipe, extra_serving);
 
                 ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
                 ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
@@ -329,7 +346,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
             mRecipeId = recipeId;
 
-            recipeReviewFragment = RecipeReviewFragment.newInstance(recipeId, null, extra_serving);
+            recipeReviewFragment = RecipeReviewFragment2.newInstance(recipeId, isUserRecipe, extra_serving);
             ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left, R.anim.slide_in_right, R.anim.slide_out_right);
             ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
             ft.addToBackStack(null);
@@ -341,14 +358,23 @@ public class SearchInListsActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onListItemChecked(MyFragment listFragment, long id, boolean isChecked) {
-
+    public void onListItemChecked(MyListFragment listFragment, String recipeId, boolean isChecked) {
         this.listFragment = listFragment;
+        User user = appStateManager.user;
+
+        boolean isUserRecipe;
+        if (user.userRecipes.containsKey(recipeId)) {
+            isUserRecipe = true;
+        } else if (user.yummlyRecipes.containsKey(recipeId)) {
+            isUserRecipe = false;
+        } else {
+            return;
+        }
 
         if (isChecked) {
             // Unchecked item was checked
 
-            checkedItemsId.add((int) id);
+            checkedItemsId.add(recipeId);
 
             toolbarTitle = checkedItemsId.size() + " " + getString(R.string.selected);
             toolbar.setTitle(toolbarTitle);
@@ -357,11 +383,11 @@ public class SearchInListsActivity extends AppCompatActivity implements
             if (getResources().getBoolean(R.bool.isTablet)) {
                 // Tablet only
 
-                if (mRecipeId == id) {
+                if (mRecipeId.equals(recipeId)) {
                     break ForTablet;
                 }
 
-                mRecipeId = id;
+                mRecipeId = recipeId;
 
                 FragmentManager fm = getSupportFragmentManager();
                 FragmentTransaction ft = fm.beginTransaction();
@@ -370,7 +396,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
                     fm.popBackStack();
                 }
 
-                Fragment recipeReviewFragment = RecipeReviewFragment.newInstance(mRecipeId, null, extra_serving);
+                Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, isUserRecipe, extra_serving);
                 ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
                 ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
                 ft.commit();
@@ -382,7 +408,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 if (getResources().getBoolean(R.bool.isTablet)) {
 
                     if (layout_logo.getVisibility() == View.VISIBLE) {
-                        AppHelper.animateViewFadingOut(this, layout_logo, 500, 0);
+                        AnimationHelper.animateViewFadingOut(this, layout_logo, 500, 0);
                     }
                 }
 
@@ -394,7 +420,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
         } else {
             // Checked item was unchecked
 
-            checkedItemsId.remove(Integer.valueOf((int) id));
+            checkedItemsId.remove(recipeId);
 
             if (checkedItemsId.isEmpty()) {
                 // The last checked item was unchecked
@@ -413,7 +439,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
                     ft.remove(recipeReviewFragment);
                     ft.commit();
 
-                    AppHelper.animateViewFadingIn(this, layout_logo, 500, 500);
+                    AnimationHelper.animateViewFadingIn(this, layout_logo, 500, 500);
                 }
 
                 setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
@@ -427,7 +453,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 if (getResources().getBoolean(R.bool.isTablet)) {
                     // Tablet only
 
-                    mRecipeId = (long) checkedItemsId.get(checkedItemsId.size() - 1);
+                    mRecipeId = checkedItemsId.get(checkedItemsId.size() - 1);
 
                     FragmentManager fm = getSupportFragmentManager();
                     FragmentTransaction ft = fm.beginTransaction();
@@ -436,7 +462,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
                         fm.popBackStack();
                     }
 
-                    Fragment recipeReviewFragment = RecipeReviewFragment.newInstance(mRecipeId, null, null);
+                    Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, isUserRecipe, null);
                     ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
                     ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
                     ft.commit();
@@ -448,7 +474,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onAddNewRecipeClick(MyFragment listFragment, int listTypeIndex) {
+    public void onAddNewRecipeClick(MyListFragment listFragment, int listTypeIndex) {
         // No implementation in this activity
     }
 
@@ -484,45 +510,45 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
 //-------------------------------------------------------------------------------------------------
 
-    @Override
-    public void onRecipeWasSaved(long recipeId) {
-        // After saving the changes- review the recipe
-
-        mRecipeId = recipeId;
-
-        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
-
-        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
-
-        Fragment recipeReviewFragment = RecipeReviewFragment.newInstance(recipeId, null, extra_serving);
-        ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_up);
-
-        if (getResources().getBoolean(R.bool.isTablet)) {
-            ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
-        } else {
-            ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
-        }
-
-        ft.commit();
-
-        ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
-
-        Recipe recipe = dbManager.queryRecipeObjectById(recipeId);
-
-        toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
-
-        if (recipe.favouriteIndex == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
-            toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
-
-        } else {
-            toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
-        }
-
-        setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
-    }
+//    @Override
+//    public void onRecipeWasSaved(long recipeId) {
+//        // After saving the changes- review the recipe
+//
+//        mRecipeId = recipeId;
+//
+//        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
+//
+//        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
+//
+//        FragmentManager fm = getSupportFragmentManager();
+//        FragmentTransaction ft = fm.beginTransaction();
+//
+//        Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(recipeId, null, extra_serving);
+//        ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_up);
+//
+//        if (getResources().getBoolean(R.bool.isTablet)) {
+//            ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
+//        } else {
+//            ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
+//        }
+//
+//        ft.commit();
+//
+//        ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
+//
+//        Recipe recipe = dbManager.queryRecipeObjectById(recipeId);
+//
+//        toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
+//
+//        if (recipe.favouriteIndex == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
+//            toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
+//
+//        } else {
+//            toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
+//        }
+//
+//        setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
+//    }
 
 //-------------------------------------------------------------------------------------------------
 
@@ -580,13 +606,13 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
                 if (toolbarButtonsList.contains(button)) {
                     MenuItem toolbarButton = toolbar.getMenu().findItem(button);
-                    fadingInAnimationsList.add(AppHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 600));
+                    fadingInAnimationsList.add(AnimationHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 600));
                 }
             }
         } else {
 
             if (!toolbar_search.isVisible()) {
-                AppHelper.animateToolbarButtonFadingIn(toolbar_search, 500, 600);
+                AnimationHelper.animateToolbarButtonFadingIn(toolbar_search, 500, 600);
             }
         }
     }
@@ -626,7 +652,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
             toolBarButton = toolbar.getMenu().findItem(button);
             if (toolBarButton.isVisible()) {
-                AppHelper.animateToolbarButtonFadingOut(toolBarButton, 500, 0);
+                AnimationHelper.animateToolbarButtonFadingOut(toolBarButton, 500, 0);
             }
         }
 
@@ -715,13 +741,11 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
         int itemId = item.getItemId();
 
-        Recipe recipe;
-
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
 
-        EditRecipeFragment editRecipeFragment = (EditRecipeFragment) fm.findFragmentByTag(AppConsts.Fragments.EDIT_RECIPE);
-        RecipeReviewFragment recipeReviewFragment = (RecipeReviewFragment) fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
+        EditRecipeFragment2 editRecipeFragment = (EditRecipeFragment2) fm.findFragmentByTag(AppConsts.Fragments.EDIT_RECIPE);
+        RecipeReviewFragment2 recipeReviewFragment = (RecipeReviewFragment2) fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
 
         ArrayList<Integer> toolbarButtonsList;
 
@@ -733,18 +757,14 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 ListView listView = (ListView) listFragment.getView().findViewById(R.id.listView_searchResults);
                 listView.setEnabled(false);
 
-                editRecipeFragment = EditRecipeFragment.newInstance(mRecipeId);
-                //ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right, R.anim.slide_in_left, R.anim.slide_out_left);
+                editRecipeFragment = EditRecipeFragment2.newInstance(AppConsts.Actions.ACTION_EDIT, mRecipeId);
                 ft.setCustomAnimations(R.anim.slide_in_bottom, R.anim.slide_out_right);
 
                 if (getResources().getBoolean(R.bool.isTablet)) {
                     // tablet
-
                     ft.replace(R.id.layout_detailsContainer, editRecipeFragment, AppConsts.Fragments.EDIT_RECIPE);
-
                 } else {
                     // phone
-
                     ft.replace(R.id.layout_container, editRecipeFragment, AppConsts.Fragments.EDIT_RECIPE);
                 }
 
@@ -759,83 +779,49 @@ public class SearchInListsActivity extends AppCompatActivity implements
             case R.id.action_save:
                 // Save a recipe after finishing editing an existing recipe
 
-                editRecipeFragment.onSaveRecipe();
+                progressDialog.show();
 
-                // After the saving, the editFragment calls the recipeWasSaved(long recipeId)
-                // method of this activity, and updates mRecipeId
+                UserRecipe userRecipeToSave = editRecipeFragment.onSaveUserRecipeClicked();
+                dbManager.updateUserRecipe(userRecipeToSave);
 
                 break;
 
             case R.id.action_delete:
-
                 onDeleteItemsClicked();
-
                 break;
 
             case R.id.action_addServing:
+                boolean isUserRecipe = appStateManager.user.userRecipes.containsKey(mRecipeId);
 
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, mRecipeId);
+                resultIntent.putExtra(AppConsts.Extras.EXTRA_IS_USER_RECIPE, isUserRecipe);
                 setResult(Activity.RESULT_OK, resultIntent);
                 finish();
 
                 break;
 
             case R.id.action_addToFavourites:
-                // While reviewing a recipe
-
-                recipe = dbManager.queryRecipeObjectById(mRecipeId);
-                recipe.favouriteIndex = AppConsts.FavouriteIndex.FAVOURITE;
-                dbManager.updateRecipe(recipe);
-
-                toolbarButtonsList = new ArrayList<>();
-                toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
-
-                if (recipe.originIndex == AppConsts.RecipeOrigin.ADDED_MANUALLY) {
-                    toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
-                }
-
-                recipeReviewFragment.setFavouriteImage(AppConsts.FavouriteIndex.FAVOURITE);
-
-                setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);
-
-                break;
-
             case R.id.action_removeFromFavourites:
-                // While reviewing a recipe
+                // Tablet only, while reviewing a recipe
 
-                recipe = dbManager.queryRecipeObjectById(mRecipeId);
-                recipe.favouriteIndex = AppConsts.FavouriteIndex.NOT_FAVOURITE;
-                dbManager.updateRecipe(recipe);
-
-                toolbarButtonsList = new ArrayList<>();
-                toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
-
-                if (recipe.originIndex == AppConsts.RecipeOrigin.ADDED_MANUALLY) {
-                    toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
-                }
-
-                recipeReviewFragment.setFavouriteImage(AppConsts.FavouriteIndex.NOT_FAVOURITE);
-
-                setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);
-
+                progressDialog.show();
+                dbManager.updateUserFavouriteRecipesIds(mRecipeId, itemId == R.id.action_addToFavourites);
                 break;
 
             case R.id.action_ok:
                 // The user finished choosing categories in categoriesChooserFragment
 
-                CategoriesChooserFragment categoriesChooserFragment = (CategoriesChooserFragment) fm.findFragmentByTag("categoriesChooserFragment");
+                CategoriesChooserFragment categoriesChooserFragment = (CategoriesChooserFragment) fm.findFragmentByTag(AppConsts.Fragments.CATEGORIES_CHOOSER);
                 ArrayList<String> categoriesList = categoriesChooserFragment.getSelectedCategoriesNamesList();
-                editRecipeFragment.updateCategoriesList(this, categoriesList);
+                editRecipeFragment.updateCategoriesList(categoriesList);
 
                 onBackPressed();
 
                 break;
 
             case R.id.action_closeWebview:
-
                 onBackPressed();
-
                 break;
 
             default:
@@ -855,12 +841,10 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
         final Dialog dialog = new Dialog(this);
 
-        // hide to default title for Dialog
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         LayoutInflater inflater = LayoutInflater.from(context);
 
-        // inflate the layout dialog_layout.xml and set it as contentView
         final View view = inflater.inflate(R.layout.dialog_warning, null, false);
 
         dialog.setCancelable(false);
@@ -885,67 +869,56 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 + getString(R.string.the_operation_is_irreversible));
 
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
-        button_yes.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
+        button_yes.setOnClickListener(v -> {
 
-                FragmentManager fm = getSupportFragmentManager();
-                FragmentTransaction ft = fm.beginTransaction();
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
 
-                Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
+            Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
 
-                if (recipeReviewFragment != null) {
-                    // Tablet only
+            if (recipeReviewFragment != null) {
+                // Tablet only
 
-                    Fragment webViewFragment = fm.findFragmentByTag(AppConsts.Fragments.WEB_VIEW);
-                    if (webViewFragment != null) {
+                Fragment webViewFragment = fm.findFragmentByTag(AppConsts.Fragments.WEB_VIEW);
+                if (webViewFragment != null) {
 
-                        fm.popBackStack();
-                    }
-
-                    ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
-
-                    ft.remove(recipeReviewFragment);
-                    ft.commit();
-
-                    AppHelper.animateViewFadingIn(context, layout_logo, 500, 500);
+                    fm.popBackStack();
                 }
 
-                for (int i = 0; i < checkedItemsId.size(); i++) {
-                    dbManager.deleteRecipeById(context, checkedItemsId.get(i));
-                }
+                ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
 
-                setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
+                ft.remove(recipeReviewFragment);
+                ft.commit();
 
-                listFragment.backToDefaultDisplay(false);
-
-                String toastMessage;
-
-                if (checkedItemsId.size() == 1) {
-                    toastMessage = getString(R.string.the_recipe_was_deleted);
-
-                } else {
-                    toastMessage = checkedItemsId.size() + " " + getString(R.string.recipes_were_deleted);
-                }
-                Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show();
-
-                checkedItemsId.clear();
-
-                // Close the dialog
-                dialog.dismiss();
+                AnimationHelper.animateViewFadingIn(context, layout_logo, 500, 500);
             }
+
+            for (int i = 0; i < checkedItemsId.size(); i++) {
+                dbManager.deleteRecipeById(context, checkedItemsId.get(i));
+            }
+
+            setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
+
+            listFragment.backToDefaultDisplay(false);
+
+            String toastMessage;
+
+            if (checkedItemsId.size() == 1) {
+                toastMessage = getString(R.string.the_recipe_was_deleted);
+
+            } else {
+                toastMessage = checkedItemsId.size() + " " + getString(R.string.recipes_were_deleted);
+            }
+            Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show();
+
+            checkedItemsId.clear();
+
+            dialog.dismiss();
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
-        btnCancel.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // Close the dialog
-                dialog.dismiss();
-            }
-        });
+        btnCancel.setOnClickListener(v -> dialog.dismiss());
 
-        // Display the dialog
         dialog.show();
     }
 
@@ -967,7 +940,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
             if (getResources().getBoolean(R.bool.isTablet)) {
                 // Tablet only
 
-                AppHelper.animateViewFadingIn(this, layout_logo, 500, 500);
+                AnimationHelper.animateViewFadingIn(this, layout_logo, 500, 500);
 
                 Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
 
@@ -981,7 +954,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
             listFragment.backToDefaultDisplay(true);
             setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
 
-            mRecipeId = AppConsts.NEW_RECIPE;
+            mRecipeId = null;
 
             return;
         }
@@ -991,12 +964,12 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 || toolbar_addServing.isVisible()) {
             // The user renounced reviewing a recipe, or adding the recipe to meal planner
 
-            mRecipeId = AppConsts.NEW_RECIPE;
+            mRecipeId = null;
 
             if (getResources().getBoolean(R.bool.isTablet)) {
                 // Tablet
 
-                AppHelper.animateViewFadingIn(this, layout_logo, 500, 500);
+                AnimationHelper.animateViewFadingIn(this, layout_logo, 500, 500);
 
                 Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
 
@@ -1108,7 +1081,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 FragmentManager fm = getSupportFragmentManager();
                 FragmentTransaction ft = fm.beginTransaction();
 
-                Fragment recipeReviewFragment = RecipeReviewFragment.newInstance(mRecipeId, null, null);
+                Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, null, null);
                 ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_up);
 
                 if (getResources().getBoolean(R.bool.isTablet)) {

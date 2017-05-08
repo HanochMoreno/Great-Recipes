@@ -11,26 +11,26 @@ import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.hanoch.greatrecipes.AppHelper;
+import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
-import com.hanoch.greatrecipes.model.MyFragment;
+import com.hanoch.greatrecipes.api.GGGRecipe2;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.HashMap;
 
 /**
  * Custom adapter for a recipes list
  */
 
-public class UserRecipesListAdapter2 extends BaseAdapter {
+public class RecipesListAdapter2 extends BaseAdapter {
 
     int MAX_ITEMS = 500;
 
-    private ArrayList<UserRecipe> recipesList;
+    private ArrayList<GGGRecipe2> recipesList;
     private ArrayList<String> checkedIds;
-    private String selectedId = MyFragment.NO_SELECTION;
+    private String selectedId;
     private HashMap<String, View> viewsMap = new HashMap<>();
 
     private Context context;
@@ -51,55 +51,14 @@ public class UserRecipesListAdapter2 extends BaseAdapter {
 
 //----------------------------------------------------------------------------------------------
 
-    public UserRecipesListAdapter2(Context context, ArrayList<UserRecipe> recipesList,
-                                   ArrayList<String> checkedIds, String selectedId) {
+    public RecipesListAdapter2(Context context, ArrayList<GGGRecipe2> recipesList,
+                               ArrayList<String> checkedIds, String selectedId) {
 
         this.recipesList = recipesList;
         this.selectedId = selectedId;
         this.checkedIds = checkedIds;
         this.context = context;
     }
-
-//-------------------------------------------------------------------------------------------------
-
-//    @Override
-//    public View newView(Context context, Cursor cursor, ViewGroup parent) {
-//
-//        View view = LayoutInflater.from(context).inflate(R.layout.listitem_recipes_list, parent, false);
-//        ViewHolder holder = new ViewHolder();
-//
-//        holder.layout_listItemContainer = (FrameLayout) view.findViewById(R.id.layout_listItemContainer);
-//        holder.textView_title = (TextView) view.findViewById(R.id.textView_itemTitle);
-//        holder.imageView_image = (ImageView) view.findViewById(R.id.imageView_itemImage);
-//        holder.imageView_checked = (ImageView) view.findViewById(R.id.imageView_checkedIcon);
-//        holder.textView_noImageAvailable = (TextView) view.findViewById(R.id.textView_noImageAvailable);
-//
-//        view.setTag(holder);
-//
-//        return view;
-//    }
-
-//-------------------------------------------------------------------------------------------------
-
-//    @Override
-//    public void bindView(View view, Context context, Cursor cursor) {
-//
-//        long id = cursor.getLong(cursor.getColumnIndex(RecipesContract.Recipes._ID));
-//        String title = cursor.getString(cursor.getColumnIndex(RecipesContract.Recipes.TITLE));
-//
-//        ViewHolder holder = (ViewHolder) view.getTag();
-//
-//        holder.id = id;
-//        holder.textView_title.setText(title);
-//
-//        holder.imageView_image.setVisibility(View.INVISIBLE);
-//        holder.textView_noImageAvailable.setVisibility(View.INVISIBLE);
-//
-//        viewsMap.put(id + "", view);
-//
-//        GetImageFromSdCard getImageFromSdCard = new GetImageFromSdCard(id, holder);
-//        getImageFromSdCard.execute();
-//    }
 
 //-------------------------------------------------------------------------------------------------
 
@@ -121,7 +80,7 @@ public class UserRecipesListAdapter2 extends BaseAdapter {
 
     public boolean onNoSelection() {
 
-        selectedId = MyFragment.NO_SELECTION;
+        selectedId = null;
 
         return true;
     }
@@ -134,8 +93,8 @@ public class UserRecipesListAdapter2 extends BaseAdapter {
     }
 
     @Override
-    public Object getItem(int i) {
-        return null;
+    public GGGRecipe2 getItem(int i) {
+        return recipesList.get(i);
     }
 
     @Override
@@ -147,10 +106,11 @@ public class UserRecipesListAdapter2 extends BaseAdapter {
     public View getView(int i, View convertView, ViewGroup viewGroup) {
         View view = LayoutInflater.from(context).inflate(R.layout.listitem_recipes_list, viewGroup, false);
 
-        UserRecipe userRecipe = recipesList.get(i);
-        String id = userRecipe._id;
-        String title = userRecipe.recipeTitle;
-        String imageByteArrayAsString = userRecipe.imageByteArrayAsString;
+        GGGRecipe2 recipe = getItem(i);
+
+        String id = recipe._id;
+        String title = recipe.recipeTitle;
+        String imageByteArrayAsString = recipe.imageByteArrayAsString;
 
         ViewHolder holder = new ViewHolder();
         holder.id = id;
@@ -159,11 +119,12 @@ public class UserRecipesListAdapter2 extends BaseAdapter {
         holder.imageView_image = (ImageView) view.findViewById(R.id.imageView_itemImage);
         holder.imageView_checked = (ImageView) view.findViewById(R.id.imageView_checkedIcon);
         holder.textView_noImageAvailable = (TextView) view.findViewById(R.id.textView_noImageAvailable);
-        view.setTag(holder);
 
         holder.textView_title.setText(title);
         holder.imageView_image.setVisibility(View.INVISIBLE);
         holder.textView_noImageAvailable.setVisibility(View.INVISIBLE);
+
+        view.setTag(holder);
 
         viewsMap.put(id, view);
 
@@ -186,6 +147,14 @@ public class UserRecipesListAdapter2 extends BaseAdapter {
     public int getViewTypeCount() {
 
         return MAX_ITEMS;
+    }
+
+//----------------------------------------------------------------------------------------------
+
+    public void refreshList(ArrayList<GGGRecipe2> newRecipesList) {
+        recipesList = new ArrayList<>(newRecipesList);
+        Collections.sort(newRecipesList, GGGRecipe2.TITLE_COMPARATOR);
+        notifyDataSetChanged();
     }
 
 //----------------------------------------------------------------------------------------------
@@ -219,8 +188,8 @@ public class UserRecipesListAdapter2 extends BaseAdapter {
                     holder.imageView_image.setAlpha(0.5f);
                 }
 
-                if (selectedId.equals(id)) {
-                    AppHelper.setSelectedRecipe(holder.layout_listItemContainer, context);
+                if (selectedId != null && selectedId.equals(id)) {
+                    AnimationHelper.animateSelectedRecipe(holder.layout_listItemContainer, context);
                 }
 
                 if (image == null) {

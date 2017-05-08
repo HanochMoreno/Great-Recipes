@@ -1,13 +1,10 @@
 package com.hanoch.greatrecipes.view;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.os.Bundle;
-import android.os.Parcelable;
+import android.support.annotation.Nullable;
 import android.support.design.widget.FloatingActionButton;
-import android.support.v4.app.LoaderManager;
-import android.support.v4.content.CursorLoader;
-import android.support.v4.content.Loader;
+import android.support.v4.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -19,27 +16,23 @@ import android.widget.TextView;
 
 import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppHelper;
-import com.hanoch.greatrecipes.GreatRecipesApplication;
+import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.control.ListFragmentListener;
-import com.hanoch.greatrecipes.database.RecipesContract;
-import com.hanoch.greatrecipes.database.DbManager;
-import com.hanoch.greatrecipes.model.MyListFragment;
-import com.hanoch.greatrecipes.view.adapters.ServingsCursorAdapter;
+import com.hanoch.greatrecipes.model.Serving;
+import com.hanoch.greatrecipes.model.Serving2;
+import com.hanoch.greatrecipes.view.adapters.RecipesListAdapter2;
 import com.hanoch.greatrecipes.view.adapters.ServingsListAdapter;
 
 import java.util.ArrayList;
 
 
-public class ServingsListFragment extends MyListFragment implements
+public class ServingsListFragment2 extends Fragment implements
         View.OnClickListener,
         AdapterView.OnItemClickListener,
-        AdapterView.OnItemLongClickListener,
-        LoaderManager.LoaderCallbacks<Cursor> {
+        AdapterView.OnItemLongClickListener {
 
-    private ListFragmentListener mListListener;
     private FragmentServingsListListener mListener;
-    private ServingsListAdapter adapter;
+    public ServingsListAdapter adapter;
 
     private Bundle savedInstanceState;
 
@@ -47,44 +40,36 @@ public class ServingsListFragment extends MyListFragment implements
     private FloatingActionButton floatingButton_addServing;
     private FrameLayout layout_dialogBubble;
 
-    private ArrayList<String> selectedItemsIdList;
+    private ArrayList<String> checkedItemsIdList;
 
 //-------------------------------------------------------------------------------------------------
 
-    public static ServingsListFragment newInstance() {
-        return new ServingsListFragment();
+    public static ServingsListFragment2 newInstance() {
+        return new ServingsListFragment2();
     }
 
 //-------------------------------------------------------------------------------------------------
 
     public interface FragmentServingsListListener {
+        void showRecipeDetails(Serving2 serving);
 
-        void listSizeChanged(int listSize);
+        void onServingChecked(Serving2 serving, boolean isChecked);
+
+        void onAddNewServingClick();
+
+        void onListSizeChanged(int listSize);
     }
 
 //-------------------------------------------------------------------------------------------------
 
+    @Nullable
     @Override
-    public View onCreateView(LayoutInflater inflater, ViewGroup container,
-                             Bundle savedInstanceState) {
-
+    public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, Bundle savedInstanceState) {
         this.savedInstanceState = savedInstanceState;
 
-        selectedItemsIdList = new ArrayList<>();
+        checkedItemsIdList = new ArrayList<>();
 
-        // Inflate the layout for this fragment
         View view = inflater.inflate(R.layout.fragment_create_meal, container, false);
-
-        listView_servingsList = (ListView) view.findViewById(R.id.listView_servingsList);
-        // Adding gaps (divider-like) at the top and bottom of the listView
-        listView_servingsList.addFooterView(new View(getContext()), null, true);
-        listView_servingsList.addHeaderView(new View(getContext()), null, true);
-
-        listView_servingsList.setOnItemClickListener(this);
-        listView_servingsList.setOnItemLongClickListener(this);
-
-        floatingButton_addServing = (FloatingActionButton) view.findViewById(R.id.floatingButton_addServing);
-        floatingButton_addServing.setOnClickListener(this);
 
         layout_dialogBubble = (FrameLayout) view.findViewById(R.id.layout_dialogBubble);
         layout_dialogBubble.setVisibility(View.GONE);
@@ -92,11 +77,21 @@ public class ServingsListFragment extends MyListFragment implements
         TextView textView_dialogBubble = (TextView) view.findViewById(R.id.textView_dialogBubble);
         textView_dialogBubble.setText(getString(R.string.click_here_to_start_planning_meal));
 
-        getLoaderManager().initLoader(0, null, this);
+        listView_servingsList = (ListView) view.findViewById(R.id.listView_servingsList);
+        listView_servingsList.setOnItemClickListener(this);
+
+        // Adding gaps (divider-like) at the top and bottom of the listView
+        listView_servingsList.addFooterView(new View(getContext()), null, true);
+        listView_servingsList.addHeaderView(new View(getContext()), null, true);
+
+        floatingButton_addServing = (FloatingActionButton) view.findViewById(R.id.floatingButton_addServing);
+        floatingButton_addServing.setOnClickListener(this);
+
+        listView_servingsList.setOnItemLongClickListener(this);
 
         if (savedInstanceState != null) {
 
-            selectedItemsIdList = savedInstanceState.getStringArrayList("selectedItemsIdList");
+            checkedItemsIdList = savedInstanceState.getStringArrayList("checkedItemsIdList");
 
             int floatingButton_addServingVisibility = savedInstanceState.getInt("floatingButton_addServingVisibility");
             floatingButton_addServing.setVisibility(floatingButton_addServingVisibility);
@@ -105,7 +100,7 @@ public class ServingsListFragment extends MyListFragment implements
             layout_dialogBubble.setVisibility(layout_dialogBubbleVisibility);
         }
 
-        adapter = new ServingsListAdapter(getContext(), selectedItemsIdList);
+        adapter = new ServingsListAdapter(getContext(), checkedItemsIdList);
         listView_servingsList.setAdapter(adapter);
 
         return view;
@@ -116,13 +111,6 @@ public class ServingsListFragment extends MyListFragment implements
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
-
-        try {
-            mListListener = (ListFragmentListener) context;
-        } catch (ClassCastException e) {
-            throw new ClassCastException(context.toString()
-                    + " must implement ListFragmentListener");
-        }
 
         try {
             mListener = (FragmentServingsListListener) context;
@@ -154,7 +142,7 @@ public class ServingsListFragment extends MyListFragment implements
         int layout_dialogBubbleVisibility = layout_dialogBubble.getVisibility();
         outState.putInt("layout_dialogBubbleVisibility", layout_dialogBubbleVisibility);
 
-        outState.putStringArrayList("selectedItemsIdList", selectedItemsIdList);
+        outState.putStringArrayList("checkedItemsIdList", checkedItemsIdList);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -166,7 +154,7 @@ public class ServingsListFragment extends MyListFragment implements
 
             case R.id.floatingButton_addServing:
 
-                mListListener.onAddNewRecipeClick(this, -222);
+                mListener.onAddNewServingClick();
                 AppHelper.hideTheKeyboard(getActivity());
                 break;
         }
@@ -177,38 +165,51 @@ public class ServingsListFragment extends MyListFragment implements
     @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
-        if (!selectedItemsIdList.isEmpty()) {
+        String servingId = ((ServingsListAdapter.ViewHolder) view.getTag()).servingId;
+        Serving2 serving = null;
+        for (Serving2 servingModel : AppStateManager.getInstance().user.servings.values()) {
+            if (servingModel.servingId.equals(servingId)) {
+                serving = servingModel;
+                break;
+            }
+        }
 
-            if (selectedItemsIdList.contains(id + "")) {
-                // Checked item was unchecked
+        if (serving != null) {
 
-                AnimationHelper.animateUncheckedServing(view, getContext());
-                selectedItemsIdList.remove(id + "");
+            if (checkedItemsIdList.isEmpty()) {
+                mListener.showRecipeDetails(serving);
+            } else {
+                // The user is checking/unChecking recipes to delete
 
-                //adapter.onServingUnchecked(id + "");
+                if (checkedItemsIdList.contains(servingId)) {
+                    // Checked item was unchecked
 
-                if (selectedItemsIdList.isEmpty()) {
-                    backToDefaultDisplay(true);
+                    AnimationHelper.animateUncheckedServing(view, getContext());
+                    checkedItemsIdList.remove(servingId);
+
+                    //adapter.onServingUnchecked(id + "");
+
+                    if (checkedItemsIdList.isEmpty()) {
+                        // The last checked item was unchecked
+
+                        backToDefaultDisplay(true);
+                    }
+
+                    mListener.onServingChecked(serving, false);
+
+                } else {
+                    // Unchecked item was checked (at least 2 item are checked now)
+
+                    //adapter.onServingChecked(id + "");
+
+                    checkedItemsIdList.add(servingId);
+
+                    AnimationHelper.animateCheckedServing(view, getContext());
+
+                    mListener.onServingChecked(serving, true);
                 }
 
-                mListListener.onListItemChecked(this, id, false);
-
-            } else {
-                // Unchecked item was checked (at least 2 item are checked now)
-
-                //adapter.onServingChecked(id + "");
-
-                selectedItemsIdList.add(id + "");
-
-                AnimationHelper.animateCheckedServing(view, getContext());
-
-                mListListener.onListItemChecked(this, id, true);
             }
-
-        } else {
-            DbManager dbManager = ((GreatRecipesApplication) getActivity().getApplication()).getDbManager();
-            long recipeId = dbManager.queryServingObjectById(id).recipeId;
-            mListListener.onRecipeClick(this, recipeId);
         }
     }
 
@@ -217,89 +218,89 @@ public class ServingsListFragment extends MyListFragment implements
     @Override
     public boolean onItemLongClick(AdapterView<?> parent, View view, int position, long id) {
 
-        if (!selectedItemsIdList.isEmpty()) {
+        if (!checkedItemsIdList.isEmpty()) {
             return false;
         }
+
+        String servingId = ((ServingsListAdapter.ViewHolder) view.getTag()).servingId;
 
         floatingButton_addServing.setEnabled(false);
         AnimationHelper.animateViewFadingOut(getContext(), floatingButton_addServing, 1000, 0);
 
         AnimationHelper.animateCheckedServing(view, getContext());
 
-        selectedItemsIdList.add(id + "");
+        checkedItemsIdList.add(servingId);
 
-        //adapter.onServingChecked(id + "");
-
-        mListListener.onListItemChecked(this, id, true);
+        Serving2 serving = AppStateManager.getInstance().user.servings.get(servingId);
+        mListener.onServingChecked(serving, true);
 
         return true;
     }
 
 //-------------------------------------------------------------------------------------------------
 
-    @Override
-    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
-
-        return new CursorLoader(
-                getActivity(),
-                RecipesContract.MealPlanning.CONTENT_URI,
-
-                // columns: null = all
-                null,
-
-                // rows:
-                null,
-                null,
-
-                // sort order
-                RecipesContract.MealPlanning._ID + " ASC"
-        );
-    }
+//    @Override
+//    public Loader<Cursor> onCreateLoader(int i, Bundle bundle) {
+//
+//        return new CursorLoader(
+//                getActivity(),
+//                RecipesContract.MealPlanning.CONTENT_URI,
+//
+//                // columns: null = all
+//                null,
+//
+//                // rows:
+//                null,
+//                null,
+//
+//                // sort order
+//                RecipesContract.MealPlanning._ID + " ASC"
+//        );
+//    }
+//
+////-------------------------------------------------------------------------------------------------
+//
+//    @Override
+//    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
+//
+//        adapter.swapCursor(cursor);
+//
+//        mListener.onListSizeChanged(cursor.getCount());
+//
+//        if (savedInstanceState != null) {
+//
+//            Parcelable listViewState = savedInstanceState.getParcelable("listViewState");
+//            listView_servingsList.onRestoreInstanceState(listViewState);
+//        }
+//
+//        if (cursor.getCount() == 0) {
+//
+//            if (floatingButton_addServing.getVisibility() == View.VISIBLE && layout_dialogBubble.getVisibility() != View.VISIBLE) {
+//                AnimationHelper.animateViewFadingIn(getContext(), layout_dialogBubble, 1500, 500);
+//            }
+//
+//        } else {
+//            layout_dialogBubble.setVisibility(View.INVISIBLE);
+//        }
+//    }
+//
+////-------------------------------------------------------------------------------------------------
+//
+//    @Override
+//    public void onLoaderReset(Loader<Cursor> loader) {
+//
+//        adapter.swapCursor(null);
+//    }
 
 //-------------------------------------------------------------------------------------------------
 
-    @Override
-    public void onLoadFinished(Loader<Cursor> loader, Cursor cursor) {
-
-        adapter.swapCursor(cursor);
-
-        mListener.listSizeChanged(cursor.getCount());
-
-        if (savedInstanceState != null) {
-
-            Parcelable listViewState = savedInstanceState.getParcelable("listViewState");
-            listView_servingsList.onRestoreInstanceState(listViewState);
-        }
-
-        if (cursor.getCount() == 0) {
-
-            if (floatingButton_addServing.getVisibility() == View.VISIBLE && layout_dialogBubble.getVisibility() != View.VISIBLE) {
-                AnimationHelper.animateViewFadingIn(getContext(), layout_dialogBubble, 1500, 500);
-            }
-
-        } else {
-            layout_dialogBubble.setVisibility(View.INVISIBLE);
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
-    public void onLoaderReset(Loader<Cursor> loader) {
-
-        adapter.swapCursor(null);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
     public void backToDefaultDisplay(boolean includeAnimation) {
 
         floatingButton_addServing.setEnabled(true);
 
         if (includeAnimation) {
 
-            for (String selectedItemId : selectedItemsIdList) {
+            for (String selectedItemId : checkedItemsIdList) {
 
                 View selectedItemView = adapter.getViewById(selectedItemId);
                 if (selectedItemView != null) {
@@ -312,7 +313,7 @@ public class ServingsListFragment extends MyListFragment implements
         } else {
             // After deleting an item(s) - no need for unchecked items animation
 
-            for (String selectedItemId : selectedItemsIdList) {
+            for (String selectedItemId : checkedItemsIdList) {
 
                 View selectedItemView = adapter.getViewById(selectedItemId);
                 if (selectedItemView != null) {
@@ -327,8 +328,9 @@ public class ServingsListFragment extends MyListFragment implements
             floatingButton_addServing.setAlpha(1f);
         }
 
-        selectedItemsIdList.clear();
+        checkedItemsIdList.clear();
     }
+
 }
 
 

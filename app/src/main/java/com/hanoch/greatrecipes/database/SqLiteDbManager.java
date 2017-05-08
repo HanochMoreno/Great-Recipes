@@ -15,13 +15,13 @@ import com.hanoch.greatrecipes.utilities.ImageStorage;
 
 import java.util.List;
 
-public class DbManager {
+public class SqLiteDbManager {
 
     private Context context;
 
 //-------------------------------------------------------------------------------------------------
 
-    public DbManager (Context appContext) {
+    public SqLiteDbManager(Context appContext) {
         // Should only be called once by the Application
         this.context = appContext;
     }
@@ -215,8 +215,8 @@ public class DbManager {
         deleteServingByRecipeId(id);
 
         // Delete connected image and thumbnail as well, if exist
-        ImageStorage.deleteImageByImageName(context, AppConsts.Images.RECIPE_IMAGE_PREFIX + id);
-        ImageStorage.deleteImageByImageName(context, AppConsts.Images.RECIPE_THUMBNAIL_PREFIX + id);
+        ImageStorage.deleteImageByImageName(context, AppConsts.Images.RECIPE_IMAGE + id);
+        ImageStorage.deleteImageByImageName(context, AppConsts.Images.RECIPE_THUMBNAIL + id);
 
         return context.getContentResolver().delete(contentUri, selection, selectionArgs);
     }

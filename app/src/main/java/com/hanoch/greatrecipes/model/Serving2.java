@@ -1,8 +1,9 @@
 package com.hanoch.greatrecipes.model;
 
-/**
- * Created by Hanoc_000 on 01/05/2017.
- */
 
-class Serving2 {
+public class Serving2 {
+    public String recipeId;
+    public String servingId;
+    public String servingType;
+    public boolean isUserRecipe;
 }

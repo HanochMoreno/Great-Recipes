@@ -1,14 +1,14 @@
 package com.hanoch.greatrecipes.control;
 
-import com.hanoch.greatrecipes.model.MyFragment;
+import com.hanoch.greatrecipes.model.MyListFragment;
 
 
 public interface ListFragmentListener {
-    void onRecipeClick(MyFragment listFragment, String id);
+    void onRecipeClick(MyListFragment listFragment, String id);
 
-    void onListItemChecked(MyFragment listFragment, String id, boolean isChecked);
+    void onListItemChecked(MyListFragment listFragment, String id, boolean isChecked);
 
-    void onAddNewRecipeClick(MyFragment listFragment, int listTypeIndex);
+    void onAddNewRecipeClick(MyListFragment listFragment, int listTypeIndex);
 
 }
 
