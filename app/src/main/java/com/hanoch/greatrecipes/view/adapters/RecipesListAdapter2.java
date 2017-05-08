@@ -1,31 +1,21 @@
 package com.hanoch.greatrecipes.view.adapters;
 
 import android.content.Context;
-import android.database.Cursor;
 import android.graphics.Bitmap;
-import android.graphics.ColorMatrix;
-import android.graphics.ColorMatrixColorFilter;
-import android.graphics.drawable.Drawable;
 import android.os.AsyncTask;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
-import android.widget.CursorAdapter;
 import android.widget.FrameLayout;
 import android.widget.ImageView;
 import android.widget.TextView;
 
-import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
-import com.hanoch.greatrecipes.database.RecipesContract;
 import com.hanoch.greatrecipes.model.MyFragment;
-import com.hanoch.greatrecipes.model.ServingType;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
-import com.squareup.picasso.Picasso;
-import com.squareup.picasso.Target;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -34,7 +24,7 @@ import java.util.HashMap;
  * Custom adapter for a recipes list
  */
 
-public class RecipesListAdapter2 extends BaseAdapter {
+public class UserRecipesListAdapter2 extends BaseAdapter {
 
     int MAX_ITEMS = 500;
 
@@ -61,8 +51,8 @@ public class RecipesListAdapter2 extends BaseAdapter {
 
 //----------------------------------------------------------------------------------------------
 
-    public RecipesListAdapter2(Context context, ArrayList<UserRecipe> recipesList,
-                               ArrayList<String> checkedIds, String selectedId) {
+    public UserRecipesListAdapter2(Context context, ArrayList<UserRecipe> recipesList,
+                                   ArrayList<String> checkedIds, String selectedId) {
 
         this.recipesList = recipesList;
         this.selectedId = selectedId;
@@ -216,7 +206,7 @@ public class RecipesListAdapter2 extends BaseAdapter {
         @Override
         protected Bitmap doInBackground(String... params) {
 
-            return ImageStorage.convertByteArrayAsStrigAsToBitmap(imageByteArrayAsString);
+            return ImageStorage.convertByteArrayAsStringAsToBitmap(imageByteArrayAsString);
         }
 
         @Override
