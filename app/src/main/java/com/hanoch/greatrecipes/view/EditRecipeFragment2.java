@@ -98,6 +98,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
     private ProgressDialog progressDialog;
     private GreatRecipesDbManager dbManager;
+    private AppStateManager appStateManager;
 //    private Subscriber<UserRecipe> subscriber;
 
 //-------------------------------------------------------------------------------------------------
@@ -128,7 +129,8 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         super.onCreate(savedInstanceState);
 
         dbManager = GreatRecipesDbManager.getInstance();
-
+        appStateManager = AppStateManager.getInstance();
+        
         progressDialog = new ProgressDialog(getActivity());
         progressDialog.setTitle(getString(R.string.loading_info));
         progressDialog.setMessage(getString(R.string.please_wait));
@@ -226,7 +228,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
             Bundle args = getArguments();
             mRecipeId = args.getString(ARG_RECIPE_ID, null);
-            User user = AppStateManager.getInstance().user;
+            User user = appStateManager.user;
 
             if (mRecipeId == null || !user.userRecipes.containsKey(mRecipeId)) {
                 // Adding a new recipe to 'My Own Recipes' list
@@ -246,7 +248,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
                 editText_recipeInstructions.setText(userRecipe.instructions);
                 editText_notes.setText(userRecipe.notes);
                 recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(userRecipe.imageByteArrayAsString);
-                isFavourite = isRecipeFavourite(mRecipeId);
+                isFavourite = appStateManager.isRecipeFavourite(mRecipeId);
             }
         } else {
 
@@ -541,7 +543,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 //-------------------------------------------------------------------------------------------------
 
     public UserRecipe onSaveUserRecipeClicked() {
-        User user = AppStateManager.getInstance().user;
+        User user = appStateManager.user;
 
         // Get the user's inputs:
         String title = editText_recipeTitle.getText().toString();

@@ -6,7 +6,6 @@ import android.graphics.Bitmap;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppStateManager;
-import com.hanoch.greatrecipes.api.GGGRecipe2;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
@@ -14,16 +13,11 @@ import com.hanoch.greatrecipes.api.yummly_api.YummlyRecipeResponse2;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnDownloadUserRecipeCompletedEvent;
-import com.hanoch.greatrecipes.bus.OnDownloadYummlyRecipeCompletedEvent;
+import com.hanoch.greatrecipes.bus.OnYummlyRecipeDownloadedEvent;
 import com.hanoch.greatrecipes.bus.OnLoginEvent;
 import com.hanoch.greatrecipes.bus.OnRegisterEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateServingsListCompletedEvent;
-import com.hanoch.greatrecipes.bus.OnAddUserRecipeCompletedEvent;
-import com.hanoch.greatrecipes.bus.OnUpdateUserFavouriteRecipesIdsCompletedEvent;
-import com.hanoch.greatrecipes.bus.OnUpdateUserRecipeEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
-import com.hanoch.greatrecipes.bus.OnUpdateUserUserRecipesEvent;
-import com.hanoch.greatrecipes.bus.OnUpdateUserYummlyRecipesEvent;
 import com.hanoch.greatrecipes.model.ApiProvider;
 import com.hanoch.greatrecipes.model.Serving2;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
@@ -195,13 +189,15 @@ public class GreatRecipesDbManager {
 
             @Override
             public void onError(Throwable t) {
-                bus.post(new OnAddUserRecipeCompletedEvent(false, null, t));
+                bus.post(new OnUpdateUserRecipesEvent(BusConsts.ACTION_ADD_NEW, false, null, t));
             }
 
             @Override
             public void onNext(UserRecipe recipe) {
-                AppStateManager.getInstance().user.userRecipes.put(recipe._id, recipe);
-                bus.post(new OnAddUserRecipeCompletedEvent(true, userRecipe, null));
+                ArrayList<UserRecipe> userRecipes = new ArrayList<>();
+                userRecipes.add(recipe);
+
+                updateUserRecipes(userRecipes, null, BusConsts.ACTION_ADD_NEW);
             }
         };
 
@@ -231,15 +227,18 @@ public class GreatRecipesDbManager {
 
             @Override
             public void onError(Throwable t) {
-                bus.post(new OnUpdateUserRecipeEvent(false, null, t));
+                bus.post(new OnUpdateUserRecipesEvent(BusConsts.ACTION_EDIT, false, null, t));
             }
 
             @Override
             public void onNext(UserRecipe recipe) {
-                AppStateManager.getInstance().user.userRecipes.put(recipe._id, recipe);
-                bus.post(new OnUpdateUserRecipeEvent(true, userRecipe, null));
+                ArrayList<UserRecipe> userRecipes = new ArrayList<>();
+                userRecipes.add(recipe);
+
+                updateUserRecipes(userRecipes, null, BusConsts.ACTION_EDIT);
             }
         };
+
 
         Single<UserRecipe> updateUserRecipe =
                 ApiProvider.getGreatRecipesApi().updateUserRecipe(userRecipe);
@@ -284,13 +283,13 @@ public class GreatRecipesDbManager {
 
             @Override
             public void onError(Throwable t) {
-                bus.post(new OnDownloadYummlyRecipeCompletedEvent(false, null, t));
+                bus.post(new OnYummlyRecipeDownloadedEvent(false, null, t));
             }
 
             @Override
             public void onNext(YummlyRecipe recipe) {
                 AppStateManager.getInstance().user.yummlyRecipes.put(recipe._id, recipe);
-                bus.post(new OnDownloadYummlyRecipeCompletedEvent(true, recipe, null));
+                bus.post(new OnYummlyRecipeDownloadedEvent(true, recipe, null));
             }
         };
 
@@ -387,7 +386,7 @@ public class GreatRecipesDbManager {
 
             @Override
             public void onError(Throwable t) {
-                bus.post(new OnDownloadYummlyRecipeCompletedEvent(false, null, t));
+                bus.post(new OnYummlyRecipeDownloadedEvent(false, null, t));
             }
 
             @Override
@@ -398,7 +397,7 @@ public class GreatRecipesDbManager {
                     }
                 } else {
                     AppStateManager.getInstance().user.yummlyRecipes.put(recipe._id, recipe);
-                    bus.post(new OnDownloadYummlyRecipeCompletedEvent(true, recipe, null));
+                    bus.post(new OnYummlyRecipeDownloadedEvent(true, recipe, null));
                 }
             }
         };
@@ -418,59 +417,59 @@ public class GreatRecipesDbManager {
 
 //-------------------------------------------------------------------------------------------------
 
-    /**
-     * Update the user yummlyRecipesIds after adding a new Yummly recipe
-     *
-     * @param recipesList: The Yummly recipe list (in the Great Recipes DB)
-     */
-    public void updateUserYummlyRecipes(ArrayList<YummlyRecipe> recipesList, int action) {
-        MyBus bus = MyBus.getInstance();
-        User currentUser = AppStateManager.getInstance().user;
-
-        User user = new User();
-        user._id = currentUser._id;
-        user.yummlyRecipes = new HashMap<>(currentUser.yummlyRecipes);
-
-        Subscriber<User> subscriber = new Subscriber<User>() {
-            @Override
-            public void onCompleted() {
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                bus.post(new OnUpdateUserYummlyRecipesEvent(action, false, null, t));
-            }
-
-            @Override
-            public void onNext(User user) {
-                AppStateManager.getInstance().user = user;
-                bus.post(new OnUpdateUserYummlyRecipesEvent(action, true, user.yummlyRecipes, null));
-            }
-        };
-
-        HashMap<String, YummlyRecipe> currentRecipes = new HashMap<>(currentUser.yummlyRecipes);
-        switch (action) {
-            case BusConsts.ACTION_ADD_NEW:
-                for (YummlyRecipe recipe : recipesList) {
-                    currentRecipes.put(recipe._id, recipe);
-                }
-                break;
-
-            case BusConsts.ACTION_DELETE:
-                for (YummlyRecipe recipe : recipesList) {
-                    currentRecipes.remove(recipe._id);
-                }
-                break;
-        }
-
-        Single<User> updateUser =
-                ApiProvider.getGreatRecipesApi().updateUser(user);
-
-        updateUser
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(subscriber);
-    }
+//    /**
+//     * Update the user yummlyRecipesIds after adding a new Yummly recipe
+//     *
+//     * @param recipesList: The Yummly recipe list (in the Great Recipes DB)
+//     */
+//    public void updateUserYummlyRecipes(ArrayList<YummlyRecipe> recipesList, int action) {
+//        MyBus bus = MyBus.getInstance();
+//        User currentUser = AppStateManager.getInstance().user;
+//
+//        User user = new User();
+//        user._id = currentUser._id;
+//        user.yummlyRecipes = new HashMap<>(currentUser.yummlyRecipes);
+//
+//        Subscriber<User> subscriber = new Subscriber<User>() {
+//            @Override
+//            public void onCompleted() {
+//            }
+//
+//            @Override
+//            public void onError(Throwable t) {
+//                bus.post(new OnUpdateUserYummlyRecipesEvent(action, false, null, t));
+//            }
+//
+//            @Override
+//            public void onNext(User user) {
+//                AppStateManager.getInstance().user = user;
+//                bus.post(new OnUpdateUserYummlyRecipesEvent(action, true, user.yummlyRecipes, null));
+//            }
+//        };
+//
+//        HashMap<String, YummlyRecipe> currentRecipes = new HashMap<>(currentUser.yummlyRecipes);
+//        switch (action) {
+//            case BusConsts.ACTION_ADD_NEW:
+//                for (YummlyRecipe recipe : recipesList) {
+//                    currentRecipes.put(recipe._id, recipe);
+//                }
+//                break;
+//
+//            case BusConsts.ACTION_DELETE:
+//                for (YummlyRecipe recipe : recipesList) {
+//                    currentRecipes.remove(recipe._id);
+//                }
+//                break;
+//        }
+//
+//        Single<User> updateUser =
+//                ApiProvider.getGreatRecipesApi().updateUser(user);
+//
+//        updateUser
+//                .subscribeOn(Schedulers.io())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe(subscriber);
+//    }
 
 //-------------------------------------------------------------------------------------------------
 
@@ -510,63 +509,6 @@ public class GreatRecipesDbManager {
 //-------------------------------------------------------------------------------------------------
 
     /**
-     * Update the user's userRecipesIds after adding/editing a UserRecipe
-     *
-     * @param recipesList: The user's user recipes list (in the Great Recipes DB)
-     */
-    public void updateUserUserRecipes(ArrayList<UserRecipe> recipesList, int action) {
-        MyBus bus = MyBus.getInstance();
-        User currentUser = AppStateManager.getInstance().user;
-
-        User user = new User();
-        user._id = currentUser._id;
-        user.userRecipes = new HashMap<>(currentUser.userRecipes);
-
-        Subscriber<User> subscriber = new Subscriber<User>() {
-            @Override
-            public void onCompleted() {
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                bus.post(new OnUpdateUserUserRecipesEvent(action, false, null, t));
-            }
-
-            @Override
-            public void onNext(User user) {
-                AppStateManager.getInstance().user = user;
-                bus.post(new OnUpdateUserUserRecipesEvent(action, true, user.userRecipes, null));
-            }
-        };
-
-        HashMap<String, UserRecipe> currentRecipes = new HashMap<>(currentUser.userRecipes);
-        switch (action) {
-            case BusConsts.ACTION_EDIT:
-            case BusConsts.ACTION_ADD_NEW:
-                for (UserRecipe recipe : recipesList) {
-                    currentRecipes.put(recipe._id, recipe);
-                }
-                break;
-
-            case BusConsts.ACTION_DELETE:
-                for (UserRecipe recipe : recipesList) {
-                    currentRecipes.remove(recipe._id);
-                }
-                break;
-        }
-
-        Single<User> updateUser =
-                ApiProvider.getGreatRecipesApi().updateUser(user);
-
-        updateUser
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(subscriber);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    /**
      * Update the user's recipes lists after adding/editing/deleting recipes
      */
     public void updateUserRecipes(ArrayList<UserRecipe> userRecipes, ArrayList<YummlyRecipe> yummlyRecipes, int action) {
@@ -577,6 +519,7 @@ public class GreatRecipesDbManager {
         user._id = currentUser._id;
         user.userRecipes = new HashMap<>(currentUser.userRecipes);
         user.yummlyRecipes = new HashMap<>(currentUser.yummlyRecipes);
+        user.favouriteRecipesIds = new ArrayList<>(currentUser.favouriteRecipesIds);
 
         Subscriber<User> subscriber = new Subscriber<User>() {
             @Override
@@ -608,70 +551,73 @@ public class GreatRecipesDbManager {
                         user.yummlyRecipes.put(recipe._id, recipe);
                     }
                 }
+
+                user.favouriteRecipesIds = null;
                 break;
 
             case BusConsts.ACTION_DELETE:
+                user.servings = new HashMap<>(currentUser.servings);
+
                 if (userRecipes != null) {
                     for (UserRecipe recipe : userRecipes) {
                         user.userRecipes.remove(recipe._id);
+                        if (user.favouriteRecipesIds.contains(recipe._id)) {
+                            user.favouriteRecipesIds.remove(recipe._id);
+                        }
+                        if (user.servings.containsKey(recipe._id)) {
+                            user.servings.remove(recipe._id);
+                        }
                     }
                 }
                 if (yummlyRecipes != null) {
                     for (YummlyRecipe recipe : yummlyRecipes) {
                         user.yummlyRecipes.remove(recipe._id);
+                        if (user.favouriteRecipesIds.contains(recipe._id)) {
+                            user.favouriteRecipesIds.remove(recipe._id);
+                        }
+                        if (user.servings.containsKey(recipe._id)) {
+                            user.servings.remove(recipe._id);
+                        }
                     }
                 }
+
+                if (user.favouriteRecipesIds.size() == currentUser.favouriteRecipesIds.size()) {
+                    // No change in favourites list
+                    user.favouriteRecipesIds = null;
+                }
+
+                if (user.servings.size() == currentUser.servings.size()) {
+                    // No change in servings map
+                    user.servings = null;
+                }
+
+                break;
+
+            case BusConsts.ACTION_TOGGLE_FAVOURITE:
+                if (userRecipes != null) {
+                    for (UserRecipe recipe : userRecipes) {
+                        if (user.favouriteRecipesIds.contains(recipe._id)) {
+                            user.favouriteRecipesIds.remove(recipe._id);
+                        } else {
+                            user.favouriteRecipesIds.add(recipe._id);
+                        }
+                    }
+                }
+                if (yummlyRecipes != null) {
+                    for (YummlyRecipe recipe : yummlyRecipes) {
+                        if (user.favouriteRecipesIds.contains(recipe._id)) {
+                            user.favouriteRecipesIds.remove(recipe._id);
+                        } else {
+                            user.favouriteRecipesIds.add(recipe._id);
+                        }
+                    }
+                }
+
+                user.userRecipes = null;
+                user.yummlyRecipes = null;
+
                 break;
         }
-
-        Single<User> updateUser =
-                ApiProvider.getGreatRecipesApi().updateUser(user);
-
-        updateUser
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(subscriber);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    /**
-     * Update the user's favouriteRecipesIds
-     *
-     * @param _id: The recipe _id (in the Great Recipes DB)
-     */
-    public void updateUserFavouriteRecipesIds(String _id, boolean isToAdd) {
-        MyBus bus = MyBus.getInstance();
-        AppStateManager appStateManager = AppStateManager.getInstance();
-
-        User user = new User();
-        user._id = appStateManager.user._id;
-
-        ArrayList<String> favouriteRecipesIds = new ArrayList<>(appStateManager.user.favouriteRecipesIds);
-        if (isToAdd) {
-            favouriteRecipesIds.add(_id);
-        } else {
-            favouriteRecipesIds.remove(_id);
-        }
-
-        user.favouriteRecipesIds = favouriteRecipesIds;
-
-        Subscriber<User> subscriber = new Subscriber<User>() {
-            @Override
-            public void onCompleted() {
-            }
-
-            @Override
-            public void onError(Throwable t) {
-                bus.post(new OnUpdateUserFavouriteRecipesIdsCompletedEvent(false, null, t));
-            }
-
-            @Override
-            public void onNext(User user) {
-                appStateManager.user = user;
-                bus.post(new OnUpdateUserFavouriteRecipesIdsCompletedEvent(true, user, null));
-            }
-        };
 
         Single<User> updateUser =
                 ApiProvider.getGreatRecipesApi().updateUser(user);

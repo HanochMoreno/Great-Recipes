@@ -33,12 +33,12 @@ public class SplashActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         Fabric.with(this, new Crashlytics(), new CrashlyticsNdk());
 
-        if (BuildConfig.DEBUG) {
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-            finish();
-            return;
-        }
+//        if (BuildConfig.DEBUG) {
+//            Intent intent = new Intent(this, MainActivity.class);
+//            startActivity(intent);
+//            finish();
+//            return;
+//        }
 
         setContentView(R.layout.activity_splash);
 
@@ -80,37 +80,29 @@ public class SplashActivity extends AppCompatActivity {
 
         continueRunning = true;
 
-        splash = new Thread(new Runnable() {
+        splash = new Thread(() -> {
 
-            public void run() {
-
-                while (progressStatus < 100) {
-
-                    if (!continueRunning) return;
-
-                    progressStatus += 1;
-                    handler.post(new Runnable() {
-                        public void run() {
-                            progressBar.setProgress(progressStatus);
-                        }
-                    });
-
-                    try {
-                        Thread.sleep(50);
-                    } catch (InterruptedException e) {
-                        e.printStackTrace();
-                    }
-                }
+            while (progressStatus < 100) {
 
                 if (!continueRunning) return;
 
-                if (progressStatus == 100) {
-                    Intent intent = new Intent(SplashActivity.this, MainActivity.class);
-                    startActivity(intent);
-                    SplashActivity.this.finish();
+                progressStatus += 1;
+                handler.post(() -> progressBar.setProgress(progressStatus));
+
+                try {
+                    Thread.sleep(50);
+                } catch (InterruptedException e) {
+                    e.printStackTrace();
                 }
             }
 
+            if (!continueRunning) return;
+
+            if (progressStatus == 100) {
+                Intent intent = new Intent(SplashActivity.this, MainActivity.class);
+                startActivity(intent);
+                SplashActivity.this.finish();
+            }
         });
 
         splash.start();

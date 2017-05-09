@@ -21,4 +21,26 @@ public class User {
     public HashMap<String, Serving2> servings;
     public boolean isPremium;
     public int onlineSearchesCount;
+
+    public UserRecipe getLastUserRecipe() {
+        ArrayList<UserRecipe> list = new ArrayList<>(userRecipes.values());
+        if (list.isEmpty()) {
+            return null;
+        } else {
+            return list.get(list.size() - 1);
+        }
+    }
+
+    public YummlyRecipe getLastYummlyRecipe() {
+        ArrayList<YummlyRecipe> list = new ArrayList<>(yummlyRecipes.values());
+        if (list.isEmpty()) {
+            return null;
+        } else {
+            return list.get(list.size() - 1);
+        }
+    }
+
+    public boolean isUserRecipe(String recipeId) {
+        return userRecipes.containsKey(recipeId);
+    }
 }

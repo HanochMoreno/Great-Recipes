@@ -26,7 +26,6 @@ import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
 
-import com.google.gson.Gson;
 import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
@@ -34,10 +33,9 @@ import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
+import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
-import com.hanoch.greatrecipes.bus.OnAddUserRecipeCompletedEvent;
-import com.hanoch.greatrecipes.bus.OnUpdateUserFavouriteRecipesIdsCompletedEvent;
-import com.hanoch.greatrecipes.bus.OnUpdateUserRecipeEvent;
+import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.squareup.otto.Subscribe;
@@ -74,9 +72,6 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
     private ArrayList<ObjectAnimator> fadingInAnimationsList;
     private Bundle savedInstanceState;
 
-    private UserRecipe userRecipe;
-    private YummlyRecipe yummlyRecipe;
-
     private GreatRecipesDbManager dbManager;
     private MyBus bus;
     private ProgressDialog progressDialog;
@@ -100,6 +95,8 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle(getString(R.string.loading_info));
         progressDialog.setMessage(getString(R.string.please_wait));
+        progressDialog.setCancelable(false);
+        progressDialog.setCanceledOnTouchOutside(false);
 
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
@@ -126,15 +123,8 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
             if (action.equals(AppConsts.Actions.ACTION_REVIEW)) {
                 // Show details of a recipe came from one of the user lists
-                String recipeId;
-                if (isUserRecipe) {
-                    userRecipe = appStateManager.user.userRecipes.get(mRecipeId);
-                    recipeId = userRecipe._id;
-                } else {
-                    yummlyRecipe = appStateManager.user.yummlyRecipes.get(mRecipeId);
-                    recipeId = yummlyRecipe._id;
-                }
-                fragment = RecipeReviewFragment2.newInstance(recipeId, isUserRecipe, extra_serving);
+
+                fragment = RecipeReviewFragment2.newInstance(mRecipeId, isUserRecipe, extra_serving);
                 ft.add(R.id.layout_container, fragment, AppConsts.Fragments.RECIPE_REVIEW);
 
             } else if (action.equals(AppConsts.Actions.ACTION_EDIT)
@@ -169,11 +159,6 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
         isUserRecipe = savedInstanceState.getBoolean("isUserRecipe");
         extra_serving = savedInstanceState.getString("extra_serving");
         action = savedInstanceState.getString("action");
-        if (isUserRecipe) {
-            userRecipe = new Gson().fromJson(savedInstanceState.getString("userRecipeAsJson"), UserRecipe.class);
-        } else {
-            yummlyRecipe = new Gson().fromJson(savedInstanceState.getString("yummlyRecipeAsJson"), YummlyRecipe.class);
-        }
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -185,11 +170,6 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
         outState.putString("mRecipeId", mRecipeId);
         outState.putBoolean("isUserRecipe", isUserRecipe);
         outState.putString("extra_serving", extra_serving);
-        if (isUserRecipe) {
-            outState.putString("userRecipeAsJson", new Gson().toJson(userRecipe, UserRecipe.class));
-        } else if (yummlyRecipe != null) {
-            outState.putString("yummlyRecipeAsJson", new Gson().toJson(yummlyRecipe, YummlyRecipe.class));
-        }
 
         outState.putInt("toolbarColor", toolbarColor);
         outState.putString("toolbarTitle", toolbarTitle);
@@ -244,44 +224,68 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
 //-------------------------------------------------------------------------------------------------
 
-    public void onRecipeWasSaved(Boolean isNewRecipe, UserRecipe recipe) {
-        // Settings after editing an existing recipe, or adding a new one to "My Own" list
+    public void onToggleFavourite() {
+        ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
 
-        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
-
-        mRecipeId = recipe._id;
-        userRecipe = recipe;
-
-        View mainView = findViewById(android.R.id.content);
-        if (isNewRecipe != null) {
-            if (isNewRecipe) {
-                AppHelper.showSnackBar(mainView, R.string.added_to_my_own, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
-            } else {
-                AppHelper.showSnackBar(mainView, R.string.saved_successfully, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
-            }
+        if (isUserRecipe) {
+            toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
         }
 
-        FragmentManager fm = getSupportFragmentManager();
-        FragmentTransaction ft = fm.beginTransaction();
-        Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(userRecipe._id, true, null);
-
-        ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left);
-
-        ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
-        ft.commit();
-
-        action = AppConsts.Actions.ACTION_REVIEW;
-
-        ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
-        toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
-
-        if (appStateManager.isRecipeFavourite(mRecipeId)) {
+        boolean isFavourite = appStateManager.isRecipeFavourite(mRecipeId);
+        if (isFavourite) {
             toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
         } else {
             toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
         }
 
-        setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
+        FragmentManager fm = getSupportFragmentManager();
+        RecipeReviewFragment2 recipeReviewFragment = (RecipeReviewFragment2) fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
+        recipeReviewFragment.setFavouriteImage(isFavourite);
+        setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public void onRecipeWasSaved(Boolean isNewRecipe, UserRecipe recipe) {
+        // Settings after editing an existing recipe, or adding a new one to "My Own" list
+
+        if (recipe != null) {
+
+            AppHelper.hideKeyboardFrom(this, getCurrentFocus());
+
+            mRecipeId = recipe._id;
+
+            View mainView = findViewById(android.R.id.content);
+            if (isNewRecipe != null) {
+                if (isNewRecipe) {
+                    AppHelper.showSnackBar(mainView, R.string.added_to_my_own, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
+                } else {
+                    AppHelper.showSnackBar(mainView, R.string.saved_successfully, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
+                }
+            }
+
+            FragmentManager fm = getSupportFragmentManager();
+            FragmentTransaction ft = fm.beginTransaction();
+            Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, true, null);
+
+            ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left);
+
+            ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
+            ft.commit();
+
+            action = AppConsts.Actions.ACTION_REVIEW;
+
+            ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
+            toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
+
+            if (appStateManager.isRecipeFavourite(mRecipeId)) {
+                toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
+            } else {
+                toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
+            }
+
+            setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
+        }
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -420,10 +424,6 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
         int itemId = item.getItemId();
 
-//        Recipe recipe;
-
-        ArrayList<Integer> toolbarButtonsList;
-
         FragmentManager fm = getSupportFragmentManager();
         EditRecipeFragment2 editRecipeFragment = (EditRecipeFragment2) fm.findFragmentByTag(AppConsts.Fragments.EDIT_RECIPE);
 
@@ -439,21 +439,11 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
                 ft.replace(R.id.layout_container, editRecipeFragment, AppConsts.Fragments.EDIT_RECIPE);
                 ft.commit();
 
-                toolbarButtonsList = new ArrayList<>();
+                ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.SAVE);
                 setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
 
                 action = AppConsts.Actions.ACTION_EDIT;
-
-                break;
-
-            case R.id.action_save:
-                // Saving a recipe after finishing editing a recipe
-
-                progressDialog.show();
-
-                userRecipe = editRecipeFragment.onSaveUserRecipeClicked();
-                dbManager.updateUserRecipe(userRecipe);
 
                 break;
 
@@ -472,12 +462,15 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
                     editor.putInt(AppConsts.SharedPrefs.CREATED_COUNTER, createdRecipesCount);
                     editor.apply();
                 }
+                // no break...
+
+            case R.id.action_save:
+                // Saving a recipe after finishing editing a recipe
 
                 progressDialog.show();
 
-                userRecipe = editRecipeFragment.onSaveUserRecipeClicked();
-                dbManager.addUserRecipe(userRecipe);
-
+                UserRecipe userRecipe = editRecipeFragment.onSaveUserRecipeClicked();
+                dbManager.updateUserRecipe(userRecipe);
                 break;
 
             case R.id.action_addServing:
@@ -495,7 +488,18 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
                 progressDialog.show();
 
-                dbManager.updateUserFavouriteRecipesIds(mRecipeId, itemId == R.id.action_addToFavourites);
+                ArrayList<UserRecipe> userRecipes = null;
+                ArrayList<YummlyRecipe> yummlyRecipes = null;
+
+                if (appStateManager.user.isUserRecipe(mRecipeId)) {
+                    userRecipes = new ArrayList<>();
+                    userRecipes.add(appStateManager.user.userRecipes.get(mRecipeId));
+                } else {
+                    yummlyRecipes = new ArrayList<>();
+                    yummlyRecipes.add(appStateManager.user.yummlyRecipes.get(mRecipeId));
+                }
+
+                dbManager.updateUserRecipes(userRecipes, yummlyRecipes, BusConsts.ACTION_TOGGLE_FAVOURITE);
                 break;
 
             case R.id.action_ok:
@@ -548,63 +552,23 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
-    public void onEvent(OnUpdateUserRecipeEvent event) {
+    public void onEvent(OnUpdateUserRecipesEvent event) {
+        // After saving a new or edited user-recipe
+
         progressDialog.dismiss();
 
         if (event.isSuccess) {
-            onRecipeWasSaved(false, event.recipe);
-        } else {
-            View mainView = findViewById(android.R.id.content);
-            if (event.t instanceof UnknownHostException || event.t instanceof ConnectException) {
-                AppHelper.showSnackBar(mainView, R.string.internet_error, Color.RED);
-            } else {
-                AppHelper.showSnackBar(mainView, R.string.unexpected_error, Color.RED);
+            switch (event.action) {
+                case BusConsts.ACTION_ADD_NEW:
+                    onRecipeWasSaved(true, appStateManager.user.getLastUserRecipe());
+                    break;
+                case BusConsts.ACTION_EDIT:
+                    onRecipeWasSaved(true, appStateManager.user.userRecipes.get(mRecipeId));
+                    break;
+                case BusConsts.ACTION_TOGGLE_FAVOURITE:
+                    onToggleFavourite();
+                    break;
             }
-        }
-    }
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
-    public void onEvent(OnAddUserRecipeCompletedEvent event) {
-        progressDialog.dismiss();
-
-        if (event.isSuccess) {
-            onRecipeWasSaved(true, event.recipe);
-        } else {
-            View mainView = findViewById(android.R.id.content);
-            if (event.t instanceof UnknownHostException || event.t instanceof ConnectException) {
-                AppHelper.showSnackBar(mainView, R.string.internet_error, Color.RED);
-            } else {
-                AppHelper.showSnackBar(mainView, R.string.unexpected_error, Color.RED);
-            }
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
-    public void onEvent(OnUpdateUserFavouriteRecipesIdsCompletedEvent event) {
-        // After toggling favourite button
-
-        progressDialog.dismiss();
-        if (event.isSuccess) {
-            ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
-
-            boolean isFavourite = appStateManager.isRecipeFavourite(mRecipeId);
-            if (isFavourite) {
-                toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
-            } else {
-                toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
-            }
-
-            if (isUserRecipe) {
-                toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
-            }
-
-            FragmentManager fm = getSupportFragmentManager();
-            RecipeReviewFragment2 recipeReviewFragment = (RecipeReviewFragment2) fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
-            recipeReviewFragment.setFavouriteImage(isFavourite);
-            setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);
         } else {
             View mainView = findViewById(android.R.id.content);
             if (event.t instanceof UnknownHostException || event.t instanceof ConnectException) {

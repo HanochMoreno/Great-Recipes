@@ -37,19 +37,17 @@ import android.widget.TextView;
 import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
-import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
-import com.hanoch.greatrecipes.bus.OnDownloadYummlyRecipeCompletedEvent;
-import com.hanoch.greatrecipes.bus.OnUpdateUserCompletedEvent;
+import com.hanoch.greatrecipes.bus.OnYummlyRecipeDownloadedEvent;
+import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.AllergensAndDietPrefItem;
 import com.hanoch.greatrecipes.model.ObjectDrawerItem;
-import com.hanoch.greatrecipes.model.Serving2;
 import com.hanoch.greatrecipes.utilities.MyFonts;
 import com.hanoch.greatrecipes.view.adapters.DrawerItemAdapter;
 import com.hanoch.greatrecipes.view.adapters.DrawerItemAdapterLimited;
@@ -58,7 +56,6 @@ import com.squareup.otto.Subscribe;
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.HashMap;
 
 import rx.Subscriber;
 
@@ -123,6 +120,8 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle(getString(R.string.loading_info));
         progressDialog.setMessage(getString(R.string.please_wait));
+        progressDialog.setCancelable(false);
+        progressDialog.setCanceledOnTouchOutside(false);
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         isPremium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
@@ -580,7 +579,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                         SharedPreferences.Editor editor = sp.edit();
 
                         editor.putInt(AppConsts.SharedPrefs.DOWNLOADED_COUNTER, downloadedRecipesCount);
-                        editor.commit();
+                        editor.apply();
                     }
                 }
 
@@ -589,7 +588,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 ArrayList<YummlyRecipe> yummlyRecipes = new ArrayList<>();
                 yummlyRecipes.add(yummlyRecipe);
 
-                dbManager.updateUserYummlyRecipes(yummlyRecipes, BusConsts.ACTION_ADD_NEW);
+                dbManager.updateUserRecipes(null, yummlyRecipes, BusConsts.ACTION_ADD_NEW);
                 break;
 
             case R.id.action_closeWebview:
@@ -793,7 +792,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
-    public void onEvent(OnDownloadYummlyRecipeCompletedEvent event) {
+    public void onEvent(OnYummlyRecipeDownloadedEvent event) {
         progressDialog.dismiss();
 
         if (event.isSuccess) {
@@ -850,6 +849,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             }
 
             ft.commit();
+
         } else {
             ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
             toolbarButtonsList.add(AppConsts.ToolbarButtons.REFRESH);
@@ -869,13 +869,15 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
-    public void onEvent(OnUpdateUserCompletedEvent event) {
-        // After updating the user's yummlyRecipesIds in the database
+    public void onEvent(OnUpdateUserRecipesEvent event) {
+        // After updating the user's yummlyRecipes in the database
+        // event.action == BusConsts.ADD_NEW
 
         if (event.isSuccess) {
 
             if (extra_serving == null) {
                 // The user saved a yummly recipe to his online list
+
                 AppHelper.hideKeyboardFrom(this, getCurrentFocus());
 
                 if (getResources().getBoolean(R.bool.isTablet)) {
