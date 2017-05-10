@@ -2,16 +2,13 @@ package com.hanoch.greatrecipes.view;
 
 import android.app.ProgressDialog;
 import android.content.Context;
-import android.content.SharedPreferences;
 import android.database.Cursor;
 import android.graphics.Color;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
 import android.support.v4.content.CursorLoader;
 import android.support.v4.content.Loader;
-import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -20,30 +17,15 @@ import android.widget.AdapterView;
 import android.widget.ListView;
 
 import com.hanoch.greatrecipes.AppHelper;
-import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
+import com.hanoch.greatrecipes.bus.MyBus;
+import com.hanoch.greatrecipes.bus.OnGotYummlySearchResultsEvent;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.database.RecipesContract;
 import com.hanoch.greatrecipes.database.SqLiteDbManager;
-import com.hanoch.greatrecipes.model.AllergensAndDietPrefItem;
-import com.hanoch.greatrecipes.model.ApiProvider;
 import com.hanoch.greatrecipes.model.RecipeSearchResult;
-import com.hanoch.greatrecipes.AppConsts;
-import com.hanoch.greatrecipes.api.yummly_api.SearchResultsResponse;
 import com.hanoch.greatrecipes.view.adapters.SearchResultsAdapter;
-
-import java.io.UnsupportedEncodingException;
-import java.net.ConnectException;
-import java.net.URLEncoder;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-
-import rx.Single;
-import rx.Subscriber;
-import rx.android.schedulers.AndroidSchedulers;
-import rx.schedulers.Schedulers;
+import com.squareup.otto.Subscribe;
 
 public class OnlineSearchResultsFragment extends Fragment implements
         AdapterView.OnItemClickListener,
@@ -57,8 +39,9 @@ public class OnlineSearchResultsFragment extends Fragment implements
 
     private GreatRecipesDbManager dbManager;
     private SqLiteDbManager sqliteManager;
-    private Subscriber<SearchResultsResponse> subscriber;
     private boolean isToScrollToTop;
+    private ProgressDialog progressDialog;
+    private MyBus bus;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -81,7 +64,12 @@ public class OnlineSearchResultsFragment extends Fragment implements
         super.onCreate(savedInstanceState);
 
         dbManager = GreatRecipesDbManager.getInstance();
+        bus = MyBus.getInstance();
         sqliteManager = new SqLiteDbManager(getContext());
+
+        progressDialog = new ProgressDialog(getActivity());
+        progressDialog.setTitle(getString(R.string.searching));
+        progressDialog.setMessage(getString(R.string.please_wait));
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -90,7 +78,6 @@ public class OnlineSearchResultsFragment extends Fragment implements
     public View onCreateView(LayoutInflater inflater, ViewGroup container,
                              Bundle savedInstanceState) {
 
-        // Inflate the layout for this fragment
         view = inflater.inflate(R.layout.fragment_online_search_results, container, false);
 
         listView_searchResults = (ListView) view.findViewById(R.id.listView_searchResults);
@@ -132,6 +119,9 @@ public class OnlineSearchResultsFragment extends Fragment implements
     @Override
     public void onAttach(Context context) {
         super.onAttach(context);
+
+        bus.register(this);
+
         try {
             mListener = (OnFragmentOnlineSearchListener) context;
         } catch (ClassCastException e) {
@@ -145,12 +135,11 @@ public class OnlineSearchResultsFragment extends Fragment implements
     @Override
     public void onDetach() {
         super.onDetach();
+
+        bus.unregister(this);
+
         mListener = null;
         isToScrollToTop = false;
-
-        if (subscriber != null && !subscriber.isUnsubscribed()) {
-            subscriber.unsubscribe();
-        }
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -215,93 +204,8 @@ public class OnlineSearchResultsFragment extends Fragment implements
             return;
         }
 
-        final ProgressDialog progressDialog = new ProgressDialog(getActivity());
-        progressDialog.setTitle(getString(R.string.searching));
-        progressDialog.setMessage(getString(R.string.please_wait));
         progressDialog.show();
-
-        // Getting the user Diet & Allergies preferences:
-        ArrayList<AllergensAndDietPrefItem> allowedDietList = AppHelper.getUserAllowedDietPrefsList(getContext());
-        ArrayList<AllergensAndDietPrefItem> allowedAllergiesList = AppHelper.getUserAllowedAllergiesPrefsList(getContext());
-
-        // Getting the user's Max. Online Search Results preference
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
-
-        boolean premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
-
-        String maxOnlineSearchResultsPref;
-        if (premium) {
-            maxOnlineSearchResultsPref = sp.getString(AppConsts.SharedPrefs.MAX_ONLINE_SEARCH_RESULTS, "10");
-
-        } else {
-            maxOnlineSearchResultsPref = "5";
-        }
-
-        try {
-            HashMap<String, String> query = new HashMap<>();
-            query.put("q", URLEncoder.encode(keyToSearch, "utf-8"));
-            query.put("start", URLEncoder.encode("0", "utf-8"));
-            query.put("maxResult", URLEncoder.encode(maxOnlineSearchResultsPref, "utf-8"));
-            query.put("_app_id", URLEncoder.encode(AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL, "utf-8"));
-            query.put("_app_key", URLEncoder.encode(AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL, "utf-8"));
-
-            List<String> dietList = new ArrayList<>();
-            for (AllergensAndDietPrefItem dietItem : allowedDietList) {
-                dietList.add(URLEncoder.encode(dietItem.searchKeyName, "utf-8"));
-            }
-
-            List<String> allergensList = new ArrayList<>();
-            for (AllergensAndDietPrefItem allergenItem : allowedAllergiesList) {
-                allergensList.add(URLEncoder.encode(allergenItem.searchKeyName, "utf-8"));
-            }
-
-            subscriber = new Subscriber<SearchResultsResponse>() {
-                @Override
-                public final void onCompleted() {
-                }
-
-                @Override
-                public final void onError(Throwable e) {
-                    progressDialog.dismiss();
-                    Log.e("subscriber", "onError: message: " + e.getMessage() + ", cause: " + e.getCause());
-                    if (e instanceof UnknownHostException || e instanceof ConnectException) {
-                        AppHelper.showSnackBar(view, R.string.internet_error, Color.RED);
-                    } else {
-                        AppHelper.showSnackBar(view, R.string.unexpected_error, Color.RED);
-                    }
-                }
-
-                @Override
-                public final void onNext(SearchResultsResponse response) {
-                    progressDialog.dismiss();
-
-                    if (response.matches == null || response.matches.isEmpty()) {
-                        // No results
-                        AppHelper.showSnackBar(view, R.string.no_results, Color.RED);
-                        return;
-                    }
-
-                    // Deleting old search results
-                    sqliteManager.deleteAllSearchResults();
-
-                    // Adding the new search results
-                    sqliteManager.addSearchResults(response.matches);
-
-                    isToScrollToTop = true;
-                }
-            };
-
-            Single<SearchResultsResponse> getSearchResults = ApiProvider.getYummlyApi().getSearchResults(query, dietList, allergensList);
-            getSearchResults
-                    .subscribeOn(Schedulers.io())
-                    .observeOn(AndroidSchedulers.mainThread())
-                    .subscribe(subscriber);
-
-        } catch (UnsupportedEncodingException e) {
-            progressDialog.dismiss();
-            AppHelper.showSnackBar(view, R.string.unexpected_error, Color.RED);
-            e.printStackTrace();
-        }
+        dbManager.performSearchRecipesFromYummlyApi(getContext(), keyToSearch);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -311,5 +215,25 @@ public class OnlineSearchResultsFragment extends Fragment implements
         int trimmedLength = keyToSearch.trim().length();
 
         return (trimmedLength < 2);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
+    public void onEvent(OnGotYummlySearchResultsEvent event) {
+        progressDialog.dismiss();
+
+        if (event.isSuccess) {
+
+            if (event.results == null || event.results.isEmpty()) {
+                // No results
+                AppHelper.showSnackBar(view, R.string.no_results, Color.RED);
+                return;
+            }
+            isToScrollToTop = true;
+
+        } else {
+            AppHelper.onApiErrorReceived(event.t, view);
+        }
     }
 }

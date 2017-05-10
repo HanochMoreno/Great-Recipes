@@ -30,13 +30,17 @@ import android.widget.Toast;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.BuildConfig;
-import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
+import com.hanoch.greatrecipes.bus.BusConsts;
+import com.hanoch.greatrecipes.bus.MyBus;
+import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
+import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.google.IabHelperNonStatic;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.FreeTrialCheckBoxPreference;
 import com.hanoch.greatrecipes.model.FreeTrialPreference;
 import com.hanoch.greatrecipes.model.MyIllegalStateException;
+import com.squareup.otto.Subscribe;
 
 
 public class PreferencesFragment extends PreferenceFragment
@@ -59,6 +63,7 @@ public class PreferencesFragment extends PreferenceFragment
     private boolean iabHelperWasAlreadySetUpSuccessfully;
     private ProgressDialog progressDialog;
     private Preference prefUpgradeToPremium;
+    private MyBus bus;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -76,6 +81,8 @@ public class PreferencesFragment extends PreferenceFragment
 
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
+
+        bus = MyBus.getInstance();
 
         view = inflater.inflate(R.layout.fragment_preferences, container, false);
 
@@ -198,6 +205,7 @@ public class PreferencesFragment extends PreferenceFragment
     public void onResume() {
         super.onResume();
 
+        bus.register(this);
         AnalyticsHelper.setScreenName(this);
     }
 
@@ -206,6 +214,9 @@ public class PreferencesFragment extends PreferenceFragment
     @Override
     public void onDestroy() {
         super.onDestroy();
+
+        bus.unregister(this);
+
         if (mIabHelper != null) {
             try {
                 mIabHelper.dispose();
@@ -286,7 +297,7 @@ public class PreferencesFragment extends PreferenceFragment
                     return true;
                 }
 
-                if (mIabHelper!= null && iabHelperWasAlreadySetUpSuccessfully) {
+                if (mIabHelper != null && iabHelperWasAlreadySetUpSuccessfully) {
 
                     purchasePremiumAccess();
 
@@ -345,7 +356,7 @@ public class PreferencesFragment extends PreferenceFragment
 
                 if (preference instanceof FreeTrialCheckBoxPreference) {
                     ((FreeTrialCheckBoxPreference) preference).onPreferenceClick(preference);
-                } else if (preference instanceof FreeTrialPreference){
+                } else if (preference instanceof FreeTrialPreference) {
                     ((FreeTrialPreference) preference).onPreferenceClick(preference);
                 }
         }
@@ -355,33 +366,33 @@ public class PreferencesFragment extends PreferenceFragment
 
 //-------------------------------------------------------------------------------------------------
 
-    private void purchasePremiumAccess(){
+    private void purchasePremiumAccess() {
 
         final IabHelperNonStatic.OnIabPurchaseFinishedListener mPurchaseFinishedListener
                 = (result, purchase) -> {
 
-                    if (result.isFailure()) {
+            if (result.isFailure()) {
 
-                        if (prefUpgradeToPremium != null) {
-                            prefUpgradeToPremium.setEnabled(true);
-                        }
+                if (prefUpgradeToPremium != null) {
+                    prefUpgradeToPremium.setEnabled(true);
+                }
 
-                        errorMessage = result.toString();
-                        if (errorMessage.contains("Already Owned")) {
-                            errorMessage = getString(R.string.error_purchasing) + ": " + getString(R.string.you_are_already_premium);
-                        } else {
-                            errorMessage = getString(R.string.error_purchasing) + ": " + result;
-                        }
+                errorMessage = result.toString();
+                if (errorMessage.contains("Already Owned")) {
+                    errorMessage = getString(R.string.error_purchasing) + ": " + getString(R.string.you_are_already_premium);
+                } else {
+                    errorMessage = getString(R.string.error_purchasing) + ": " + result;
+                }
 
-                        showGoogleErrorDialog(errorMessage);
-                        Log.e(TAG, errorMessage);
+                showGoogleErrorDialog(errorMessage);
+                Log.e(TAG, errorMessage);
 
-                    } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
-                        // give user access to premium content
+            } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
+                // give user access to premium content
 
-                        mListener.onPremiumAccessPurchased();
-                    }
-                };
+                mListener.onPremiumAccessPurchased();
+            }
+        };
 
         try {
             mIabHelper.launchPurchaseFlow(getActivity(), AppConsts.SKU_PREMIUM, AppConsts.REQ_CODE_PURCHASE, mPurchaseFinishedListener);
@@ -415,17 +426,17 @@ public class PreferencesFragment extends PreferenceFragment
 
         textView_dialogTitle.setText(R.string.deleting_all_the_recipes);
         textView_dialogContent.setText(getString(R.string.are_you_sure)
-                        + "\n"
-                        + getString(R.string.the_operation_is_irreversible)
-                        + "\n"
-                        + getString(R.string.all_servings_will_be_deleted)
+                + "\n"
+                + getString(R.string.the_operation_is_irreversible)
+                + "\n"
+                + getString(R.string.all_servings_will_be_deleted)
         );
 
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
         button_yes.setOnClickListener(v -> {
 
-            ((GreatRecipesApplication) getActivity().getApplication()).getDbManager().deleteAllRecipes();
-            AppHelper.showSnackBar(view, R.string.all_the_recipe_were_deleted, ContextCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
+            GreatRecipesDbManager.getInstance().clearAllLists(BusConsts.ACTION_DELETE);
+
             dialog.dismiss();
         });
 
@@ -485,6 +496,19 @@ public class PreferencesFragment extends PreferenceFragment
 
         (googleErrorDialog.findViewById(R.id.button_cancel)).setVisibility(View.GONE);
         googleErrorDialog.show();
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
+    public void onEvent(OnUpdateUserRecipesEvent event) {
+        if (event.isSuccess) {
+            if (event.action == BusConsts.ACTION_DELETE) {
+                AppHelper.showSnackBar(view, R.string.all_the_recipe_were_deleted, ContextCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
+            }
+        } else {
+            AppHelper.onApiErrorReceived(event.t, view);
+        }
     }
 
 }

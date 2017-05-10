@@ -4,7 +4,7 @@ import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentStatePagerAdapter;
 
-import com.hanoch.greatrecipes.model.MyListFragment;
+import com.hanoch.greatrecipes.view.MyListFragment;
 import com.hanoch.greatrecipes.view.ListFavouriteFragment2;
 import com.hanoch.greatrecipes.view.ListMyOwnFragment2;
 import com.hanoch.greatrecipes.view.ListOnlineFragment2;

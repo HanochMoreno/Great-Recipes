@@ -19,8 +19,6 @@ import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.model.Serving;
-import com.hanoch.greatrecipes.model.Serving2;
-import com.hanoch.greatrecipes.view.adapters.RecipesListAdapter2;
 import com.hanoch.greatrecipes.view.adapters.ServingsListAdapter;
 
 import java.util.ArrayList;
@@ -51,9 +49,9 @@ public class ServingsListFragment2 extends Fragment implements
 //-------------------------------------------------------------------------------------------------
 
     public interface FragmentServingsListListener {
-        void showRecipeDetails(Serving2 serving);
+        void showRecipeDetails(Serving serving);
 
-        void onServingChecked(Serving2 serving, boolean isChecked);
+        void onServingChecked(Serving serving, boolean isChecked);
 
         void onAddNewServingClick();
 
@@ -166,8 +164,8 @@ public class ServingsListFragment2 extends Fragment implements
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
         String servingId = ((ServingsListAdapter.ViewHolder) view.getTag()).servingId;
-        Serving2 serving = null;
-        for (Serving2 servingModel : AppStateManager.getInstance().user.servings.values()) {
+        Serving serving = null;
+        for (Serving servingModel : AppStateManager.getInstance().user.servings.values()) {
             if (servingModel.servingId.equals(servingId)) {
                 serving = servingModel;
                 break;
@@ -231,7 +229,7 @@ public class ServingsListFragment2 extends Fragment implements
 
         checkedItemsIdList.add(servingId);
 
-        Serving2 serving = AppStateManager.getInstance().user.servings.get(servingId);
+        Serving serving = AppStateManager.getInstance().user.servings.get(servingId);
         mListener.onServingChecked(serving, true);
 
         return true;

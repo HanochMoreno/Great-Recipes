@@ -38,7 +38,4 @@ public interface GreatRecipesApi {
 
     @PUT("http://10.0.0.3:3000/user/update-user")
     Single<User> updateUser(@Body User user);
-
-    @GET("http://10.0.0.3:3000/user/get-recipes/")
-    Single<UserRecipesResponse> getUserRecipes(@Query("userId") String userId);
 }

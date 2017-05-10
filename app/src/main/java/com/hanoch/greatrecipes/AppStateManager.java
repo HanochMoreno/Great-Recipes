@@ -21,4 +21,9 @@ public class AppStateManager {
     public boolean isRecipeFavourite(String recipeId) {
         return user.favouriteRecipesIds.contains(recipeId);
     }
+
+    public boolean isTestingUser() {
+        return user == null;
+    }
+
 }

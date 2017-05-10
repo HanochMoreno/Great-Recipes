@@ -1,31 +1,24 @@
 package com.hanoch.greatrecipes;
 
-import android.animation.Animator;
-import android.animation.AnimatorInflater;
-import android.animation.ObjectAnimator;
-import android.animation.PropertyValuesHolder;
 import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
-import android.graphics.drawable.Drawable;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
-import android.support.v4.content.ContextCompat;
-import android.view.MenuItem;
+import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.FrameLayout;
-import android.widget.ImageView;
-import android.widget.TextView;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.hanoch.greatrecipes.model.AllergensAndDietPrefItem;
+import com.hanoch.greatrecipes.model.AllergenAndDiet;
 
+import java.net.ConnectException;
+import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -199,21 +192,21 @@ public abstract class AppHelper {
 
 //-------------------------------------------------------------------------------------------------
 
-    public static AllergensAndDietPrefItem[] getAllDietList(Context context) {
+    public static AllergenAndDiet[] getAllDietList(Context context) {
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
 
-        AllergensAndDietPrefItem[] dietList = new AllergensAndDietPrefItem[3];
+        AllergenAndDiet[] dietList = new AllergenAndDiet[3];
 
-        AllergensAndDietPrefItem diet = new AllergensAndDietPrefItem(
+        AllergenAndDiet diet = new AllergenAndDiet(
                 2, AppConsts.Filters.VEGAN, "390^Vegan", sp.getBoolean(AppConsts.SharedPrefs.VEGAN, false));
         dietList[0] = diet;
 
-        diet = new AllergensAndDietPrefItem(
+        diet = new AllergenAndDiet(
                 3, AppConsts.Filters.VEGETARIAN, "387^Lacto-ovo vegetarian", sp.getBoolean(AppConsts.SharedPrefs.VEGETARIAN, false));
         dietList[1] = diet;
 
-        diet = new AllergensAndDietPrefItem(
+        diet = new AllergenAndDiet(
                 4, AppConsts.Filters.PALEO, "403^Paleo", sp.getBoolean(AppConsts.SharedPrefs.PALEO, false));
         dietList[2] = diet;
 
@@ -222,45 +215,45 @@ public abstract class AppHelper {
 
 //-------------------------------------------------------------------------------------------------
 
-    public static AllergensAndDietPrefItem[] getAllAllergiesList(Context context) {
+    public static AllergenAndDiet[] getAllAllergiesList(Context context) {
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
 
-        AllergensAndDietPrefItem[] allergiesList = new AllergensAndDietPrefItem[9];
+        AllergenAndDiet[] allergiesList = new AllergenAndDiet[9];
 
-        AllergensAndDietPrefItem allergen = new AllergensAndDietPrefItem(
+        AllergenAndDiet allergen = new AllergenAndDiet(
                 6, AppConsts.Filters.DAIRY_FREE, "396^Dairy-Free", sp.getBoolean(AppConsts.SharedPrefs.DAIRY_FREE, false));
         allergiesList[0] = allergen;
 
-        allergen = new AllergensAndDietPrefItem(
+        allergen = new AllergenAndDiet(
                 7, AppConsts.Filters.EGG_FREE, "397^Egg-Free", sp.getBoolean(AppConsts.SharedPrefs.EGG_FREE, false));
         allergiesList[1] = allergen;
 
-        allergen = new AllergensAndDietPrefItem(
+        allergen = new AllergenAndDiet(
                 8, AppConsts.Filters.GLUTEN_FREE, "393^Gluten-Free", sp.getBoolean(AppConsts.SharedPrefs.GLUTEN_FREE, false));
         allergiesList[2] = allergen;
 
-        allergen = new AllergensAndDietPrefItem(
+        allergen = new AllergenAndDiet(
                 9, AppConsts.Filters.PEANUT_FREE, "394^Peanut-Free", sp.getBoolean(AppConsts.SharedPrefs.PEANUT_FREE, false));
         allergiesList[3] = allergen;
 
-        allergen = new AllergensAndDietPrefItem(
+        allergen = new AllergenAndDiet(
                 10, AppConsts.Filters.SEAFOOD_FREE, "398^Seafood-Free", sp.getBoolean(AppConsts.SharedPrefs.SEAFOOD_FREE, false));
         allergiesList[4] = allergen;
 
-        allergen = new AllergensAndDietPrefItem(
+        allergen = new AllergenAndDiet(
                 11, AppConsts.Filters.SESAME_FREE, "399^Sesame-Free", sp.getBoolean(AppConsts.SharedPrefs.SESAME_FREE, false));
         allergiesList[5] = allergen;
 
-        allergen = new AllergensAndDietPrefItem(
+        allergen = new AllergenAndDiet(
                 12, AppConsts.Filters.SOY_FREE, "400^Soy-Free", sp.getBoolean(AppConsts.SharedPrefs.SOY_FREE, false));
         allergiesList[6] = allergen;
 
-        allergen = new AllergensAndDietPrefItem(
+        allergen = new AllergenAndDiet(
                 13, AppConsts.Filters.TREE_NUT_FREE, "395^Tree Nut-Free", sp.getBoolean(AppConsts.SharedPrefs.TREE_NUT_FREE, false));
         allergiesList[7] = allergen;
 
-        allergen = new AllergensAndDietPrefItem(
+        allergen = new AllergenAndDiet(
                 14, AppConsts.Filters.WHEAT_FREE, "392^Wheat-Free", sp.getBoolean(AppConsts.SharedPrefs.WHEAT_FREE, false));
         allergiesList[8] = allergen;
 
@@ -269,11 +262,11 @@ public abstract class AppHelper {
 
 //-------------------------------------------------------------------------------------------------
 
-    public static ArrayList<AllergensAndDietPrefItem> getUserAllowedDietPrefsList(Context context) {
+    public static ArrayList<AllergenAndDiet> getUserAllowedDietPrefsList(Context context) {
 
-        ArrayList<AllergensAndDietPrefItem> allowedDietList = new ArrayList<>();
+        ArrayList<AllergenAndDiet> allowedDietList = new ArrayList<>();
 
-        AllergensAndDietPrefItem[] dietList = getAllDietList(context);
+        AllergenAndDiet[] dietList = getAllDietList(context);
 
         for (int i = 0; i < dietList.length; i++) {
 
@@ -287,11 +280,11 @@ public abstract class AppHelper {
 
 //-------------------------------------------------------------------------------------------------
 
-    public static ArrayList<AllergensAndDietPrefItem> getUserAllowedAllergiesPrefsList(Context context) {
+    public static ArrayList<AllergenAndDiet> getUserAllowedAllergiesPrefsList(Context context) {
 
-        ArrayList<AllergensAndDietPrefItem> allowedAllergiesList = new ArrayList<>();
+        ArrayList<AllergenAndDiet> allowedAllergiesList = new ArrayList<>();
 
-        AllergensAndDietPrefItem[] allergiesList = getAllAllergiesList(context);
+        AllergenAndDiet[] allergiesList = getAllAllergiesList(context);
 
         for (int i = 0; i < allergiesList.length; i++) {
 
@@ -328,4 +321,12 @@ public abstract class AppHelper {
         snack.show();
     }
 
+    public static void onApiErrorReceived(Throwable t, View mainView) {
+        Log.e("subscriber", "onError: message: " + t.getMessage() + ", cause: " + t.getCause());
+        if (t instanceof UnknownHostException || t instanceof ConnectException) {
+            showSnackBar(mainView, R.string.internet_error, Color.RED);
+        } else {
+            showSnackBar(mainView, R.string.unexpected_error, Color.RED);
+        }
+    }
 }

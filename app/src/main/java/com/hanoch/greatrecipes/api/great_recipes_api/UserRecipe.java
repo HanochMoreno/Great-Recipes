@@ -1,13 +1,13 @@
 package com.hanoch.greatrecipes.api.great_recipes_api;
 
 
-import com.hanoch.greatrecipes.api.GGGRecipe2;
+import com.hanoch.greatrecipes.api.GenericRecipe;
 
 /**
  * A recipe created by a user, as received from GreatRecipesApi.
  */
 
-public class UserRecipe extends GGGRecipe2{
+public class UserRecipe extends GenericRecipe {
 
     public String instructions;
     public String notes;

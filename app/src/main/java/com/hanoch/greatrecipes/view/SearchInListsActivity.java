@@ -23,7 +23,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.LinearLayout;
 import android.widget.ListView;
@@ -35,7 +34,6 @@ import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.api.GGGRecipe2;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
@@ -44,12 +42,8 @@ import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.control.ListFragmentListener;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
-import com.hanoch.greatrecipes.model.MyListFragment;
-import com.hanoch.greatrecipes.model.Recipe;
 import com.squareup.otto.Subscribe;
 
-import java.net.ConnectException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 public class SearchInListsActivity extends AppCompatActivity implements
@@ -1119,11 +1113,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
         } else {
             View mainView = findViewById(android.R.id.content);
-            if (event.t instanceof UnknownHostException || event.t instanceof ConnectException) {
-                AppHelper.showSnackBar(mainView, R.string.internet_error, Color.RED);
-            } else {
-                AppHelper.showSnackBar(mainView, R.string.unexpected_error, Color.RED);
-            }
+            AppHelper.onApiErrorReceived(event.t, mainView);
         }
     }
 

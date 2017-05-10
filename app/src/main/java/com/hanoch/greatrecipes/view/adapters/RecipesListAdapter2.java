@@ -13,7 +13,7 @@ import android.widget.TextView;
 
 import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.api.GGGRecipe2;
+import com.hanoch.greatrecipes.api.GenericRecipe;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 
 import java.util.ArrayList;
@@ -28,7 +28,7 @@ public class RecipesListAdapter2 extends BaseAdapter {
 
     int MAX_ITEMS = 500;
 
-    private ArrayList<GGGRecipe2> recipesList;
+    private ArrayList<GenericRecipe> recipesList;
     private ArrayList<String> checkedIds;
     private String selectedId;
     private HashMap<String, View> viewsMap = new HashMap<>();
@@ -51,7 +51,7 @@ public class RecipesListAdapter2 extends BaseAdapter {
 
 //----------------------------------------------------------------------------------------------
 
-    public RecipesListAdapter2(Context context, ArrayList<GGGRecipe2> recipesList,
+    public RecipesListAdapter2(Context context, ArrayList<GenericRecipe> recipesList,
                                ArrayList<String> checkedIds, String selectedId) {
 
         this.recipesList = recipesList;
@@ -93,7 +93,7 @@ public class RecipesListAdapter2 extends BaseAdapter {
     }
 
     @Override
-    public GGGRecipe2 getItem(int i) {
+    public GenericRecipe getItem(int i) {
         return recipesList.get(i);
     }
 
@@ -106,7 +106,7 @@ public class RecipesListAdapter2 extends BaseAdapter {
     public View getView(int i, View convertView, ViewGroup viewGroup) {
         View view = LayoutInflater.from(context).inflate(R.layout.listitem_recipes_list, viewGroup, false);
 
-        GGGRecipe2 recipe = getItem(i);
+        GenericRecipe recipe = getItem(i);
 
         String id = recipe._id;
         String title = recipe.recipeTitle;
@@ -151,9 +151,9 @@ public class RecipesListAdapter2 extends BaseAdapter {
 
 //----------------------------------------------------------------------------------------------
 
-    public void refreshList(ArrayList<GGGRecipe2> newRecipesList) {
+    public void refreshList(ArrayList<GenericRecipe> newRecipesList) {
         recipesList = new ArrayList<>(newRecipesList);
-        Collections.sort(newRecipesList, GGGRecipe2.TITLE_COMPARATOR);
+        Collections.sort(newRecipesList, GenericRecipe.TITLE_COMPARATOR);
         notifyDataSetChanged();
     }
 

@@ -1,10 +1,8 @@
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorListContainerBackground"
-    android:orientation="vertical"
-    tools:context=".MainActivity">
+    android:orientation="vertical">
 
     <include
         android:id="@+id/toolbar"
@@ -26,91 +24,91 @@
             android:measureWithLargestChild="false">
 
             <LinearLayout
+                android:id="@+id/layout_settings"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:measureWithLargestChild="false"
                 android:orientation="vertical"
-                android:id="@+id/layout_settings"
                 android:padding="@dimen/padding_menu_item">
 
                 <ImageView
+                    android:id="@+id/imageView_settings"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_gravity="center"
                     android:layout_weight="1"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/btn_settings"
-                    android:id="@+id/imageView_settings" />
+                    android:src="@drawable/btn_settings" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="center|top"
+                    android:minLines="2"
+                    android:paddingTop="@dimen/padding_menu_item_text_top"
                     android:text="@string/settings"
                     android:textColor="@color/colorTextPrimary"
-                    android:textSize="@dimen/text_size_menu_item"
-                    android:minLines="2"
-                    android:paddingTop="@dimen/padding_menu_item_text_top" />
+                    android:textSize="@dimen/text_size_menu_item" />
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/layout_addRecipeManually"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:id="@+id/layout_addRecipeManually"
                 android:padding="@dimen/padding_menu_item">
 
                 <ImageView
+                    android:id="@+id/imageView_addOwnRecipe"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_gravity="center"
                     android:layout_weight="1"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/btn_add_manually"
-                    android:id="@+id/imageView_addOwnRecipe" />
+                    android:src="@drawable/btn_add_manually" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="center|top"
+                    android:minLines="2"
+                    android:paddingTop="@dimen/padding_menu_item_text_top"
                     android:text="@string/add_your_own_recipe"
                     android:textColor="@color/colorTextPrimary"
-                    android:textSize="@dimen/text_size_menu_item"
-                    android:minLines="2"
-                    android:paddingTop="@dimen/padding_menu_item_text_top" />
+                    android:textSize="@dimen/text_size_menu_item" />
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/layout_onlineSearch"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:id="@+id/layout_onlineSearch"
                 android:padding="@dimen/padding_menu_item">
 
                 <ImageView
+                    android:id="@+id/imageView_onlineSearch"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_gravity="center"
                     android:layout_weight="1"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/btn_online_search"
-                    android:id="@+id/imageView_onlineSearch" />
+                    android:src="@drawable/btn_online_search" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="center|top"
+                    android:minLines="2"
+                    android:paddingTop="@dimen/padding_menu_item_text_top"
                     android:text="@string/search_recipe_online"
                     android:textColor="@color/colorTextPrimary"
-                    android:textSize="@dimen/text_size_menu_item"
-                    android:minLines="2"
-                    android:paddingTop="@dimen/padding_menu_item_text_top" />
+                    android:textSize="@dimen/text_size_menu_item" />
 
             </LinearLayout>
         </TableRow>
@@ -123,91 +121,91 @@
             android:measureWithLargestChild="false">
 
             <LinearLayout
+                android:id="@+id/layout_mealPlanner"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:id="@+id/layout_mealPlanner"
                 android:padding="@dimen/padding_menu_item">
 
                 <ImageView
+                    android:id="@+id/imageView_mealPlanner"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_gravity="center"
                     android:layout_weight="1"
-                    android:src="@drawable/btn_plan_meal"
                     android:scaleType="fitCenter"
-                    android:id="@+id/imageView_mealPlanner" />
+                    android:src="@drawable/btn_plan_meal" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="center|top"
+                    android:minLines="2"
+                    android:paddingTop="@dimen/padding_menu_item_text_top"
                     android:text="@string/meal_planner"
                     android:textColor="@color/colorTextPrimary"
-                    android:textSize="@dimen/text_size_menu_item"
-                    android:minLines="2"
-                    android:paddingTop="@dimen/padding_menu_item_text_top" />
+                    android:textSize="@dimen/text_size_menu_item" />
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/layout_myRecipesLists"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:id="@+id/layout_myRecipesLists"
                 android:padding="@dimen/padding_menu_item">
 
                 <ImageView
+                    android:id="@+id/imageView_recipesLists"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_gravity="center"
                     android:layout_weight="1"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/btn_lists"
-                    android:id="@+id/imageView_recipesLists" />
+                    android:src="@drawable/btn_lists" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="center|top"
+                    android:minLines="2"
+                    android:paddingTop="@dimen/padding_menu_item_text_top"
                     android:text="@string/my_recipes_lists"
                     android:textColor="@color/colorTextPrimary"
-                    android:textSize="@dimen/text_size_menu_item"
-                    android:minLines="2"
-                    android:paddingTop="@dimen/padding_menu_item_text_top" />
+                    android:textSize="@dimen/text_size_menu_item" />
 
             </LinearLayout>
 
             <LinearLayout
+                android:id="@+id/layout_login"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:id="@+id/layout_login"
                 android:padding="@dimen/padding_menu_item">
 
                 <ImageView
+                    android:id="@+id/imageView_login"
                     android:layout_width="match_parent"
                     android:layout_height="0dp"
                     android:layout_gravity="center"
                     android:layout_weight="1"
                     android:scaleType="fitCenter"
-                    android:src="@drawable/btn_login"
-                    android:id="@+id/imageView_login" />
+                    android:src="@drawable/btn_login" />
 
                 <TextView
                     android:layout_width="wrap_content"
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="center|top"
+                    android:minLines="2"
+                    android:paddingTop="@dimen/padding_menu_item_text_top"
                     android:text="@string/login"
                     android:textColor="@color/colorTextPrimary"
-                    android:textSize="@dimen/text_size_menu_item"
-                    android:minLines="2"
-                    android:paddingTop="@dimen/padding_menu_item_text_top" />
+                    android:textSize="@dimen/text_size_menu_item" />
             </LinearLayout>
         </TableRow>
 

@@ -46,15 +46,13 @@ import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
-import com.hanoch.greatrecipes.model.AllergensAndDietPrefItem;
+import com.hanoch.greatrecipes.model.AllergenAndDiet;
 import com.hanoch.greatrecipes.model.ObjectDrawerItem;
 import com.hanoch.greatrecipes.utilities.MyFonts;
 import com.hanoch.greatrecipes.view.adapters.DrawerItemAdapter;
 import com.hanoch.greatrecipes.view.adapters.DrawerItemAdapterLimited;
 import com.squareup.otto.Subscribe;
 
-import java.net.ConnectException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 
 import rx.Subscriber;
@@ -132,8 +130,8 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         extra_serving = prevIntent.getStringExtra(AppConsts.Extras.EXTRA_SERVING);
 
         drawerCheckedItemsPositionList = new ArrayList<String>();
-        ArrayList<AllergensAndDietPrefItem> allowedDietPrefsList = AppHelper.getUserAllowedDietPrefsList(this);
-        ArrayList<AllergensAndDietPrefItem> allowedAllergiesPrefsList = AppHelper.getUserAllowedAllergiesPrefsList(this);
+        ArrayList<AllergenAndDiet> allowedDietPrefsList = AppHelper.getUserAllowedDietPrefsList(this);
+        ArrayList<AllergenAndDiet> allowedAllergiesPrefsList = AppHelper.getUserAllowedAllergiesPrefsList(this);
 
         for (int i = 0; i < allowedDietPrefsList.size(); i++) {
 
@@ -786,7 +784,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 break;
         }
 
-        editor.commit();
+        editor.apply();
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -853,16 +851,10 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         } else {
             ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
             toolbarButtonsList.add(AppConsts.ToolbarButtons.REFRESH);
-            int errorResId;
-            if (event.t instanceof UnknownHostException || event.t instanceof ConnectException) {
-                errorResId = R.string.internet_error;
-            } else {
-                errorResId = R.string.unexpected_error;
-            }
+            setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.PRIMARY, getString(R.string.unexpected_error));
 
             View rootView = findViewById(android.R.id.content);
-            AppHelper.showSnackBar(rootView, errorResId, Color.RED);
-            setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.PRIMARY, getString(errorResId));
+            AppHelper.onApiErrorReceived(event.t, rootView);
         }
     }
 
@@ -912,15 +904,8 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 finish();
             }
         } else {
-            int errorResId;
-            if (event.t instanceof UnknownHostException || event.t instanceof ConnectException) {
-                errorResId = R.string.internet_error;
-            } else {
-                errorResId = R.string.unexpected_error;
-            }
-
             View rootView = findViewById(android.R.id.content);
-            AppHelper.showSnackBar(rootView, errorResId, Color.RED);
+            AppHelper.onApiErrorReceived(event.t, rootView);
         }
     }
 

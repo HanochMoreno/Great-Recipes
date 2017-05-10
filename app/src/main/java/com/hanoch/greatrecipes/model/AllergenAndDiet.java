@@ -1,18 +1,18 @@
 package com.hanoch.greatrecipes.model;
 
 
-public class AllergensAndDietPrefItem {
+public class AllergenAndDiet {
 
     public int positionInDrawer;
-    public String displayedName;
+    public String displayName;
     public String searchKeyName;
     public Boolean isChosen;
 
-    public AllergensAndDietPrefItem(int positionInDrawer, String displayedName,
-                                    String searchKeyName, Boolean isChosen) {
+    public AllergenAndDiet(int positionInDrawer, String displayName,
+                           String searchKeyName, Boolean isChosen) {
 
         this.positionInDrawer = positionInDrawer;
-        this.displayedName = displayedName;
+        this.displayName = displayName;
         this.searchKeyName = searchKeyName;
         this.isChosen = isChosen;
     }

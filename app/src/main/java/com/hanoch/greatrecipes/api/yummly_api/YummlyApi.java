@@ -15,7 +15,7 @@ import rx.Single;
 public interface YummlyApi {
 
     @GET(AppConsts.ApiAccess.YUMMLY_KEY_SEARCH)
-    Single<SearchResultsResponse> getSearchResults(
+    Single<YummlySearchResultsResponse> getSearchResults(
             @QueryMap Map<String, String> queries,
             @Query("allowedDiet[]") List<String> dietItems,
             @Query("allowedAllergy[]") List<String> allergensItems);

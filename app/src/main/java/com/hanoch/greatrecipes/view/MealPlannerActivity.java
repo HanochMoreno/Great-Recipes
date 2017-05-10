@@ -8,7 +8,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -40,21 +39,17 @@ import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.bus.BusConsts;
-import com.hanoch.greatrecipes.bus.OnUpdateServingsListCompletedEvent;
+import com.hanoch.greatrecipes.bus.OnUpdateServingsListEvent;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
-import com.hanoch.greatrecipes.model.Serving2;
+import com.hanoch.greatrecipes.model.Serving;
 import com.hanoch.greatrecipes.model.ServingType;
 import com.hanoch.greatrecipes.utilities.MyFonts;
 import com.hanoch.greatrecipes.view.adapters.ServingTypesAdapter;
 import com.squareup.otto.Subscribe;
 
-import java.net.ConnectException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
 
 public class MealPlannerActivity extends AppCompatActivity implements
         ServingsListFragment2.FragmentServingsListListener,
@@ -82,7 +77,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
     private ArrayList<String> selectedItemsId;
 
     private int listSize;
-    private Serving2 mServing;
+    private Serving mServing;
     private String servingType;
 
     private ArrayList<ServingType> servingTypesList = new ArrayList<>();;
@@ -176,7 +171,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         selectedItemsId = savedInstanceState.getStringArrayList("selectedItemsId");
         servingType = savedInstanceState.getString("servingType");
-        mServing = new Gson().fromJson(savedInstanceState.getString("servingAsJson"), Serving2.class);
+        mServing = new Gson().fromJson(savedInstanceState.getString("servingAsJson"), Serving.class);
 
         listSize = savedInstanceState.getInt("listSize");
     }
@@ -193,7 +188,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
         }
 
         if (mServing != null) {
-            outState.putString("servingAsJson", new Gson().toJson(mServing, Serving2.class));
+            outState.putString("servingAsJson", new Gson().toJson(mServing, Serving.class));
         }
 
         outState.putStringArrayList("selectedItemsId", selectedItemsId);
@@ -253,7 +248,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void showRecipeDetails(Serving2 serving) {
+    public void showRecipeDetails(Serving serving) {
 
         FragmentManager fm = getSupportFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
@@ -299,7 +294,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onServingChecked(Serving2 serving, boolean isChecked) {
+    public void onServingChecked(Serving serving, boolean isChecked) {
 
         if (isChecked) {
             selectedItemsId.add(serving.servingId);
@@ -634,13 +629,13 @@ public class MealPlannerActivity extends AppCompatActivity implements
             String recipeId = data.getStringExtra(AppConsts.Extras.EXTRA_RECIPE_ID);
             boolean isUserRecipe = data.getBooleanExtra(AppConsts.Extras.EXTRA_IS_USER_RECIPE, false);
 
-            Serving2 serving = new Serving2();
+            Serving serving = new Serving();
             serving.recipeId = recipeId;
             serving.isUserRecipe = isUserRecipe;
             serving.servingId = String.valueOf(System.currentTimeMillis());
             serving.servingType = servingType;
 
-            ArrayList<Serving2> servingsList = new ArrayList<>();
+            ArrayList<Serving> servingsList = new ArrayList<>();
             servingsList.add(serving);
             dbManager.updateUserServingsMap(servingsList, BusConsts.ACTION_ADD_NEW);
         }
@@ -649,7 +644,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
-    public void onEvent(OnUpdateServingsListCompletedEvent event) {
+    public void onEvent(OnUpdateServingsListEvent event) {
         if (event.isSuccess) {
             FragmentManager fm = getSupportFragmentManager();
             ServingsListFragment2 servingsListFragment = (ServingsListFragment2) fm.findFragmentByTag(AppConsts.Fragments.SERVINGS_LIST);
@@ -706,11 +701,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
             }
         } else {
             View mainView = findViewById(android.R.id.content);
-            if (event.t instanceof UnknownHostException || event.t instanceof ConnectException) {
-                AppHelper.showSnackBar(mainView, R.string.internet_error, Color.RED);
-            } else {
-                AppHelper.showSnackBar(mainView, R.string.unexpected_error, Color.RED);
-            }
+            AppHelper.onApiErrorReceived(event.t, mainView);
         }
     }
 
@@ -755,7 +746,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
         button_yes.setOnClickListener(v -> {
 
-            ArrayList<Serving2> servingsList = new ArrayList<>(appStateManager.user.servings.values());
+            ArrayList<Serving> servingsList = new ArrayList<>(appStateManager.user.servings.values());
             servingsList.stream()
                     .filter(serving -> !selectedItemsId.contains(serving.servingId))
                     .forEach(servingsList::remove);

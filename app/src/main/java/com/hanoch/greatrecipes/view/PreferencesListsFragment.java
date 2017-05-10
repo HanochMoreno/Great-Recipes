@@ -16,9 +16,13 @@ import android.widget.Toast;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
-import com.hanoch.greatrecipes.GreatRecipesApplication;
 import com.hanoch.greatrecipes.R;
+import com.hanoch.greatrecipes.bus.BusConsts;
+import com.hanoch.greatrecipes.bus.MyBus;
+import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
+import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.model.FreeTrialPreference;
+import com.squareup.otto.Subscribe;
 
 public class PreferencesListsFragment extends PreferenceFragment implements
         Preference.OnPreferenceClickListener,
@@ -27,10 +31,15 @@ public class PreferencesListsFragment extends PreferenceFragment implements
     private Preference maxOnlineSearchResults;
     private View view;
     private boolean premium;
+    private MyBus bus;
+
+//-------------------------------------------------------------------------------------------------
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+
+        bus = MyBus.getInstance();
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
         premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
@@ -40,6 +49,8 @@ public class PreferencesListsFragment extends PreferenceFragment implements
         else
             addPreferencesFromResource(R.xml.prefs_lists_free_trial);
     }
+
+//-------------------------------------------------------------------------------------------------
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -67,8 +78,24 @@ public class PreferencesListsFragment extends PreferenceFragment implements
 
             maxOnlineSearchResults.setOnPreferenceClickListener(this);
         }
+    }
 
+//-------------------------------------------------------------------------------------------------
 
+    @Override
+    public void onStart() {
+        super.onStart();
+
+        bus.register(this);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Override
+    public void onStop() {
+        super.onStop();
+
+        bus.unregister(this);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -117,13 +144,10 @@ public class PreferencesListsFragment extends PreferenceFragment implements
         AppHelper.vibrate(getActivity());
 
         final Dialog dialog = new Dialog(getActivity());
-
-        // hide to default title for Dialog
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
         LayoutInflater inflater = LayoutInflater.from(getActivity());
 
-        // inflate the layout dialog_layout.xml and set it as contentView
         View dialogView = inflater.inflate(R.layout.dialog_warning, null, false);
 
         dialog.setCancelable(false);
@@ -144,8 +168,7 @@ public class PreferencesListsFragment extends PreferenceFragment implements
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
         button_yes.setOnClickListener(v -> {
 
-            ((GreatRecipesApplication) getActivity().getApplication()).getDbManager().deleteAllRecipes();
-            AppHelper.showSnackBar(view, R.string.all_the_recipe_were_deleted, ContextCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
+            GreatRecipesDbManager.getInstance().clearAllLists(BusConsts.ACTION_DELETE);
             dialog.dismiss();
         });
 
@@ -158,5 +181,18 @@ public class PreferencesListsFragment extends PreferenceFragment implements
         });
 
         dialog.show();
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
+    public void onEvent(OnUpdateUserRecipesEvent event) {
+        if (event.isSuccess) {
+            if (event.action == BusConsts.ACTION_DELETE) {
+                AppHelper.showSnackBar(view, R.string.all_the_recipe_were_deleted, ContextCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
+            }
+        } else {
+            AppHelper.onApiErrorReceived(event.t, view);
+        }
     }
 }

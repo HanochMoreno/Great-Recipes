@@ -17,7 +17,6 @@ import android.widget.TextView;
 
 import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
-import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.R;
 
 import java.util.ArrayList;

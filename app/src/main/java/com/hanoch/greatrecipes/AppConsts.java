@@ -34,9 +34,28 @@ public class AppConsts {
 
     public class Actions {
 
+        public static final String ACTION_REGISTER = "ACTION_REGISTER";
+        public static final String ACTION_LOGIN = "ACTION_LOGIN";
+
         public static final String ACTION_ADD_NEW = "action_addNew";
         public static final String ACTION_EDIT = "action_edit";
         public static final String ACTION_REVIEW = "action_review";
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public class Regex {
+
+        public static final String EMAIL_PATTERN =
+                "^[_A-Za-z0-9-\\+]+(\\.[_A-Za-z0-9-]+)*@"
+                        + "[A-Za-z0-9-]+(\\.[A-Za-z0-9]+)*(\\.[A-Za-z]{2,})$";
+
+        public static final String USERNAME_PATTERN =
+                "abcdefghijklmnopqrstuvwxyz. _ABCDEFGHIJKLMNOPQRSTUVWXYZ-1234567890";
+
+        public static final String PASSWORD_PATTERN =
+                "abcdefghijklmnopqrstuvwxyz.!_ABCDEFGHIJKLMNOPQRSTUVWXYZ-1234567890";
+
     }
 
 //-------------------------------------------------------------------------------------------------

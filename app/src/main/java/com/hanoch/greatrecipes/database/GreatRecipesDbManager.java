@@ -3,23 +3,29 @@ package com.hanoch.greatrecipes.database;
 
 import android.content.Context;
 import android.graphics.Bitmap;
+import android.graphics.Color;
 
 import com.hanoch.greatrecipes.AppConsts;
+import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
+import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
+import com.hanoch.greatrecipes.api.yummly_api.YummlySearchResultsResponse;
 import com.hanoch.greatrecipes.api.yummly_api.YummlyRecipeResponse2;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnDownloadUserRecipeCompletedEvent;
+import com.hanoch.greatrecipes.bus.OnGotYummlySearchResultsEvent;
 import com.hanoch.greatrecipes.bus.OnYummlyRecipeDownloadedEvent;
 import com.hanoch.greatrecipes.bus.OnLoginEvent;
 import com.hanoch.greatrecipes.bus.OnRegisterEvent;
-import com.hanoch.greatrecipes.bus.OnUpdateServingsListCompletedEvent;
+import com.hanoch.greatrecipes.bus.OnUpdateServingsListEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
+import com.hanoch.greatrecipes.model.AllergenAndDiet;
 import com.hanoch.greatrecipes.model.ApiProvider;
-import com.hanoch.greatrecipes.model.Serving2;
+import com.hanoch.greatrecipes.model.Serving;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 
 import java.io.File;
@@ -27,6 +33,7 @@ import java.io.UnsupportedEncodingException;
 import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 import rx.Single;
 import rx.Subscriber;
@@ -123,7 +130,7 @@ public class GreatRecipesDbManager {
     /**
      * Update the user servingsList to database
      */
-    public void updateUserServingsMap(ArrayList<Serving2> servingsList, int action) {
+    public void updateUserServingsMap(ArrayList<Serving> servingsList, int action) {
         MyBus bus = MyBus.getInstance();
         User currentUser = AppStateManager.getInstance().user;
 
@@ -134,26 +141,26 @@ public class GreatRecipesDbManager {
 
             @Override
             public void onError(Throwable t) {
-                bus.post(new OnUpdateServingsListCompletedEvent(action, false, null, t));
+                bus.post(new OnUpdateServingsListEvent(action, false, null, t));
             }
 
             @Override
             public void onNext(User user) {
                 AppStateManager.getInstance().user = user;
-                bus.post(new OnUpdateServingsListCompletedEvent(action, true, user.servings, null));
+                bus.post(new OnUpdateServingsListEvent(action, true, user.servings, null));
             }
         };
 
-        HashMap<String, Serving2> currentServings = new HashMap<>(currentUser.servings);
+        HashMap<String, Serving> currentServings = new HashMap<>(currentUser.servings);
         switch (action) {
             case BusConsts.ACTION_ADD_NEW:
-                for (Serving2 serving : servingsList) {
+                for (Serving serving : servingsList) {
                     currentServings.put(serving.servingId, serving);
                 }
                 break;
 
             case BusConsts.ACTION_DELETE:
-                for (Serving2 serving : servingsList) {
+                for (Serving serving : servingsList) {
                     currentServings.remove(serving.servingId);
                 }
                 break;
@@ -247,6 +254,75 @@ public class GreatRecipesDbManager {
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(subscriber);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    /**
+     * http://api.yummly.com/v1/api/recipes?q=chicken&start=0&maxResult=10&_app_id=418b707a&_app_key=249ec501a990bd7d5fa5dd5218bf7e14
+     */
+    public void performSearchRecipesFromYummlyApi(Context context, String keyToSearch) {
+        MyBus bus = MyBus.getInstance();
+
+        User user = AppStateManager.getInstance().user;
+
+        // Getting the user Diet & Allergies preferences:
+        ArrayList<AllergenAndDiet> userDietList = user.dietList;
+        ArrayList<AllergenAndDiet> userAllergiesList = user.allergensList;
+
+        try {
+            HashMap<String, String> query = new HashMap<>();
+            query.put("q", URLEncoder.encode(keyToSearch, "utf-8"));
+            query.put("start", URLEncoder.encode("0", "utf-8"));
+            query.put("maxResult", URLEncoder.encode(String.valueOf(user.maxOnlineSearchResults), "utf-8"));
+            query.put("_app_id", URLEncoder.encode(AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL, "utf-8"));
+            query.put("_app_key", URLEncoder.encode(AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL, "utf-8"));
+
+            List<String> encodedDietList = new ArrayList<>();
+            for (AllergenAndDiet dietItem : userDietList) {
+                encodedDietList.add(URLEncoder.encode(dietItem.searchKeyName, "utf-8"));
+            }
+
+            List<String> encodedAllergensList = new ArrayList<>();
+            for (AllergenAndDiet allergenItem : userAllergiesList) {
+                encodedAllergensList.add(URLEncoder.encode(allergenItem.searchKeyName, "utf-8"));
+            }
+
+            Subscriber<YummlySearchResultsResponse> subscriber = new Subscriber<YummlySearchResultsResponse>() {
+                @Override
+                public final void onCompleted() {
+                }
+
+                @Override
+                public final void onError(Throwable t) {
+                    bus.post(new OnGotYummlySearchResultsEvent(false, null, t));
+                }
+
+                @Override
+                public final void onNext(YummlySearchResultsResponse response) {
+
+                    SqLiteDbManager sqliteManager = new SqLiteDbManager(context);
+
+                    // Deleting old search results
+                    sqliteManager.deleteAllSearchResults();
+
+                    // Adding the new search results
+                    sqliteManager.addSearchResults(response.matches);
+
+                    bus.post(new OnGotYummlySearchResultsEvent(true, response.matches, null));
+                }
+            };
+
+            Single<YummlySearchResultsResponse> getSearchResults = ApiProvider.getYummlyApi().getSearchResults(query, encodedDietList, encodedAllergensList);
+            getSearchResults
+                    .subscribeOn(Schedulers.io())
+                    .observeOn(AndroidSchedulers.mainThread())
+                    .subscribe(subscriber);
+
+        } catch (UnsupportedEncodingException e) {
+            bus.post(new OnGotYummlySearchResultsEvent(false, null, null));
+            e.printStackTrace();
+        }
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -377,6 +453,7 @@ public class GreatRecipesDbManager {
             tempEncoded = URLEncoder.encode(resultYummlyId, "utf-8");
         } catch (UnsupportedEncodingException e) {
         }
+
         final String encoded = tempEncoded;
 
         Subscriber<YummlyRecipe> subscriber = new Subscriber<YummlyRecipe>() {
@@ -618,6 +695,47 @@ public class GreatRecipesDbManager {
 
                 break;
         }
+
+        Single<User> updateUser =
+                ApiProvider.getGreatRecipesApi().updateUser(user);
+
+        updateUser
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    /**
+     * Clear all the user's recipes lists
+     */
+    public void clearAllLists(int action) {
+        MyBus bus = MyBus.getInstance();
+
+        User user = new User();
+        user._id = AppStateManager.getInstance().user._id;
+        user.servings = new HashMap<>();
+        user.userRecipes = new HashMap<>();
+        user.yummlyRecipes = new HashMap<>();
+        user.favouriteRecipesIds = new ArrayList<>();
+
+        Subscriber<User> subscriber = new Subscriber<User>() {
+            @Override
+            public void onCompleted() {
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                bus.post(new OnUpdateUserRecipesEvent(action, false, null, t));
+            }
+
+            @Override
+            public void onNext(User user) {
+                AppStateManager.getInstance().user = user;
+                bus.post(new OnUpdateUserRecipesEvent(action, true, user, null));
+            }
+        };
 
         Single<User> updateUser =
                 ApiProvider.getGreatRecipesApi().updateUser(user);

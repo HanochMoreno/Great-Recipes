@@ -209,5 +209,16 @@
     <string name="retype_password">הקש סיסמא בשנית</string>
     <string name="username">שם משתמש</string>
     <string name="added_to_your_list">המתכון הוסף בהצלחה לרשימות המתכונים שלך</string>
+    <string name="already_have_an_account">כבר רשום?</string>
+    <string name="open_account_for_free">לפתיחת חשבון בחינם</string>
+    <string name="click_here">לחץ כאן</string>
+    <string name="want_to_test_the_app_before">רוצה לנסות את האפליקציה קודם?</string>
+    <string name="continue_">המשך</string>
+    <string name="sign_in">הכנס</string>
+    <string name="register">הרשמה</string>
+    <string name="invalid_email">כתובת מייל לא חוקית</string>
+    <string name="invalid_password">סיסמא לא חוקית</string>
+    <string name="invalid_username">שם משתמש לא חוקי</string>
+    <string name="passwords_are_not_identical">הסיסמאות אינן תואמות</string>
 
 </resources>

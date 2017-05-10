@@ -22,7 +22,7 @@
 //import com.hanoch.greatrecipes.R;
 //import com.hanoch.greatrecipes.control.ListFragmentListener;
 //import com.hanoch.greatrecipes.database.RecipesContract;
-//import com.hanoch.greatrecipes.model.MyListFragment;
+//import com.hanoch.greatrecipes.view.MyListFragment;
 //import com.hanoch.greatrecipes.view.adapters.ServingsCursorAdapter;
 //
 //import java.util.ArrayList;

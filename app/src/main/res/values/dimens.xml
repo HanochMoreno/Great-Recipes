@@ -31,6 +31,7 @@
     <dimen name="text_size_fragment_recipe_review_card_title">20sp</dimen>
     <dimen name="text_size_fragment_recipe_review_card_content">17sp</dimen>
     <dimen name="text_size_splash_app_name">40sp</dimen>
+    <dimen name="text_size_login">15sp</dimen>
 
     <!-- Sizes -->
     <dimen name="height_card_category">120dp</dimen>
@@ -43,11 +44,14 @@
     <dimen name="height_fragment_recipe_review_card_title_icon">40dp</dimen>
     <dimen name="height_bubble">80dp</dimen>
     <dimen name="width_bubble">170dp</dimen>
+    <dimen name="width_login_edit_text">300dp</dimen>
     <dimen name="min_width_dialog">220dp</dimen>
     <dimen name="height_dialog_title">48dp</dimen>
     <dimen name="height_dialog_favourites_add_to_fav_icon">25dp</dimen>
     <dimen name="height_dialog_serving_radio_button">100dp</dimen>
     <dimen name="height_button">48dp</dimen>
+    <dimen name="height_login_edit_text">25dp</dimen>
+    <dimen name="size_login_image">48dp</dimen>
 
     <!-- Padding -->
     <dimen name="padding_bottom_top_list_item_premium_limitation_text">2dp</dimen>
@@ -62,6 +66,8 @@
     <dimen name="padding_splash_app_logo">10dp</dimen>
     <dimen name="padding_splash_progress_bar_sides">10dp</dimen>
     <dimen name="padding_fragment_recipe_review_cards_part_sides">5dp</dimen>
+    <dimen name="padding_bottom_and_top_login_edit_text">3dp</dimen>
+    <dimen name="padding_left_and_right_login_edit_text">10dp</dimen>
 
     <!-- Margins -->
     <dimen name="margin_end_bubble">30dp</dimen>
@@ -72,5 +78,6 @@
     <dimen name="margin_bottom_splash_app_logo">10dp</dimen>
     <dimen name="margin_floating_button">20dp</dimen>
     <dimen name="margin_card_category_chooser">1dp</dimen>
+    <dimen name="margin_edit_text_register">10dp</dimen>
 
 </resources>

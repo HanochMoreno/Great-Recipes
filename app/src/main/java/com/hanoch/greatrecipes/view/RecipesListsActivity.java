@@ -9,7 +9,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
-import android.graphics.Color;
 import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
@@ -46,13 +45,10 @@ import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.bus.MyBus;
-import com.hanoch.greatrecipes.model.MyListFragment;
 import com.hanoch.greatrecipes.bus.OnTabChangedEvent;
 import com.hanoch.greatrecipes.utilities.MyFonts;
 import com.squareup.otto.Subscribe;
 
-import java.net.ConnectException;
-import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -1387,11 +1383,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
         } else {
             View mainView = findViewById(android.R.id.content);
-            if (event.t instanceof UnknownHostException || event.t instanceof ConnectException) {
-                AppHelper.showSnackBar(mainView, R.string.internet_error, Color.RED);
-            } else {
-                AppHelper.showSnackBar(mainView, R.string.unexpected_error, Color.RED);
-            }
+            AppHelper.onApiErrorReceived(event.t, mainView);
         }
     }
 

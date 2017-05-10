@@ -12,11 +12,11 @@ import android.widget.TextView;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.api.GGGRecipe2;
+import com.hanoch.greatrecipes.api.GenericRecipe;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 import com.hanoch.greatrecipes.model.ApiProvider;
-import com.hanoch.greatrecipes.model.Serving2;
+import com.hanoch.greatrecipes.model.Serving;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 
 import java.io.UnsupportedEncodingException;
@@ -37,7 +37,7 @@ public class ServingsListAdapter extends BaseAdapter {
 
     final int MAX_ITEMS = 100;
 
-    private ArrayList<Serving2> servingsList;
+    private ArrayList<Serving> servingsList;
     private Context context;
     private AppStateManager appStateManager;
 
@@ -63,7 +63,7 @@ public class ServingsListAdapter extends BaseAdapter {
     public ServingsListAdapter(Context context, ArrayList<String> selectedIds) {
 
         appStateManager = AppStateManager.getInstance();
-        servingsList = new ArrayList<>(appStateManager.user.servingsList);
+        servingsList = new ArrayList<>(appStateManager.user.servings.values());
         this.context = context;
         this.selectedIds = selectedIds;
     }
@@ -100,7 +100,7 @@ public class ServingsListAdapter extends BaseAdapter {
     }
 
     @Override
-    public Serving2 getItem(int i) {
+    public Serving getItem(int i) {
         return servingsList.get(i);
     }
 
@@ -115,7 +115,7 @@ public class ServingsListAdapter extends BaseAdapter {
     public View getView(int i, View convertedView, ViewGroup viewGroup) {
         View view = LayoutInflater.from(context).inflate(R.layout.listitem_serving, viewGroup, false);
 
-        Serving2 serving = getItem(i);
+        Serving serving = getItem(i);
 
         ViewHolder holder = new ViewHolder();
 
@@ -127,18 +127,17 @@ public class ServingsListAdapter extends BaseAdapter {
         holder.iv_checked = (ImageView) view.findViewById(R.id.imageView_checkedIcon);
         holder.tv_noImageAvailable = (TextView) view.findViewById(R.id.textView_noImageAvailable);
 
-        UserRecipesResponse userRecipes = appStateManager.userRecipes;
-        GGGRecipe2 recipe;
+        GenericRecipe recipe;
 
         if (serving.isUserRecipe) {
-            recipe = userRecipes.userRecipesMap.get(serving.recipeId);
+            recipe = appStateManager.user.userRecipes.get(serving.recipeId);
             if (recipe == null) {
                 getUserRecipeFromGreatRecipesApi(holder, serving);
             } else {
                 onRecipeDataReceived(holder, serving, recipe);
             }
         } else {
-            recipe = userRecipes.yummlyRecipesMap.get(serving.recipeId);
+            recipe = appStateManager.user.yummlyRecipes.get(serving.recipeId);
             if (recipe == null) {
                 getYummlyRecipeFromGreatRecipesApi(holder, serving);
             } else {
@@ -176,7 +175,7 @@ public class ServingsListAdapter extends BaseAdapter {
 
 //-------------------------------------------------------------------------------------------------
 
-    public void getUserRecipeFromGreatRecipesApi(ViewHolder holder, Serving2 serving) {
+    public void getUserRecipeFromGreatRecipesApi(ViewHolder holder, Serving serving) {
 
         String encoded = serving.recipeId;
         try {
@@ -197,7 +196,7 @@ public class ServingsListAdapter extends BaseAdapter {
 
 //-------------------------------------------------------------------------------------------------
 
-    public void getYummlyRecipeFromGreatRecipesApi(ViewHolder holder, Serving2 serving) {
+    public void getYummlyRecipeFromGreatRecipesApi(ViewHolder holder, Serving serving) {
 
         String encoded = serving.recipeId;
         try {
@@ -218,7 +217,7 @@ public class ServingsListAdapter extends BaseAdapter {
 
 //-------------------------------------------------------------------------------------------------
 
-    private void onRecipeDataReceived(ViewHolder holder, Serving2 serving, GGGRecipe2 recipe){
+    private void onRecipeDataReceived(ViewHolder holder, Serving serving, GenericRecipe recipe){
         if (holder.servingId.equals(serving.servingId)) {
             holder.tv_recipeTitle.setText(recipe.recipeTitle);
             String translatedServingTypeName = AppHelper.getTranslatedServingTypeName(context, serving.servingType);
@@ -244,7 +243,7 @@ public class ServingsListAdapter extends BaseAdapter {
 //-------------------------------------------------------------------------------------------------
 
     public void refreshAdapter(){
-        servingsList = new ArrayList<>(appStateManager.user.servingsList);
+        servingsList = new ArrayList<>(appStateManager.user.servings.values());
         notifyDataSetChanged();
     }
 }

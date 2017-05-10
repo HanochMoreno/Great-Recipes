@@ -4,6 +4,9 @@
     <dimen name="height_fragment_recipe_review_card_title">60dp</dimen>
     <dimen name="height_fragment_recipe_review_card_title_icon">50dp</dimen>
     <dimen name="height_list_item_recipe">120dp</dimen>
+    <dimen name="height_login_edit_text">40dp</dimen>
+    <dimen name="width_login_edit_text">500dp</dimen>
+    <dimen name="size_login_image">70dp</dimen>
 
     <dimen name="padding_menu">30dp</dimen>
     <dimen name="padding_menu_item">20dp</dimen>
@@ -13,6 +16,7 @@
     <dimen name="padding_splash_progress_bar_sides">20dp</dimen>
     <dimen name="padding_bottom_top_list_item_premium_limitation_text">0dp</dimen>
     <dimen name="padding_fragment_recipe_review_cards_part_sides">10dp</dimen>
+    <dimen name="margin_edit_text_register">20dp</dimen>
 
     <dimen name="text_size_menu_item">25sp</dimen>
     <dimen name="text_size_splash_app_name">50sp</dimen>
@@ -22,5 +26,6 @@
     <dimen name="text_size_fragment_recipe_review_recipe_title">25sp</dimen>
     <dimen name="text_size_list_item_simple_text_view">20sp</dimen>
     <dimen name="text_size_list_item_recipe_name">25sp</dimen>
+    <dimen name="text_size_login">25sp</dimen>
 
 </resources>

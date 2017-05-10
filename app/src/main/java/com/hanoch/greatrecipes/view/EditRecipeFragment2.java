@@ -99,7 +99,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
     private ProgressDialog progressDialog;
     private GreatRecipesDbManager dbManager;
     private AppStateManager appStateManager;
-//    private Subscriber<UserRecipe> subscriber;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -821,11 +820,8 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
         // Create custom dialog object
         final Dialog dialog = new Dialog(getActivity());
-
-        // hide the default title for Dialog
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        // inflate the layout dialog_layout.xml and set it as contentView
         View view = inflater.inflate(R.layout.dialog_add_ingredient, null, false);
         dialog.setCanceledOnTouchOutside(false);
         dialog.setContentView(view);
@@ -865,10 +861,8 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         final int position = userRecipe.ingredientsList.indexOf(ingredientText);
 
         final Dialog dialog = new Dialog(getActivity());
-
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        // inflate the layout dialog_layout.xml and set it as contentView
         View view = inflater.inflate(R.layout.dialog_add_ingredient, null, false);
         dialog.setCanceledOnTouchOutside(false);
         dialog.setContentView(view);
@@ -1028,23 +1022,10 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         Button button_save = (Button) loginDialog.findViewById(R.id.button_save);
         button_save.setOnClickListener(v -> {
 
-            // Get the input text
             String email = editText_email.getText().toString();
             String author = editText_username.getText().toString();
             String password = editText_password.getText().toString();
             String retypePassword = editText_repeatPassword.getText().toString();
-
-//            if (usernameTooShort(author)) {
-//                // Less than 6 letters
-//                AppHelper.showSnackBar(view, R.string.at_least_6_characters_are_required, Color.RED);
-//                return;
-//            }
-//
-//            if (usernameTooLong(author)) {
-//                // More than 20 letters
-//                AppHelper.showSnackBar(view, R.string.max_20_chars_are_allowed, Color.RED);
-//                return;
-//            }
 
             if (areFieldsValid(email, author, password, retypePassword)) {
                 dbManager.register(email, author, password);
@@ -1058,15 +1039,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
                 loginDialog.dismiss();
             }
-
-//            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-//            SharedPreferences.Editor editor = sp.edit();
-//            editor.putString(AppConsts.SharedPrefs.USER_NAME, author);
-//            editor.apply();
-//
-//            AnalyticsHelper.sendEvent(EditRecipeFragment2.this, AppConsts.Analytics.CATEGORY_LOGIN, "Register successfully", author);
-//
-//            loginDialog.dismiss();
         });
 
         Button btnCancel = (Button) loginDialog.findViewById(R.id.button_cancel);

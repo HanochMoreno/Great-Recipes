@@ -212,6 +212,16 @@
     <string name="username">Username</string>
     <string name="password">Password</string>
     <string name="retype_password">Retype password</string>
+    <string name="already_have_an_account">Already have an account?</string>
+    <string name="open_account_for_free">To open an account for free</string>
+    <string name="click_here">click here</string>
+    <string name="want_to_test_the_app_before">Want to test the app before?</string>
+    <string name="continue_">Continue</string>
+    <string name="sign_in">Sign in</string>
+    <string name="register">Register</string>
+    <string name="invalid_email">Invalid e-Mail</string>
+    <string name="invalid_username">Invalid username</string>
+    <string name="invalid_password">Invalid password</string>
     <string name="passwords_are_not_identical">Passwords are not identical</string>
 
 </resources>

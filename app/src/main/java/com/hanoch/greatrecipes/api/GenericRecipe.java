@@ -8,7 +8,7 @@ import java.util.Comparator;
  * A recipe downloaded from Yummly, as received from GreatRecipesApi or generated from YummlyRecipeResponse2.
  */
 
-public class GGGRecipe2 {
+public class GenericRecipe {
 
     public String _id;
     public String recipeTitle;
@@ -20,6 +20,6 @@ public class GGGRecipe2 {
     public ArrayList<String> ingredientsList;
     public ArrayList<String> categoriesList;
 
-    public static Comparator<GGGRecipe2> TITLE_COMPARATOR =
+    public static Comparator<GenericRecipe> TITLE_COMPARATOR =
             (recipe, recipe2) -> recipe.recipeTitle.compareToIgnoreCase(recipe2.recipeTitle);
 }

@@ -14,7 +14,6 @@ import android.widget.LinearLayout;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.model.AppCompatPreferenceActivity;
 
 import java.util.ArrayList;
 import java.util.List;

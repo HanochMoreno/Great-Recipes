@@ -79,7 +79,7 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
         if (BuildConfig.DEBUG) {
-            sp.edit().putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false).commit();
+            sp.edit().putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false).apply();
         }
 
         boolean premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);

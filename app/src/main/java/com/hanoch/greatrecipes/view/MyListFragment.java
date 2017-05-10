@@ -1,4 +1,4 @@
-package com.hanoch.greatrecipes.model;
+package com.hanoch.greatrecipes.view;
 
 import android.content.Context;
 import android.os.Bundle;
@@ -20,10 +20,8 @@ import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.api.GGGRecipe2;
+import com.hanoch.greatrecipes.api.GenericRecipe;
 import com.hanoch.greatrecipes.control.ListFragmentListener;
-import com.hanoch.greatrecipes.view.ListFavouriteFragment2;
-import com.hanoch.greatrecipes.view.SearchInListsFragment2;
 import com.hanoch.greatrecipes.view.adapters.RecipesListAdapter2;
 
 import java.util.ArrayList;
@@ -46,7 +44,7 @@ public abstract class MyListFragment extends Fragment
     protected FrameLayout layout_dialogBubble;
 
     protected ArrayList<String> checkedItemsIdList;
-    protected ArrayList<GGGRecipe2> recipesList = new ArrayList<>();
+    protected ArrayList<GenericRecipe> recipesList = new ArrayList<>();
 
     protected Bundle savedInstanceState;
 

@@ -11,11 +11,8 @@ import android.widget.AbsListView;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.api.GGGRecipe2;
-import com.hanoch.greatrecipes.api.YummlyRecipe;
+import com.hanoch.greatrecipes.api.GenericRecipe;
 import com.hanoch.greatrecipes.api.great_recipes_api.User;
-import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
-import com.hanoch.greatrecipes.model.MyListFragment;
 
 import java.util.ArrayList;
 
@@ -93,27 +90,28 @@ public class SearchInListsFragment2 extends MyListFragment {
     public void performSearch(String keyToSearch, boolean searchWasPerformedByUser) {
 
         this.keyToSearch = keyToSearch;
-
-        User user = AppStateManager.getInstance().user;
-
-        ArrayList<GGGRecipe2> searchResults = new ArrayList<>();
-
-        for (UserRecipe userRecipe : user.userRecipes.values()) {
-            if (userRecipe.recipeTitle.contains(keyToSearch)) {
-                searchResults.add(userRecipe);
-            }
-        }
-        for (YummlyRecipe yummlyRecipe : user.yummlyRecipes.values()) {
-            if (yummlyRecipe.recipeTitle.contains(keyToSearch)) {
-                searchResults.add(yummlyRecipe);
-            }
-        }
-
-        adapter.refreshList(searchResults);
-
-        if (searchResults.isEmpty() && searchWasPerformedByUser) {
+        refreshAdapter();
+        if (adapter.getCount() == 0 && searchWasPerformedByUser) {
             AppHelper.showSnackBar(view, R.string.no_results, Color.RED);
         }
     }
 
+//-------------------------------------------------------------------------------------------------
+
+    @Override
+    public void refreshAdapter() {
+        User user = AppStateManager.getInstance().user;
+
+        ArrayList<GenericRecipe> searchResults = new ArrayList<>();
+
+        user.userRecipes.values().stream()
+                .filter(userRecipe -> userRecipe.recipeTitle.contains(keyToSearch))
+                .forEach(searchResults::add);
+
+        user.yummlyRecipes.values().stream()
+                .filter(yummlyRecipe -> yummlyRecipe.recipeTitle.contains(keyToSearch))
+                .forEach(searchResults::add);
+
+        adapter.refreshList(searchResults);
+    }
 }

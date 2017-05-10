@@ -14,7 +14,6 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.ByteBuffer;
 
 /**
  * Image storage to SD card (External Memory).
@@ -26,8 +25,6 @@ public class ImageStorage {
     public static final String TEMP_PHOTO_FILE = "temporary_holder.jpg";
 
     public static File saveToSdCard(Context context, Bitmap bitmap, String filename) {
-
-        //String stored = null;
 
         File sdcard = context.getExternalFilesDir(Environment.DIRECTORY_PICTURES);
 

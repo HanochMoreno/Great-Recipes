@@ -1,6 +1,6 @@
 package com.hanoch.greatrecipes.control;
 
-import com.hanoch.greatrecipes.model.MyListFragment;
+import com.hanoch.greatrecipes.view.MyListFragment;
 
 
 public interface ListFragmentListener {
