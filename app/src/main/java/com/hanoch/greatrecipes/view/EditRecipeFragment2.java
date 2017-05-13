@@ -233,7 +233,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
                 // Adding a new recipe to 'My Own Recipes' list
 
                 // TODO: cannot happen, unless in test mode:
-                if (user.author == null) {
+                if (user.username == null) {
                     showLoginDialog("", "", "", "");
                 }
 
@@ -349,6 +349,20 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 //-------------------------------------------------------------------------------------------------
 
     @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        if (selectedImage != null) {
+            selectedImage.recycle();
+        }
+        if (recipeImage != null) {
+            recipeImage.recycle();
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Override
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
@@ -420,10 +434,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
                 case REQ_CODE_PICK_IMAGE:
 
                     if (imageReturnedIntent == null) return;
-
-                    if (selectedImage != null) {
-                        selectedImage.recycle();
-                    }
 
                     imageView_recipeImage.setImageBitmap(null);
 
@@ -563,7 +573,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         final String recipeId = getArguments().getString(ARG_RECIPE_ID);
 
         userRecipe._id = recipeId;
-        userRecipe.author = user.author;
+        userRecipe.author = user.username;
         userRecipe.userId = user._id;
         userRecipe.recipeTitle = title;
         userRecipe.instructions = instructions;
@@ -574,19 +584,18 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
             if (selectedImage == null || imageWasDeleted) {
                 // No image selected
                 userRecipe.imageByteArrayAsString = "";
-                userRecipe.thumbnailByteArrayAsString = "";
+//                userRecipe.thumbnailByteArrayAsString = "";
             } else {
                 userRecipe.imageByteArrayAsString = ImageStorage.convertBitmapToByteArrayAsString(selectedImage);
 
-                String imageName = AppConsts.Images.RECIPE_IMAGE;
-                File file = ImageStorage.saveToSdCard(getContext(), selectedImage, imageName);
-
-                if (file != null) {
-                    Bitmap thumbnail = ImageStorage.decodeSampledBitmapFromFile(file.getPath(), Bitmap.Config.ARGB_8888, 100, 100);
-                    userRecipe.thumbnailByteArrayAsString = ImageStorage.convertBitmapToByteArrayAsString(thumbnail);
-                    thumbnail.recycle();
-                }
-                selectedImage.recycle();
+//                String imageName = AppConsts.Images.RECIPE_IMAGE;
+//                File file = ImageStorage.saveToSdCard(getContext(), selectedImage, imageName);
+//
+//                if (file != null) {
+//                    Bitmap thumbnail = ImageStorage.decodeSampledBitmapFromFile(file.getPath(), Bitmap.Config.ARGB_8888, 100, 100);
+//                    userRecipe.thumbnailByteArrayAsString = ImageStorage.convertBitmapToByteArrayAsString(thumbnail);
+//                    thumbnail.recycle();
+//                }
             }
 
         } else {
@@ -596,27 +605,22 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
                 // No image selected as a replacement
 
                 userRecipe.imageByteArrayAsString = "";
-                userRecipe.thumbnailByteArrayAsString = "";
+//                userRecipe.thumbnailByteArrayAsString = "";
 
             } else if (selectedImage != null) {
                 // The original image replaced by another
 
                 userRecipe.imageByteArrayAsString = ImageStorage.convertBitmapToByteArrayAsString(selectedImage);
 
-                String imageName = AppConsts.Images.RECIPE_IMAGE;
-                File file = ImageStorage.saveToSdCard(getContext(), selectedImage, imageName);
-
-                if (file != null) {
-                    Bitmap thumbnail = ImageStorage.decodeSampledBitmapFromFile(file.getPath(), Bitmap.Config.ARGB_8888, 100, 100);
-                    userRecipe.thumbnailByteArrayAsString = ImageStorage.convertBitmapToByteArrayAsString(thumbnail);
-                    thumbnail.recycle();
-                }
-                selectedImage.recycle();
+//                String imageName = AppConsts.Images.RECIPE_IMAGE;
+//                File file = ImageStorage.saveToSdCard(getContext(), selectedImage, imageName);
+//
+//                if (file != null) {
+//                    Bitmap thumbnail = ImageStorage.decodeSampledBitmapFromFile(file.getPath(), Bitmap.Config.ARGB_8888, 100, 100);
+//                    userRecipe.thumbnailByteArrayAsString = ImageStorage.convertBitmapToByteArrayAsString(thumbnail);
+//                    thumbnail.recycle();
+//                }
             }
-        }
-
-        if (recipeImage != null) {
-            recipeImage.recycle();
         }
 
         return userRecipe;

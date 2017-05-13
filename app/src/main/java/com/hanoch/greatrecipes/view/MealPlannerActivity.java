@@ -1,7 +1,6 @@
 package com.hanoch.greatrecipes.view;
 
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Dialog;
 import android.content.Context;
@@ -275,14 +274,14 @@ public class MealPlannerActivity extends AppCompatActivity implements
                 onBackPressed();
             }
 
-            recipeReviewFragment = RecipeReviewFragment2.newInstance(serving.recipeId, serving.isUserRecipe, AppConsts.Extras.REVIEW_SERVING);
+            recipeReviewFragment = RecipeReviewFragment2.newInstance(serving.recipeId, AppConsts.Extras.REVIEW_SERVING);
             ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
             ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
 
         } else {
             // phone
 
-            recipeReviewFragment = RecipeReviewFragment2.newInstance(serving.recipeId, serving.isUserRecipe, AppConsts.Extras.REVIEW_SERVING);
+            recipeReviewFragment = RecipeReviewFragment2.newInstance(serving.recipeId, AppConsts.Extras.REVIEW_SERVING);
             ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left, R.anim.slide_in_right, R.anim.slide_out_right);
             ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
             ft.addToBackStack(null);
@@ -480,14 +479,16 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         if (toolbarButtonsList != null) {
 
-            allButtons.stream().filter(toolbarButtonsList::contains).forEach(button -> {
-                MenuItem toolbarButton = toolbar.getMenu().findItem(button);
-                if (button == AppConsts.ToolbarButtons.CLEAR_SERVING_LIST) {
-                    toolbarButton.setVisible(true);
-                } else {
-                    fadingInAnimationsList.add(AnimationHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 0));
+            for (Integer button : allButtons) {
+                if (toolbarButtonsList.contains(button)) {
+                    MenuItem toolbarButton = toolbar.getMenu().findItem(button);
+                    if (button == AppConsts.ToolbarButtons.CLEAR_SERVING_LIST) {
+                        toolbarButton.setVisible(true);
+                    } else {
+                        fadingInAnimationsList.add(AnimationHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 0));
+                    }
                 }
-            });
+            }
         }
     }
 
@@ -495,10 +496,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
     public ArrayList<Integer> getAndHideAllToolbarButtons() {
 
-        if (fadingInAnimationsList != null) {
-            // Cancelling all buttons "fading-in" animations, if exists
-            fadingInAnimationsList.forEach(ValueAnimator::cancel);
-        }
+        AnimationHelper.cancelAllFadingInAnimations(fadingInAnimationsList);
 
         ArrayList<Integer> buttons = new ArrayList<>();
 
@@ -627,11 +625,10 @@ public class MealPlannerActivity extends AppCompatActivity implements
             // The request code doesn't matter in this case
 
             String recipeId = data.getStringExtra(AppConsts.Extras.EXTRA_RECIPE_ID);
-            boolean isUserRecipe = data.getBooleanExtra(AppConsts.Extras.EXTRA_IS_USER_RECIPE, false);
 
             Serving serving = new Serving();
             serving.recipeId = recipeId;
-            serving.isUserRecipe = isUserRecipe;
+            serving.isUserRecipe = appStateManager.user.isUserRecipe(recipeId);
             serving.servingId = String.valueOf(System.currentTimeMillis());
             serving.servingType = servingType;
 
@@ -653,16 +650,16 @@ public class MealPlannerActivity extends AppCompatActivity implements
             if (getResources().getBoolean(R.bool.isTablet)) {
                 switch (event.action) {
                     case BusConsts.ACTION_ADD_NEW:
-                        onListSizeChanged(event.servingsMap.size());
-                        mServing = event.servingsMap.get(mServing.servingId);
+                        onListSizeChanged(appStateManager.user.servings.size());
+                        mServing = appStateManager.user.servings.get(mServing.servingId);
                         showRecipeDetails(mServing);
                         break;
                     case BusConsts.ACTION_EDIT:
-                        mServing = event.servingsMap.get(mServing.servingId);
+                        mServing = appStateManager.user.servings.get(mServing.servingId);
                         showRecipeDetails(mServing);
                         break;
                     case BusConsts.ACTION_DELETE:
-                        onListSizeChanged(event.servingsMap.size());
+                        onListSizeChanged(appStateManager.user.servings.size());
                         listFragment.backToDefaultDisplay(false);
 
                         Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
@@ -747,46 +744,13 @@ public class MealPlannerActivity extends AppCompatActivity implements
         button_yes.setOnClickListener(v -> {
 
             ArrayList<Serving> servingsList = new ArrayList<>(appStateManager.user.servings.values());
-            servingsList.stream()
-                    .filter(serving -> !selectedItemsId.contains(serving.servingId))
-                    .forEach(servingsList::remove);
+            for (Serving serving : servingsList) {
+                if (!selectedItemsId.contains(serving.servingId)) {
+                    servingsList.remove(serving);
+                }
+            }
 
             dbManager.updateUserServingsMap(servingsList, BusConsts.ACTION_DELETE);
-
-//            listFragment.backToDefaultDisplay(false);
-//
-//            FragmentManager fm = getSupportFragmentManager();
-//            Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
-//
-//            if (recipeReviewFragment != null) {
-//                // Tablet only
-//
-//                Fragment webViewFragment = fm.findFragmentByTag(AppConsts.Fragments.WEB_VIEW);
-//
-//                if (webViewFragment != null) {
-//                    fm.popBackStack();
-//                }
-//
-//                FragmentTransaction ft = fm.beginTransaction();
-//                ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
-//                ft.remove(recipeReviewFragment);
-//                ft.commit();
-//
-//                AnimationHelper.animateViewFadingIn(context, layout_logo, 500, 500);
-//            }
-//
-//            String toastMessage;
-//
-//            if (selectedItemsId.size() == 1) {
-//                toastMessage = getString(R.string.the_serving_was_deleted);
-//
-//            } else {
-//                toastMessage = selectedItemsId.size() + " " + getString(R.string.servings_were_deleted);
-//            }
-//
-//            Toast.makeText(context, toastMessage, Toast.LENGTH_LONG).show();
-//
-//            selectedItemsId.clear();
 
             dialog.dismiss();
         });

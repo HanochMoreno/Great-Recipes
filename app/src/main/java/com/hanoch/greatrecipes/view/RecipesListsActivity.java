@@ -1,7 +1,6 @@
 package com.hanoch.greatrecipes.view;
 
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.Dialog;
 import android.app.ProgressDialog;
@@ -84,7 +83,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
     private MenuItem toolbar_closeWebView;
 
     private String mRecipeId;
-    private boolean isUserRecipe;
 
     private ArrayList<String> checkedItemsId;
     private String activityToolbarTitle;
@@ -419,11 +417,10 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 User user = appStateManager.user;
 
                 mRecipeId = recipeId;
-                isUserRecipe = user.userRecipes.containsKey(mRecipeId);
 
                 ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
 
-                if (isUserRecipe) {
+                if (appStateManager.user.isUserRecipe(mRecipeId)) {
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
                 }
 
@@ -453,12 +450,9 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
             mRecipeId = recipeId;
 
-            isUserRecipe = appStateManager.user.userRecipes.containsKey(mRecipeId);
-
             Intent intent = new Intent(this, RecipeDetailsActivity.class);
             intent.setAction(AppConsts.Actions.ACTION_REVIEW);
             intent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, recipeId);
-            intent.putExtra(AppConsts.Extras.EXTRA_IS_USER_RECIPE, isUserRecipe);
             intent.putExtra(AppConsts.Extras.EXTRA_SERVING, extra_serving);
             startActivityForResult(intent, REQ_CODE_RECIPE_DETAILS_ACTIVITY);
         }
@@ -835,10 +829,12 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
         } else {
 
-            allButtons.stream().filter(toolbarButtonsList::contains).forEach(button -> {
-                MenuItem toolbarButton = toolbar.getMenu().findItem(button);
-                fadingInAnimationsList.add(AnimationHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 600));
-            });
+            for (Integer button : allButtons) {
+                if (toolbarButtonsList.contains(button)) {
+                    MenuItem toolbarButton = toolbar.getMenu().findItem(button);
+                    fadingInAnimationsList.add(AnimationHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 600));
+                }
+            }
         }
     }
 
@@ -846,10 +842,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
     public ArrayList<Integer> getAndHideAllToolbarButtons() {
 
-        if (fadingInAnimationsList != null) {
-            // Cancelling all buttons "fading-in" animations, if exists
-            fadingInAnimationsList.forEach(ValueAnimator::cancel);
-        }
+        AnimationHelper.cancelAllFadingInAnimations(fadingInAnimationsList);
 
         ArrayList<Integer> buttons = new ArrayList<>();
 
@@ -1017,7 +1010,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, mRecipeId);
-                resultIntent.putExtra(AppConsts.Extras.EXTRA_IS_USER_RECIPE, isUserRecipe);
                 setResult(Activity.RESULT_OK, resultIntent);
                 finish();
 
@@ -1031,7 +1023,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
                 ArrayList<UserRecipe> userRecipes = null;
                 ArrayList<YummlyRecipe> yummlyRecipes = null;
-                if (isUserRecipe) {
+                if (appStateManager.user.isUserRecipe(mRecipeId)) {
                     userRecipes = new ArrayList<>();
                     userRecipes.add(appStateManager.user.userRecipes.get(mRecipeId));
                 } else {
@@ -1107,13 +1099,17 @@ public class RecipesListsActivity extends AppCompatActivity implements
             ArrayList<UserRecipe> userRecipes = new ArrayList<>();
             ArrayList<YummlyRecipe> yummlyRecipes = new ArrayList<>();
 
-            appStateManager.user.userRecipes.values().stream()
-                    .filter(userRecipe -> checkedItemsId.contains(userRecipe._id))
-                    .forEach(userRecipes::add);
+            for (UserRecipe recipe : appStateManager.user.userRecipes.values()) {
+                if (checkedItemsId.contains(recipe._id)) {
+                    userRecipes.add(recipe);
+                }
+            }
 
-            appStateManager.user.yummlyRecipes.values().stream()
-                    .filter(yummlyRecipe -> checkedItemsId.contains(yummlyRecipe._id))
-                    .forEach(yummlyRecipes::add);
+            for (YummlyRecipe recipe : appStateManager.user.yummlyRecipes.values()) {
+                if (checkedItemsId.contains(recipe._id)) {
+                    yummlyRecipes.add(recipe);
+                }
+            }
 
             dbManager.updateUserRecipes(userRecipes, yummlyRecipes, BusConsts.ACTION_DELETE);
 
@@ -1256,8 +1252,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     private void updateRecipeReviewFragment() {
-        boolean isUserRecipe = appStateManager.user.isUserRecipe(mRecipeId);
-        recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, isUserRecipe, extra_serving);
+        recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, extra_serving);
     }
 //-------------------------------------------------------------------------------------------------
 
@@ -1377,9 +1372,11 @@ public class RecipesListsActivity extends AppCompatActivity implements
                     break;
             }
 
-            fm.getFragments().stream()
-                    .filter(fragment -> fragment instanceof MyListFragment)
-                    .forEach(fragment -> ((MyListFragment) fragment).refreshAdapter());
+            for (Fragment fragment : fm.getFragments()) {
+                if (fragment instanceof MyListFragment) {
+                    ((MyListFragment) fragment).refreshAdapter();
+                }
+            }
 
         } else {
             View mainView = findViewById(android.R.id.content);
@@ -1453,10 +1450,10 @@ public class RecipesListsActivity extends AppCompatActivity implements
         } else {
             ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
 
-            boolean isFavourite = AppStateManager.getInstance().isRecipeFavourite(mRecipeId);
+            boolean isFavourite = appStateManager.isRecipeFavourite(mRecipeId);
             recipeReviewFragment.setFavouriteImage(isFavourite);
 
-            if (isUserRecipe) {
+            if (appStateManager.user.isUserRecipe(mRecipeId)) {
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
             }
 
@@ -1487,7 +1484,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
             return;
         }
 
-        Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, true, null);
+        Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, null);
 
         ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
         ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);

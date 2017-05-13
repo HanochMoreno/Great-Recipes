@@ -23,8 +23,8 @@ public class UserRecipe extends GenericRecipe {
         this.author = recipe.author;
         this.userId = recipe.userId;
         this.yield = recipe.yield;
-        this.thumbnailByteArrayAsString = recipe.thumbnailByteArrayAsString;
         this.imageByteArrayAsString = recipe.imageByteArrayAsString;
+//        this.thumbnailByteArrayAsString = recipe.thumbnailByteArrayAsString;
         this.instructions = recipe.instructions;
         this.notes = recipe.notes;
         this.cookingTime = recipe.cookingTime;

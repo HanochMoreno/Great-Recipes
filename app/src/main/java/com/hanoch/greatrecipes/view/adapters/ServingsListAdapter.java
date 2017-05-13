@@ -19,8 +19,6 @@ import com.hanoch.greatrecipes.model.ApiProvider;
 import com.hanoch.greatrecipes.model.Serving;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 
-import java.io.UnsupportedEncodingException;
-import java.net.URLEncoder;
 import java.util.ArrayList;
 import java.util.HashMap;
 
@@ -132,14 +130,14 @@ public class ServingsListAdapter extends BaseAdapter {
         if (serving.isUserRecipe) {
             recipe = appStateManager.user.userRecipes.get(serving.recipeId);
             if (recipe == null) {
-                getUserRecipeFromGreatRecipesApi(holder, serving);
+//                getUserRecipeFromGreatRecipesApi(holder, serving);
             } else {
                 onRecipeDataReceived(holder, serving, recipe);
             }
         } else {
             recipe = appStateManager.user.yummlyRecipes.get(serving.recipeId);
             if (recipe == null) {
-                getYummlyRecipeFromGreatRecipesApi(holder, serving);
+//                getYummlyRecipeFromGreatRecipesApi(holder, serving);
             } else {
                 onRecipeDataReceived(holder, serving, recipe);
             }
@@ -177,16 +175,10 @@ public class ServingsListAdapter extends BaseAdapter {
 
     public void getUserRecipeFromGreatRecipesApi(ViewHolder holder, Serving serving) {
 
-        String encoded = serving.recipeId;
-        try {
-            encoded = URLEncoder.encode(serving.recipeId, "utf-8");
-        } catch (UnsupportedEncodingException e) {
-        }
-
         Action1<UserRecipe> subscriber = (recipe -> onRecipeDataReceived(holder, serving, recipe));
 
         Single<UserRecipe> getUserRecipe =
-                ApiProvider.getGreatRecipesApi().getUserRecipe(encoded);
+                ApiProvider.getGreatRecipesApi().getUserRecipe(serving.recipeId);
 
         getUserRecipe
                 .subscribeOn(Schedulers.io())
@@ -198,21 +190,15 @@ public class ServingsListAdapter extends BaseAdapter {
 
     public void getYummlyRecipeFromGreatRecipesApi(ViewHolder holder, Serving serving) {
 
-        String encoded = serving.recipeId;
-        try {
-            encoded = URLEncoder.encode(serving.recipeId, "utf-8");
-        } catch (UnsupportedEncodingException e) {
-        }
-
-        Action1<YummlyRecipe> subscriber = (recipe -> onRecipeDataReceived(holder, serving, recipe));
-
-        Single<YummlyRecipe> getYummlyRecipe =
-                ApiProvider.getGreatRecipesApi().getYummlyRecipe(encoded);
-
-        getYummlyRecipe
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(subscriber);
+//        Action1<YummlyRecipe> subscriber = (recipe -> onRecipeDataReceived(holder, serving, recipe));
+//
+//        Single<YummlyRecipe> getYummlyRecipe =
+//                ApiProvider.getGreatRecipesApi().getYummlyRecipe(serving.recipeId);
+//
+//        getYummlyRecipe
+//                .subscribeOn(Schedulers.io())
+//                .observeOn(AndroidSchedulers.mainThread())
+//                .subscribe(subscriber);
     }
 
 //-------------------------------------------------------------------------------------------------

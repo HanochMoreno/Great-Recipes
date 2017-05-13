@@ -14,7 +14,7 @@ public class GenericRecipe {
     public String recipeTitle;
     public String author;
     public int yield;
-    public String thumbnailByteArrayAsString;
+//    public String thumbnailByteArrayAsString;
     public String imageByteArrayAsString;
     public int cookingTime;
     public ArrayList<String> ingredientsList;

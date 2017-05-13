@@ -64,12 +64,15 @@ public class OnlineSearchResultsFragment extends Fragment implements
         super.onCreate(savedInstanceState);
 
         dbManager = GreatRecipesDbManager.getInstance();
-        bus = MyBus.getInstance();
         sqliteManager = new SqLiteDbManager(getContext());
+        bus = MyBus.getInstance();
+        bus.register(this);
 
         progressDialog = new ProgressDialog(getActivity());
         progressDialog.setTitle(getString(R.string.searching));
         progressDialog.setMessage(getString(R.string.please_wait));
+        progressDialog.setCancelable(false);
+        progressDialog.setCanceledOnTouchOutside(false);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -120,8 +123,6 @@ public class OnlineSearchResultsFragment extends Fragment implements
     public void onAttach(Context context) {
         super.onAttach(context);
 
-        bus.register(this);
-
         try {
             mListener = (OnFragmentOnlineSearchListener) context;
         } catch (ClassCastException e) {
@@ -136,11 +137,19 @@ public class OnlineSearchResultsFragment extends Fragment implements
     public void onDetach() {
         super.onDetach();
 
-        bus.unregister(this);
-
         mListener = null;
         isToScrollToTop = false;
     }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+
+        bus.unregister(this);
+    }
+
 
 //-------------------------------------------------------------------------------------------------
 

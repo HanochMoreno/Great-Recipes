@@ -1,7 +1,6 @@
 package com.hanoch.greatrecipes.view;
 
 import android.animation.ObjectAnimator;
-import android.animation.ValueAnimator;
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.app.SearchManager;
@@ -24,7 +23,6 @@ import android.os.Bundle;
 
 import android.support.v7.widget.SearchView;
 import android.support.v7.widget.Toolbar;
-import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.View;
@@ -37,16 +35,17 @@ import android.widget.TextView;
 import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
+import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
+import com.hanoch.greatrecipes.bus.OnUpdateUserDietAndAllergensEvent;
 import com.hanoch.greatrecipes.bus.OnYummlyRecipeDownloadedEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
-import com.hanoch.greatrecipes.model.AllergenAndDiet;
 import com.hanoch.greatrecipes.model.ObjectDrawerItem;
 import com.hanoch.greatrecipes.utilities.MyFonts;
 import com.hanoch.greatrecipes.view.adapters.DrawerItemAdapter;
@@ -54,8 +53,6 @@ import com.hanoch.greatrecipes.view.adapters.DrawerItemAdapterLimited;
 import com.squareup.otto.Subscribe;
 
 import java.util.ArrayList;
-
-import rx.Subscriber;
 
 public class OnlineSearchActivity extends AppCompatActivity implements
         OnlineSearchResultsFragment.OnFragmentOnlineSearchListener,
@@ -83,7 +80,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
     private ArrayList<ObjectAnimator> fadingInAnimationsList;
 
-    private ArrayList<String> drawerCheckedItemsPositionList;
     private String extra_serving;
     private String mRecipeId;
     private YummlyRecipe yummlyRecipe;
@@ -98,10 +94,10 @@ public class OnlineSearchActivity extends AppCompatActivity implements
     private boolean isPremium;
 
     private boolean afterRestoreState;
-    private ArrayList<Subscriber> subscribersList = new ArrayList<>();
     private ProgressDialog progressDialog;
     private GreatRecipesDbManager dbManager;
     private MyBus bus;
+    private AppStateManager appStateManager;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -110,6 +106,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_online_search);
 
+        appStateManager = AppStateManager.getInstance();
         bus = MyBus.getInstance();
         bus.register(this);
 
@@ -121,31 +118,12 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         progressDialog.setCancelable(false);
         progressDialog.setCanceledOnTouchOutside(false);
 
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        isPremium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
+        isPremium = appStateManager.user.isPremium;
 
         mResultYummlyId = "";
 
         Intent prevIntent = getIntent();
         extra_serving = prevIntent.getStringExtra(AppConsts.Extras.EXTRA_SERVING);
-
-        drawerCheckedItemsPositionList = new ArrayList<String>();
-        ArrayList<AllergenAndDiet> allowedDietPrefsList = AppHelper.getUserAllowedDietPrefsList(this);
-        ArrayList<AllergenAndDiet> allowedAllergiesPrefsList = AppHelper.getUserAllowedAllergiesPrefsList(this);
-
-        for (int i = 0; i < allowedDietPrefsList.size(); i++) {
-
-            if (allowedDietPrefsList.get(i).isChosen) {
-                drawerCheckedItemsPositionList.add(allowedDietPrefsList.get(i).positionInDrawer + "");
-            }
-        }
-
-        for (int i = 0; i < allowedAllergiesPrefsList.size(); i++) {
-
-            if (allowedAllergiesPrefsList.get(i).isChosen) {
-                drawerCheckedItemsPositionList.add(allowedAllergiesPrefsList.get(i).positionInDrawer + "");
-            }
-        }
 
         activityToolbarTitle = getString(R.string.online_search);
         toolbarTitle = activityToolbarTitle;
@@ -213,8 +191,8 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             mDrawerList.setDivider(color);
         }
 
-        for (int i = 0; i < drawerCheckedItemsPositionList.size(); i++) {
-            mDrawerList.setItemChecked(Integer.parseInt(drawerCheckedItemsPositionList.get(i)), true);
+        for (String sPosition : appStateManager.user.dietAndAllergensList) {
+            mDrawerList.setItemChecked(Integer.parseInt(sPosition), true);
         }
 
         mDrawerList.setOnItemClickListener(new DrawerItemClickListener());
@@ -324,8 +302,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         mRecipeId = savedInstanceState.getString("mRecipeId");
         extra_serving = savedInstanceState.getString("extra_serving");
 
-        drawerCheckedItemsPositionList = savedInstanceState.getStringArrayList("drawerCheckedItemsPositionList");
-
         if (getResources().getBoolean(R.bool.isTablet)) {
             int layout_logoVisibility = savedInstanceState.getInt("layout_logoVisibility");
             layout_logo.setVisibility(layout_logoVisibility);
@@ -343,8 +319,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         outState.putString("mResultYummlyId", mResultYummlyId);
         outState.putString("mRecipeId", mRecipeId);
         outState.putString("extra_serving", extra_serving);
-
-        outState.putStringArrayList("drawerCheckedItemsPositionList", drawerCheckedItemsPositionList);
 
         if (getResources().getBoolean(R.bool.isTablet)) {
 
@@ -382,20 +356,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         }
 
         outState.putIntegerArrayList("displayedButtons", displayedButtons);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
-    protected void onPause() {
-        super.onPause();
-
-        subscribersList.stream()
-                .filter(subscriber -> subscriber != null && !subscriber.isUnsubscribed())
-                .forEach(subscriber -> {
-                    Log.d("OnlineSearchActivity", "onPause: subscriber is going to get unSubscribed");
-                    subscriber.unsubscribe();
-                });
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -550,7 +510,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, mRecipeId);
-                resultIntent.putExtra(AppConsts.Extras.EXTRA_IS_USER_RECIPE, false);
                 setResult(Activity.RESULT_OK, resultIntent);
                 finish();
 
@@ -602,7 +561,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 OnlineSearchResultsFragment onlineSearchResultsFragment = (OnlineSearchResultsFragment) fm.findFragmentByTag(AppConsts.Fragments.ONLINE_SEARCH_RESULTS);
                 onlineSearchResultsFragment.refreshAdapter();
 
-                dbManager.getYummlyRecipeFromGreatRecipesApi(this, mResultYummlyId, true);
+                dbManager.getYummlyRecipeFromGreatRecipesApi(this, mResultYummlyId);
                 break;
 
             default:
@@ -632,10 +591,13 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
             fadingInAnimationsList = new ArrayList<>();
 
-            allButtons.stream().filter(toolbarButtonsList::contains).forEach(button -> {
-                MenuItem toolbarButton = toolbar.getMenu().findItem(button);
-                fadingInAnimationsList.add(AnimationHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 600));
-            });
+            for (Integer button : allButtons) {
+                if (toolbarButtonsList.contains(button)) {
+                    MenuItem toolbarButton = toolbar.getMenu().findItem(button);
+                    fadingInAnimationsList.add(AnimationHelper.animateToolbarButtonFadingIn(toolbarButton, 500, 600));
+                }
+            }
+
         } else {
             if (!toolbar_search.isVisible()) {
                 AnimationHelper.animateToolbarButtonFadingIn(toolbar_search, 500, 600);
@@ -659,11 +621,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         }
 
         // Resetting all buttons to invisible
-
-        if (fadingInAnimationsList != null) {
-            // Cancelling all buttons "fading-in" animations, if exists
-            fadingInAnimationsList.forEach(ValueAnimator::cancel);
-        }
+        AnimationHelper.cancelAllFadingInAnimations(fadingInAnimationsList);
 
         MenuItem toolBarButton;
         for (Integer button : buttons) {
@@ -693,99 +651,101 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 return;
             }
 
-            if (drawerCheckedItemsPositionList.contains(position + "")) {
-                mDrawerList.setItemChecked(position, false);
-                drawerCheckedItemsPositionList.remove(position + "");
-                selectDrawerItem(position, false);
-            } else {
-                drawerCheckedItemsPositionList.add(position + "");
-                mDrawerList.setItemChecked(position, true);
-                selectDrawerItem(position, true);
-            }
+            dbManager.updateUserDietAndAllergensLists(position);
+
+//            if (drawerCheckedItemsPositionList.contains(position + "")) {
+//                mDrawerList.setItemChecked(position, false);
+//                drawerCheckedItemsPositionList.remove(position + "");
+//                selectDrawerItem(position, false);
+//            } else {
+//                drawerCheckedItemsPositionList.add(position + "");
+//                mDrawerList.setItemChecked(position, true);
+//                selectDrawerItem(position, true);
+//            }
         }
     }
 
 //-------------------------------------------------------------------------------------------------
 
-    private void selectDrawerItem(int position, Boolean isChosen) {
-
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = sp.edit();
-
-        switch (position) {
-
-            // 0 = header
-
-            // 1 = Diet Title
-
-            case 2:
-                // Vegan filter
-                editor.putBoolean(AppConsts.SharedPrefs.VEGAN, isChosen);
-                break;
-
-            case 3:
-                // Vegetarian filter
-                editor.putBoolean(AppConsts.SharedPrefs.VEGETARIAN, isChosen);
-                break;
-
-            case 4:
-                // Paleo filter
-                editor.putBoolean(AppConsts.SharedPrefs.PALEO, isChosen);
-                break;
-
-            // 5 Allergies Title
-
-            case 6:
-                // Dairy filter
-                editor.putBoolean(AppConsts.SharedPrefs.DAIRY_FREE, isChosen);
-                break;
-
-            case 7:
-                // Egg filter
-                editor.putBoolean(AppConsts.SharedPrefs.EGG_FREE, isChosen);
-                break;
-
-            case 8:
-                // Gluten filter
-                editor.putBoolean(AppConsts.SharedPrefs.GLUTEN_FREE, isChosen);
-                break;
-
-            case 9:
-                // Peanut filter
-                editor.putBoolean(AppConsts.SharedPrefs.PEANUT_FREE, isChosen);
-                break;
-
-            case 10:
-                // Seafood filter
-                editor.putBoolean(AppConsts.SharedPrefs.SEAFOOD_FREE, isChosen);
-                break;
-
-            case 11:
-                // Sesame filter
-                editor.putBoolean(AppConsts.SharedPrefs.SESAME_FREE, isChosen);
-                break;
-
-            case 12:
-                // Soy filter
-                editor.putBoolean(AppConsts.SharedPrefs.SOY_FREE, isChosen);
-                break;
-
-            case 13:
-                // Tree nut filter
-                editor.putBoolean(AppConsts.SharedPrefs.TREE_NUT_FREE, isChosen);
-                break;
-
-            case 14:
-                // Pescetarian filter
-                editor.putBoolean(AppConsts.SharedPrefs.WHEAT_FREE, isChosen);
-                break;
-
-            default:
-                break;
-        }
-
-        editor.apply();
-    }
+//    private void selectDrawerItem(int position, Boolean isChosen) {
+//
+//        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+//        SharedPreferences.Editor editor = sp.edit();
+//
+//        switch (position) {
+//
+//            // 0 = header
+//
+//            // 1 = Diet Title
+//
+//            case 2:
+//                // Vegan filter
+//                editor.putBoolean(AppConsts.SharedPrefs.VEGAN, isChosen);
+//                break;
+//
+//            case 3:
+//                // Vegetarian filter
+//                editor.putBoolean(AppConsts.SharedPrefs.VEGETARIAN, isChosen);
+//                break;
+//
+//            case 4:
+//                // Paleo filter
+//                editor.putBoolean(AppConsts.SharedPrefs.PALEO, isChosen);
+//                break;
+//
+//            // 5 Allergies Title
+//
+//            case 6:
+//                // Dairy filter
+//                editor.putBoolean(AppConsts.SharedPrefs.DAIRY_FREE, isChosen);
+//                break;
+//
+//            case 7:
+//                // Egg filter
+//                editor.putBoolean(AppConsts.SharedPrefs.EGG_FREE, isChosen);
+//                break;
+//
+//            case 8:
+//                // Gluten filter
+//                editor.putBoolean(AppConsts.SharedPrefs.GLUTEN_FREE, isChosen);
+//                break;
+//
+//            case 9:
+//                // Peanut filter
+//                editor.putBoolean(AppConsts.SharedPrefs.PEANUT_FREE, isChosen);
+//                break;
+//
+//            case 10:
+//                // Seafood filter
+//                editor.putBoolean(AppConsts.SharedPrefs.SEAFOOD_FREE, isChosen);
+//                break;
+//
+//            case 11:
+//                // Sesame filter
+//                editor.putBoolean(AppConsts.SharedPrefs.SESAME_FREE, isChosen);
+//                break;
+//
+//            case 12:
+//                // Soy filter
+//                editor.putBoolean(AppConsts.SharedPrefs.SOY_FREE, isChosen);
+//                break;
+//
+//            case 13:
+//                // Tree nut filter
+//                editor.putBoolean(AppConsts.SharedPrefs.TREE_NUT_FREE, isChosen);
+//                break;
+//
+//            case 14:
+//                // Pescetarian filter
+//                editor.putBoolean(AppConsts.SharedPrefs.WHEAT_FREE, isChosen);
+//                break;
+//
+//            default:
+//                break;
+//        }
+//
+//        editor.apply();
+//    }
 
 //-------------------------------------------------------------------------------------------------
 
@@ -794,9 +754,11 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         progressDialog.dismiss();
 
         if (event.isSuccess) {
+            YummlyRecipe searchResult = appStateManager.yummlySearchResult;
+
             FragmentManager fm = getSupportFragmentManager();
             FragmentTransaction ft = fm.beginTransaction();
-            Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(event.yummlyRecipe._id, false, extra_serving);
+            Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(searchResult._id, true, extra_serving);
 
             if (getResources().getBoolean(R.bool.isTablet)) {
                 // tablet
@@ -806,13 +768,13 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 }
 
                 Boolean recipeDetailsIsShawn = (toolbar_addServing.isVisible() || toolbar_addToList.isVisible() || toolbar_closeWebView.isVisible());
-                if (mResultYummlyId.equals(event.yummlyRecipe.yummlyId) && recipeDetailsIsShawn) {
+                if (mResultYummlyId.equals(searchResult.yummlyId) && recipeDetailsIsShawn) {
                     return;
                 }
 
-                yummlyRecipe = event.yummlyRecipe;
-                mResultYummlyId = event.yummlyRecipe.yummlyId;
-                mRecipeId = event.yummlyRecipe._id;
+                yummlyRecipe = searchResult;
+                mResultYummlyId = searchResult.yummlyId;
+                mRecipeId = searchResult._id;
 
                 Fragment webViewFragment = fm.findFragmentByTag(AppConsts.Fragments.WEB_VIEW);
                 if (webViewFragment != null) {
@@ -835,8 +797,8 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             } else {
                 // phone
 
-                mResultYummlyId = event.yummlyRecipe.yummlyId;
-                mRecipeId = event.yummlyRecipe._id;
+                mResultYummlyId = searchResult.yummlyId;
+                mRecipeId = searchResult._id;
 
                 ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left, R.anim.slide_in_right, R.anim.slide_out_right);
                 ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
@@ -861,50 +823,66 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
+    public void onEvent(OnUpdateUserDietAndAllergensEvent event) {
+        // After toggling a diet or allergen pref
+
+        if (event.isSuccess) {
+            mDrawerList.setItemChecked(event.position, event.action == BusConsts.ACTION_ADD_NEW);
+        }
+
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
     public void onEvent(OnUpdateUserRecipesEvent event) {
         // After updating the user's yummlyRecipes in the database
-        // event.action == BusConsts.ADD_NEW
+        View rootView = findViewById(android.R.id.content);
 
         if (event.isSuccess) {
 
-            if (extra_serving == null) {
-                // The user saved a yummly recipe to his online list
+            switch (event.action) {
 
-                AppHelper.hideKeyboardFrom(this, getCurrentFocus());
+                case BusConsts.ACTION_ADD_NEW:
+                    if (extra_serving == null) {
+                        // The user saved a yummly recipe to his online list
 
-                if (getResources().getBoolean(R.bool.isTablet)) {
-                    // Tablet
+                        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
 
-                    AnimationHelper.animateViewFadingIn(this, layout_logo, 500, 500);
+                        if (getResources().getBoolean(R.bool.isTablet)) {
+                            // Tablet
 
-                    FragmentManager fm = getSupportFragmentManager();
-                    FragmentTransaction ft = fm.beginTransaction();
+                            AnimationHelper.animateViewFadingIn(this, layout_logo, 500, 500);
 
-                    Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
+                            FragmentManager fm = getSupportFragmentManager();
+                            FragmentTransaction ft = fm.beginTransaction();
 
-                    ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left);
-                    ft.remove(recipeReviewFragment);
-                    ft.commit();
+                            Fragment recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
 
-                } else {
-                    mDrawerToggle.setDrawerIndicatorEnabled(true);
-                    onBackPressed();
-                }
+                            ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left);
+                            ft.remove(recipeReviewFragment);
+                            ft.commit();
 
-                View rootView = findViewById(android.R.id.content);
-                AppHelper.showSnackBar(rootView, R.string.added_to_online_list, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
-                setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
+                        } else {
+                            mDrawerToggle.setDrawerIndicatorEnabled(true);
+                            onBackPressed();
+                        }
 
-            } else {
-                // The user chose a yummly recipe as a serving
-                Intent resultIntent = new Intent();
-                resultIntent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, mRecipeId);
-                resultIntent.putExtra(AppConsts.Extras.EXTRA_IS_USER_RECIPE, false);
-                setResult(Activity.RESULT_OK, resultIntent);
-                finish();
+                        AppHelper.showSnackBar(rootView, R.string.added_to_online_list, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
+                        setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
+
+                    } else {
+                        // The user chose a yummly recipe as a serving
+                        Intent resultIntent = new Intent();
+                        resultIntent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, mRecipeId);
+                        setResult(Activity.RESULT_OK, resultIntent);
+                        finish();
+                    }
+
+                    break;
             }
+
         } else {
-            View rootView = findViewById(android.R.id.content);
             AppHelper.onApiErrorReceived(event.t, rootView);
         }
     }
@@ -938,7 +916,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         mResultYummlyId = resultYummlyId;
 
         progressDialog.show();
-        dbManager.getYummlyRecipeFromGreatRecipesApi(this, resultYummlyId, true);
+        dbManager.getYummlyRecipeFromGreatRecipesApi(this, resultYummlyId);
     }
 
 //-------------------------------------------------------------------------------------------------

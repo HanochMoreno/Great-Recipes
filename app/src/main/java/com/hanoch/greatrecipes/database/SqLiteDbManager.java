@@ -129,12 +129,12 @@ public class SqLiteDbManager {
 
 //-------------------------------------------------------------------------------------------------
 
-    public long[] getSearchResultsIdsList() {
+    public String[] getSearchResultsIdsList() {
 
         Uri contentUri = RecipesContract.SearchResults.CONTENT_URI;
 
         // get only "_id" column
-        String[] projection = {RecipesContract.SearchResults._ID};
+        String[] projection = {RecipesContract.SearchResults.YUMMLY_ID};
 
         // get all the rows
         String selection = null;
@@ -144,18 +144,18 @@ public class SqLiteDbManager {
 
         Cursor cursor = context.getContentResolver().query(contentUri, projection, selection, selectionArgs, sortOrder);
 
-        long[] idsList = new long[0];
+        String[] idsList = new String[0];
 
         if (cursor != null) {
 
             int totalResultsCount = cursor.getCount();
 
-            idsList = new long[totalResultsCount];
+            idsList = new String[totalResultsCount];
 
             int i = 0;
             while (cursor.moveToNext()) {
-                idsList[i] = cursor.getLong(cursor.getColumnIndex(RecipesContract.SearchResults._ID));
-                i = i + 1;
+                idsList[i] = cursor.getString(cursor.getColumnIndex(RecipesContract.SearchResults.YUMMLY_ID));
+                i++;
             }
 
             cursor.close();
@@ -244,11 +244,11 @@ public class SqLiteDbManager {
     public int deleteAllSearchResults() {
 
         // Deleting old results images:
-        long[] resultsIdsList = getSearchResultsIdsList();
+        String[] resultsYummlyIdsList = getSearchResultsIdsList();
 
-        for (long aResultId : resultsIdsList) {
+        for (String yummlyId : resultsYummlyIdsList) {
 
-            ImageStorage.deleteImageByImageName(context, AppConsts.Images.RESULT_IMAGE_PREFIX + aResultId);
+            ImageStorage.deleteImageByImageName(context, AppConsts.Images.RESULT_IMAGE_PREFIX + yummlyId);
         }
 
         Uri contentUri = RecipesContract.SearchResults.CONTENT_URI;

@@ -250,6 +250,10 @@ public class ImageStorage {
 //-------------------------------------------------------------------------------------------------
 
     public static String convertBitmapToByteArrayAsString(Bitmap bitmap) {
+        return convertBitmapToByteArrayAsString(bitmap, 100);
+    }
+
+    public static String convertBitmapToByteArrayAsString(Bitmap bitmap, int quality) {
         ByteArrayOutputStream stream = new ByteArrayOutputStream();
         bitmap.compress(Bitmap.CompressFormat.PNG, 100, stream);
         byte[] bytes = stream.toByteArray();

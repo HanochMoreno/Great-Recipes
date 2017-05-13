@@ -158,8 +158,9 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
         AnalyticsHelper.sendEvent(this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "Google Error Dialog Was Showing", errorMessage);
 
-        if (progressDialog != null && progressDialog.isShowing())
+        if (progressDialog != null && progressDialog.isShowing()) {
             progressDialog.dismiss();
+        }
 
         googleErrorDialog = new Dialog(this);
 
@@ -490,7 +491,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 sp = PreferenceManager.getDefaultSharedPreferences(this);
                 String userNamePref = sp.getString(AppConsts.SharedPrefs.USER_NAME, "");
 
-                if (userNamePref.equals(AppConsts.SharedPrefs.NEW_USER)) {
+                if (userNamePref.isEmpty()) {
                     showLoginDialog("");
 
                 } else {

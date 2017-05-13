@@ -24,7 +24,6 @@ import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
@@ -35,8 +34,8 @@ import java.util.ArrayList;
 public class RecipeReviewFragment2 extends Fragment implements View.OnClickListener {
 
     private static final String ARG_EXTRA_SERVING = "ARG_EXTRA_SERVING";
-    private static final String ARG_RECIPE_AS_JSON = "ARG_RECIPE_AS_JSON";
-    private static final String ARG_IS_USER_RECIPE = "ARG_IS_USER_RECIPE";
+    private static final String ARG_RECIPE_ID = "ARG_RECIPE_ID";
+    private static final String ARG_IS_YUMMLY_SEARCH_RESULT = "ARG_IS_YUMMLY_SEARCH_RESULT";
 
     private FragmentRecipeReviewListener mListener;
 
@@ -62,13 +61,13 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 
     private boolean viewsHaveBeenDestroyed;
 
-    private boolean isUserRecipe;
-    private UserRecipe mUserRecipe;
-    private YummlyRecipe mYummlyRecipe;
+    private boolean isYummlySearchResult;
+    private String mRecipeId;
 
     private String extra_serving;
 
     private Bitmap recipeImage;
+    private AppStateManager appStateManager;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -79,23 +78,19 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 
 //-------------------------------------------------------------------------------------------------
 
-    public static RecipeReviewFragment2 newInstance(String recipeId, boolean isUserRecipe, String extra_serving) {
+    public static RecipeReviewFragment2 newInstance(String recipeId, String extra_serving) {
+        return newInstance(recipeId, false, extra_serving) ;
+    }
 
-        User user = AppStateManager.getInstance().user;
-        String recipeAsJson;
-        if (isUserRecipe) {
-            UserRecipe userRecipe = user.userRecipes.get(recipeId);
-            recipeAsJson = new Gson().toJson(userRecipe, UserRecipe.class);
-        } else {
-            YummlyRecipe yummlyRecipe = user.yummlyRecipes.get(recipeId);
-            recipeAsJson = new Gson().toJson(yummlyRecipe, YummlyRecipe.class);
-        }
+//-------------------------------------------------------------------------------------------------
+
+    public static RecipeReviewFragment2 newInstance(String recipeId, boolean isYummlySearchResult, String extra_serving) {
 
         RecipeReviewFragment2 fragment = new RecipeReviewFragment2();
         Bundle args = new Bundle();
+        args.putString(ARG_RECIPE_ID, recipeId);
+        args.putBoolean(ARG_IS_YUMMLY_SEARCH_RESULT, isYummlySearchResult);
         args.putString(ARG_EXTRA_SERVING, extra_serving);
-        args.putString(ARG_RECIPE_AS_JSON, recipeAsJson);
-        args.putBoolean(ARG_IS_USER_RECIPE, isUserRecipe);
         fragment.setArguments(args);
 
         return fragment;
@@ -108,7 +103,7 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
                              Bundle savedInstanceState) {
 
         setRetainInstance(true);
-
+        appStateManager = AppStateManager.getInstance();
         this.inflater = inflater;
 
         if (view != null) return view;
@@ -160,47 +155,46 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
         cardView_privateNotes = (CardView) view.findViewById(R.id.cardView_notes);
         cardView_energy = (CardView) view.findViewById(R.id.cardView_energy);
 
+        Bundle args = getArguments();
+        mRecipeId = args.getString(ARG_RECIPE_ID);
+        extra_serving = args.getString(ARG_EXTRA_SERVING);
+        isYummlySearchResult = args.getBoolean(ARG_IS_YUMMLY_SEARCH_RESULT);
+
         if (savedInstanceState == null) {
 
-            Bundle args = getArguments();
-
-            extra_serving = getArguments().getString(ARG_EXTRA_SERVING);
-            isUserRecipe = args.getBoolean(ARG_IS_USER_RECIPE);
-
-            if (isUserRecipe) {
-                mUserRecipe = new Gson().fromJson(getArguments().getString(ARG_EXTRA_SERVING), UserRecipe.class);
-                recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(mUserRecipe.imageByteArrayAsString);
-                setUserRecipeDetailsView();
-            } else {
+            if (isYummlySearchResult) {
                 // Going to show an online search result
 
-                mYummlyRecipe = new Gson().fromJson(getArguments().getString(ARG_EXTRA_SERVING), YummlyRecipe.class);
-                recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(mYummlyRecipe.imageByteArrayAsString);
-                setYummlyRecipeDetailsView();
+                recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
+                        appStateManager.yummlySearchResult.imageByteArrayAsString);
+
+            } else {
+                // Going to show a recipe from the lists
+
+                if (appStateManager.user.isUserRecipe(mRecipeId)) {
+                    recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
+                            appStateManager.user.userRecipes.get(mRecipeId).imageByteArrayAsString);
+
+                } else {
+                    recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
+                            appStateManager.user.yummlyRecipes.get(mRecipeId).imageByteArrayAsString);
+                }
             }
         } else {
             // Restore recipe details from the state
-
-            extra_serving = savedInstanceState.getString("extra_serving");
-            isUserRecipe = savedInstanceState.getBoolean("isUserRecipe");
             recipeImage = savedInstanceState.getParcelable("recipeImage");
 
             if (recipeImage == null) {
                 textView_noImageAvailable.setVisibility(View.VISIBLE);
             }
+        }
 
-            if (isUserRecipe) {
-                mUserRecipe = new Gson().fromJson(savedInstanceState.getString("mUserRecipeAsJson"), UserRecipe.class);
-            } else {
-                mYummlyRecipe = new Gson().fromJson(savedInstanceState.getString("mYummlyRecipeAsJson"), YummlyRecipe.class);
-            }
-
-            if (mUserRecipe != null) {
-                setUserRecipeDetailsView();
-            } else if (mYummlyRecipe != null) {
-                setYummlyRecipeDetailsView();
-            }
-
+        if (isYummlySearchResult) {
+            setYummlyRecipeDetailsView(appStateManager.yummlySearchResult);
+        } else if (appStateManager.user.isUserRecipe(mRecipeId)) {
+            setUserRecipeDetailsView();
+        } else {
+            setYummlyRecipeDetailsView(appStateManager.user.yummlyRecipes.get(mRecipeId));
         }
 
         AppHelper.hideTheKeyboard(getActivity());
@@ -213,6 +207,8 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 
     private void setUserRecipeDetailsView() {
 
+        UserRecipe userRecipe = appStateManager.user.userRecipes.get(mRecipeId);
+
         imageView_recipeImage.setImageBitmap(recipeImage);
 
         if (recipeImage == null) {
@@ -221,40 +217,40 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
             AnimationHelper.animateViewFadingIn(getContext(), imageView_recipeImage, 2500, 0);
         }
 
-        if (mUserRecipe.recipeTitle != null) {
-            editText_recipeTitle.setText(mUserRecipe.recipeTitle.isEmpty() ? getString(R.string.no_info) : mUserRecipe.recipeTitle);
+        if (userRecipe.recipeTitle != null) {
+            editText_recipeTitle.setText(userRecipe.recipeTitle.isEmpty() ? getString(R.string.no_info) : userRecipe.recipeTitle);
         }
 
-        String stringTotalTime = AppHelper.getStringRecipeTotalTime(getContext(), mUserRecipe.cookingTime);
+        String stringTotalTime = AppHelper.getStringRecipeTotalTime(getContext(), userRecipe.cookingTime);
         textView_recipeTime.setText(stringTotalTime);
 
-        if (mUserRecipe.yield == 0) {
+        if (userRecipe.yield == 0) {
             textView_servings.setText(getString(R.string.no_info));
         } else {
-            textView_servings.setText(mUserRecipe.yield + " " + getString(R.string.servings));
+            textView_servings.setText(userRecipe.yield + " " + getString(R.string.servings));
         }
 
-        if (mUserRecipe.author == null) {
+        if (userRecipe.author == null) {
             textView_recipeAuthor.setText(getString(R.string.no_info));
         } else {
-            textView_recipeAuthor.setText(getString(R.string.from) + "\n" + mUserRecipe.author);
+            textView_recipeAuthor.setText(getString(R.string.from) + "\n" + userRecipe.author);
         }
 
-        fillList(layout_ingredientsList, mUserRecipe.ingredientsList);
-        fillList(layout_categoriesList, AppHelper.getTranslatedCategoriesList(getContext(), mUserRecipe.categoriesList));
+        fillList(layout_ingredientsList, userRecipe.ingredientsList);
+        fillList(layout_categoriesList, AppHelper.getTranslatedCategoriesList(getContext(), userRecipe.categoriesList));
 
-        setFavouriteImage(mUserRecipe._id);
+        setFavouriteImage(userRecipe._id);
 
-        if (mUserRecipe.instructions.isEmpty()) {
+        if (userRecipe.instructions.isEmpty()) {
             editText_instructions.setText(getString(R.string.no_info));
         } else {
-            editText_instructions.setText(mUserRecipe.instructions);
+            editText_instructions.setText(userRecipe.instructions);
         }
 
-        if (mUserRecipe.notes.isEmpty()) {
+        if (userRecipe.notes.isEmpty()) {
             editText_notes.setText(getString(R.string.no_info));
         } else {
-            editText_notes.setText(mUserRecipe.notes);
+            editText_notes.setText(userRecipe.notes);
         }
 
         floatingButton_getInstructions.setVisibility(View.GONE);
@@ -263,7 +259,7 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 
 //-------------------------------------------------------------------------------------------------
 
-    private void setYummlyRecipeDetailsView() {
+    private void setYummlyRecipeDetailsView(YummlyRecipe yummlyRecipe) {
 
         imageView_recipeImage.setImageBitmap(recipeImage);
 
@@ -274,35 +270,35 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
             AnimationHelper.animateViewFadingIn(getContext(), imageView_recipeImage, 2500, 0);
         }
 
-        if (mYummlyRecipe.recipeTitle != null) {
-            editText_recipeTitle.setText(mYummlyRecipe.recipeTitle.isEmpty() ? getString(R.string.no_info) : mYummlyRecipe.recipeTitle);
+        if (yummlyRecipe.recipeTitle != null) {
+            editText_recipeTitle.setText(yummlyRecipe.recipeTitle.isEmpty() ? getString(R.string.no_info) : yummlyRecipe.recipeTitle);
         }
 
-        String stringTotalTime = AppHelper.getStringRecipeTotalTime(getContext(), mYummlyRecipe.cookingTime);
+        String stringTotalTime = AppHelper.getStringRecipeTotalTime(getContext(), yummlyRecipe.cookingTime);
         textView_recipeTime.setText(stringTotalTime);
 
-        if (mYummlyRecipe.yield == 0) {
+        if (yummlyRecipe.yield == 0) {
             textView_servings.setText(getString(R.string.no_info));
         } else {
-            textView_servings.setText(mYummlyRecipe.yield + " " + getString(R.string.servings));
+            textView_servings.setText(yummlyRecipe.yield + " " + getString(R.string.servings));
         }
 
-        if (mYummlyRecipe.author == null) {
+        if (yummlyRecipe.author == null) {
             textView_recipeAuthor.setText(getString(R.string.no_info));
         } else {
-            textView_recipeAuthor.setText(getString(R.string.from) + "\n" + mYummlyRecipe.author);
+            textView_recipeAuthor.setText(getString(R.string.from) + "\n" + yummlyRecipe.author);
         }
 
-        if (mYummlyRecipe.energy == 0) {
+        if (yummlyRecipe.energy == 0) {
             textView_totalCalories.setText(getString(R.string.no_info));
         } else {
-            textView_totalCalories.setText(mYummlyRecipe.energy + " " + getString(R.string.calories));
+            textView_totalCalories.setText(yummlyRecipe.energy + " " + getString(R.string.calories));
         }
 
-        fillList(layout_ingredientsList, mYummlyRecipe.ingredientsList);
-        fillList(layout_categoriesList, AppHelper.getTranslatedCategoriesList(getContext(), mYummlyRecipe.categoriesList));
+        fillList(layout_ingredientsList, yummlyRecipe.ingredientsList);
+        fillList(layout_categoriesList, AppHelper.getTranslatedCategoriesList(getContext(), yummlyRecipe.categoriesList));
 
-        setFavouriteImage(mYummlyRecipe._id);
+        setFavouriteImage(yummlyRecipe._id);
 
         floatingButton_getInstructions.setVisibility(View.VISIBLE);
         AnimationHelper.animateViewFadingIn(getContext(), floatingButton_getInstructions, 1500, 0);
@@ -376,15 +372,8 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
     public void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
 
-        outState.putString("extra_serving", extra_serving);
-        outState.putBoolean("isUserRecipe", isUserRecipe);
         outState.putParcelable("recipeImage", recipeImage);
 
-        if (isUserRecipe) {
-            outState.putString("mUserRecipeAsJson", new Gson().toJson(mUserRecipe));
-        } else {
-            outState.putString("mYummlyRecipeAsJson", new Gson().toJson(mYummlyRecipe, YummlyRecipe.class));
-        }
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -395,8 +384,8 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
         switch (v.getId()) {
 
             case R.id.floatingButton_getInstructions:
-
-                mListener.onGetInstructionsClick(mYummlyRecipe.url);
+                YummlyRecipe yummlyRecipe = appStateManager.user.yummlyRecipes.get(mRecipeId);
+                mListener.onGetInstructionsClick(yummlyRecipe.url);
 
                 break;
         }

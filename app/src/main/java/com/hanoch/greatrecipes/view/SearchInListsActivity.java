@@ -235,7 +235,8 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
         if (getResources().getBoolean(R.bool.isTablet)) {
 
-            if (getResources().getBoolean(R.bool.isSmallTablet)) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            if (getResources().getBoolean(R.bool.isSmallTablet))
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
         } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
@@ -272,22 +273,13 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
         User user = appStateManager.user;
 
-        boolean isUserRecipe;
-        if (user.userRecipes.containsKey(recipeId)) {
-            isUserRecipe = true;
-        } else if (user.yummlyRecipes.containsKey(recipeId)) {
-            isUserRecipe = false;
-        } else {
-            return;
-        }
-
         AppHelper.hideKeyboardFrom(this, getCurrentFocus());
 
         ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
 
         if (extra_serving == null) {
 
-            if (isUserRecipe && user.userRecipes.get(recipeId).userId.equals(user._id)) {
+            if (user.isUserRecipe(recipeId) && user.userRecipes.get(recipeId).userId.equals(user._id)) {
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
             }
 
@@ -337,7 +329,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 }
 
                 mRecipeId = recipeId;
-                recipeReviewFragment = RecipeReviewFragment2.newInstance(recipeId, isUserRecipe, extra_serving);
+                recipeReviewFragment = RecipeReviewFragment2.newInstance(recipeId, extra_serving);
 
                 ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
                 ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
@@ -348,7 +340,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
             mRecipeId = recipeId;
 
-            recipeReviewFragment = RecipeReviewFragment2.newInstance(recipeId, isUserRecipe, extra_serving);
+            recipeReviewFragment = RecipeReviewFragment2.newInstance(recipeId, extra_serving);
             ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left, R.anim.slide_in_right, R.anim.slide_out_right);
             ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
             ft.addToBackStack(null);
@@ -363,15 +355,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
     public void onListItemChecked(MyListFragment listFragment, String recipeId, boolean isChecked) {
         this.listFragment = listFragment;
         User user = appStateManager.user;
-
-        boolean isUserRecipe;
-        if (user.userRecipes.containsKey(recipeId)) {
-            isUserRecipe = true;
-        } else if (user.yummlyRecipes.containsKey(recipeId)) {
-            isUserRecipe = false;
-        } else {
-            return;
-        }
 
         if (isChecked) {
             // Unchecked item was checked
@@ -398,7 +381,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
                     fm.popBackStack();
                 }
 
-                Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, isUserRecipe, extra_serving);
+                Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, extra_serving);
                 ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
                 ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
                 ft.commit();
@@ -464,7 +447,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
                         fm.popBackStack();
                     }
 
-                    Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, isUserRecipe, null);
+                    Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, null);
                     ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
                     ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
                     ft.commit();
@@ -509,48 +492,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
         toolbarButtons.add(AppConsts.ToolbarButtons.CLOSE_WEBVIEW);
         setToolbarAttr(toolbarButtons, AppConsts.ToolbarColor.ACCENT, null);
     }
-
-//-------------------------------------------------------------------------------------------------
-
-//    @Override
-//    public void onRecipeWasSaved(long recipeId) {
-//        // After saving the changes- review the recipe
-//
-//        mRecipeId = recipeId;
-//
-//        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
-//
-//        getWindow().setSoftInputMode(WindowManager.LayoutParams.SOFT_INPUT_ADJUST_PAN);
-//
-//        FragmentManager fm = getSupportFragmentManager();
-//        FragmentTransaction ft = fm.beginTransaction();
-//
-//        Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(recipeId, null, extra_serving);
-//        ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_up);
-//
-//        if (getResources().getBoolean(R.bool.isTablet)) {
-//            ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
-//        } else {
-//            ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
-//        }
-//
-//        ft.commit();
-//
-//        ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
-//
-//        Recipe recipe = dbManager.queryRecipeObjectById(recipeId);
-//
-//        toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
-//
-//        if (recipe.favouriteIndex == AppConsts.FavouriteIndex.NOT_FAVOURITE) {
-//            toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
-//
-//        } else {
-//            toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
-//        }
-//
-//        setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
-//    }
 
 //-------------------------------------------------------------------------------------------------
 
@@ -623,16 +564,9 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
     public ArrayList<Integer> getAndHideAllToolbarButtons() {
 
-        if (fadingInAnimationsList != null) {
-            // Cancelling all buttons "fading-in" animations, if exists
-            for (ObjectAnimator animation : fadingInAnimationsList) {
-                animation.cancel();
-            }
-        }
+        AnimationHelper.cancelAllFadingInAnimations(fadingInAnimationsList);
 
         ArrayList<Integer> buttons = new ArrayList<>();
-
-        //buttons.add(AppConsts.ToolbarButtons.SEARCH);
 
         buttons.add(AppConsts.ToolbarButtons.SAVE);
         buttons.add(AppConsts.ToolbarButtons.EDIT);
@@ -795,7 +729,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
                 Intent resultIntent = new Intent();
                 resultIntent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, mRecipeId);
-                resultIntent.putExtra(AppConsts.Extras.EXTRA_IS_USER_RECIPE, appStateManager.user.isUserRecipe(mRecipeId));
                 setResult(Activity.RESULT_OK, resultIntent);
                 finish();
 
@@ -884,13 +817,17 @@ public class SearchInListsActivity extends AppCompatActivity implements
             ArrayList<UserRecipe> userRecipes = new ArrayList<>();
             ArrayList<YummlyRecipe> yummlyRecipes = new ArrayList<>();
 
-            appStateManager.user.userRecipes.values().stream()
-                    .filter(userRecipe -> checkedItemsId.contains(userRecipe._id))
-                    .forEach(userRecipes::add);
+            for (UserRecipe userRecipe : appStateManager.user.userRecipes.values()) {
+                if (checkedItemsId.contains(userRecipe._id)) {
+                    userRecipes.add(userRecipe);
+                }
+            }
 
-            appStateManager.user.yummlyRecipes.values().stream()
-                    .filter(yummlyRecipe -> checkedItemsId.contains(yummlyRecipe._id))
-                    .forEach(yummlyRecipes::add);
+            for (YummlyRecipe yummlyRecipe : appStateManager.user.yummlyRecipes.values()) {
+                if (checkedItemsId.contains(yummlyRecipe._id)) {
+                    yummlyRecipes.add(yummlyRecipe);
+                }
+            }
 
             dbManager.updateUserRecipes(userRecipes, yummlyRecipes, BusConsts.ACTION_DELETE);
 
@@ -1052,7 +989,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
             FragmentManager fm = getSupportFragmentManager();
             FragmentTransaction ft = fm.beginTransaction();
 
-            Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, true, null);
+            Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, null);
             ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_up);
 
             if (getResources().getBoolean(R.bool.isTablet)) {
@@ -1190,7 +1127,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
             AnimationHelper.animateViewFadingOut(this, layout_logo, 500, 0);
         }
 
-        Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, true, null);
+        Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, null);
 
         ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
         ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);

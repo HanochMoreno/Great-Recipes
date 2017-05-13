@@ -149,13 +149,12 @@ public class PreferencesActivity extends AppCompatActivity
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         SharedPreferences.Editor editor = sp.edit();
         editor.putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, true);
-        editor.commit();
+        editor.apply();
 
         FragmentManager fm = getFragmentManager();
         FragmentTransaction ft = fm.beginTransaction();
 
         PreferencesFragment preferencesFragment = PreferencesFragment.newInstance();
-//        ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right, R.anim.slide_in_left, R.anim.slide_out_left);
         ft.replace(R.id.layout_container, preferencesFragment, AppConsts.Fragments.PREFERENCES);
         ft.commit();
 

@@ -31,8 +31,6 @@ public class DrawerItemAdapterLimited extends ArrayAdapter<ObjectDrawerItem> {
     @Override
     public View getView(int position, View convertView, ViewGroup parent) {
 
-        //View listItem = convertView;
-
         View listItem;
 
         LayoutInflater inflater = ((Activity) mContext).getLayoutInflater();
@@ -80,22 +78,6 @@ public class DrawerItemAdapterLimited extends ArrayAdapter<ObjectDrawerItem> {
 
         return listItem;
     }
-
-    /*@Override
-    public boolean areAllItemsEnabled() {
-        return false;
-    }
-
-    @Override
-    public boolean isEnabled(int position) {
-        if (position == 4 || position == 11 || position == 12) {
-            return true;
-
-        } else {
-            // Unavailable search-filter for free-trial mode
-            return false;
-        }
-    }*/
 
     @Override
     public boolean areAllItemsEnabled() {

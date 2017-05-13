@@ -2,6 +2,7 @@ package com.hanoch.greatrecipes.view.adapters;
 
 import android.app.Activity;
 import android.content.Context;
+import android.support.annotation.NonNull;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -15,7 +16,7 @@ import com.hanoch.greatrecipes.model.ObjectDrawerItem;
 public class DrawerItemAdapter extends ArrayAdapter<ObjectDrawerItem> {
 
     private Context mContext;
-    private ObjectDrawerItem data[] = null;
+    private ObjectDrawerItem[] data = null;
 
     public DrawerItemAdapter(Context mContext, ObjectDrawerItem[] data) {
         super(mContext, R.layout.listitem_drawer, data);
@@ -24,10 +25,9 @@ public class DrawerItemAdapter extends ArrayAdapter<ObjectDrawerItem> {
         this.data = data;
     }
 
+    @NonNull
     @Override
-    public View getView(int position, View convertView, ViewGroup parent) {
-
-        //View listItem = convertView;
+    public View getView(int position, View convertView, @NonNull ViewGroup parent) {
 
         View listItem;
 

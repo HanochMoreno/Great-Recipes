@@ -1,9 +1,12 @@
 package com.hanoch.greatrecipes.view;
 
+import android.app.ProgressDialog;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.os.PersistableBundle;
+import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
@@ -12,7 +15,10 @@ import android.widget.TextView;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
+import com.hanoch.greatrecipes.AppStateManager;
+import com.hanoch.greatrecipes.BuildConfig;
 import com.hanoch.greatrecipes.R;
+import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnLoginEvent;
 import com.hanoch.greatrecipes.bus.OnRegisterEvent;
@@ -40,6 +46,9 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     private String password;
     private String retypePassword;
     private MyBus bus;
+    private View til_email;
+    private View til_retypePassword;
+    private ProgressDialog progressDialog;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -55,13 +64,30 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
         dbManager = GreatRecipesDbManager.getInstance();
         bus = MyBus.getInstance();
+        bus.register(this);
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle(getString(R.string.loading_info));
+        progressDialog.setMessage(getString(R.string.please_wait));
+        progressDialog.setCancelable(false);
+        progressDialog.setCanceledOnTouchOutside(false);
 
         action = AppConsts.Actions.ACTION_REGISTER;
+
+        til_email = findViewById(R.id.til_email);
+        til_retypePassword = findViewById(R.id.til_retypePassword);
 
         et_email = (EditText) findViewById(R.id.et_email);
         et_username = (EditText) findViewById(R.id.et_username);
         et_password = (EditText) findViewById(R.id.et_password);
         et_retypePassword = (EditText) findViewById(R.id.et_retypePassword);
+
+        if (BuildConfig.DEBUG) {
+            et_email.setText("han001@test.com");
+            et_username.setText("han001");
+            et_password.setText("123456");
+            et_retypePassword.setText("123456");
+        }
 
         tv_alreadyHaveAnAccountOrRegister = (TextView) findViewById(R.id.tv_alreadyHaveAnAccountOrRegister);
 
@@ -77,17 +103,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    protected void onResume() {
-        super.onResume();
-
-        bus.register(this);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
-    protected void onPause() {
-        super.onPause();
+    protected void onDestroy() {
+        super.onDestroy();
 
         bus.unregister(this);
     }
@@ -97,6 +114,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
         super.onSaveInstanceState(outState, outPersistentState);
+
+        outState.putString("action", action);
 
         outState.putString("email", email);
         outState.putString("username", username);
@@ -109,6 +128,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
+
+        action = savedInstanceState.getString("action", action);
 
         email = savedInstanceState.getString("email", email);
         username = savedInstanceState.getString("username", username);
@@ -143,8 +164,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //-------------------------------------------------------------------------------------------------
 
     private void showLoginScreen() {
-        et_email.setVisibility(View.GONE);
-        et_retypePassword.setVisibility(View.GONE);
+        til_email.setVisibility(View.GONE);
+        til_retypePassword.setVisibility(View.GONE);
         tv_alreadyHaveAnAccountOrRegister.setText(R.string.open_account_for_free);
         action = AppConsts.Actions.ACTION_LOGIN;
     }
@@ -152,8 +173,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //-------------------------------------------------------------------------------------------------
 
     private void showRegisterScreen() {
-        et_email.setVisibility(View.VISIBLE);
-        et_retypePassword.setVisibility(View.VISIBLE);
+        til_email.setVisibility(View.VISIBLE);
+        til_retypePassword.setVisibility(View.VISIBLE);
         tv_alreadyHaveAnAccountOrRegister.setText(R.string.already_have_an_account);
         action = AppConsts.Actions.ACTION_REGISTER;
     }
@@ -162,6 +183,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
     private void onContinueButtonClicked() {
         if (areFieldsValidated()) {
+            progressDialog.show();
 
             switch (action) {
 
@@ -243,7 +265,18 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //-------------------------------------------------------------------------------------------------
 
     private void onLoginOrRegisterResponse(boolean isSuccess, Throwable t) {
+        progressDialog.dismiss();
+
         if (isSuccess) {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = sp.edit();
+
+            User user = AppStateManager.getInstance().user;
+
+            editor.putString(AppConsts.SharedPrefs.USER_NAME, user.username);
+            editor.putString(AppConsts.SharedPrefs.PASSWORD, user.password);
+            editor.apply();
+
             Intent intent = new Intent(this, MainActivity.class);
             startActivity(intent);
             finish();

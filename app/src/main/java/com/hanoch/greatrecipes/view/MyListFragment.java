@@ -27,8 +27,8 @@ import com.hanoch.greatrecipes.view.adapters.RecipesListAdapter2;
 import java.util.ArrayList;
 
 
-public abstract class MyListFragment extends Fragment
-        implements AdapterView.OnItemClickListener,
+public abstract class MyListFragment extends Fragment implements
+        AdapterView.OnItemClickListener,
         View.OnClickListener,
         AdapterView.OnItemLongClickListener {
 
@@ -70,19 +70,11 @@ public abstract class MyListFragment extends Fragment
 
 //-------------------------------------------------------------------------------------------------
 
-    @Override
-    public void onCreate(@Nullable Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-
-        appStateManager = AppStateManager.getInstance();
-    }
-
-//-------------------------------------------------------------------------------------------------
-
     @Nullable
     @Override
     public View onCreateView(LayoutInflater inflater, @Nullable ViewGroup container, @Nullable Bundle savedInstanceState) {
         this.savedInstanceState = savedInstanceState;
+        appStateManager = AppStateManager.getInstance();
 
         checkedItemsIdList = new ArrayList<>();
 
@@ -134,8 +126,8 @@ public abstract class MyListFragment extends Fragment
         }
 
         adapter = new RecipesListAdapter2(getActivity(), recipesList, checkedItemsIdList, selectedId);
-
         listView_recipes.setAdapter(adapter);
+        refreshAdapter();
 
         return view;
     }

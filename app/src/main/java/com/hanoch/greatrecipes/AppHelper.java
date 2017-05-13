@@ -15,7 +15,6 @@ import android.view.inputmethod.InputMethodManager;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
-import com.hanoch.greatrecipes.model.AllergenAndDiet;
 
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -142,34 +141,6 @@ public abstract class AppHelper {
 
 //-------------------------------------------------------------------------------------------------
 
-    public static String getTranslatedCategoryName(Context context, String categoryName) {
-
-        String translatedCategoryName;
-
-        HashMap<String, String> categoriesTranslationMap = new HashMap<>();
-
-        categoriesTranslationMap.put(AppConsts.Category.NO_INFO, context.getString(R.string.no_info));
-
-        categoriesTranslationMap.put(AppConsts.Category.MAIN_DISHES, context.getString(R.string.main_dishes));
-        categoriesTranslationMap.put(AppConsts.Category.DESSERTS, context.getString(R.string.desserts));
-        categoriesTranslationMap.put(AppConsts.Category.SIDE_DISHES, context.getString(R.string.side_dishes));
-        categoriesTranslationMap.put(AppConsts.Category.LUNCH_AND_SNACKS, context.getString(R.string.lunch_and_snacks));
-        categoriesTranslationMap.put(AppConsts.Category.APPETIZERS, context.getString(R.string.appetizers));
-        categoriesTranslationMap.put(AppConsts.Category.SALADS, context.getString(R.string.salads));
-        categoriesTranslationMap.put(AppConsts.Category.BREADS, context.getString(R.string.breads));
-        categoriesTranslationMap.put(AppConsts.Category.BREAKFAST_AND_BRUNCH, context.getString(R.string.breakfast_and_brunch));
-        categoriesTranslationMap.put(AppConsts.Category.SOUPS, context.getString(R.string.soups));
-        categoriesTranslationMap.put(AppConsts.Category.BEVERAGES, context.getString(R.string.beverages));
-        categoriesTranslationMap.put(AppConsts.Category.CONDIMENTS_AND_SAUCES, context.getString(R.string.condiments_and_sauces));
-        categoriesTranslationMap.put(AppConsts.Category.COCKTAILS, context.getString(R.string.cocktails));
-
-        translatedCategoryName = (categoriesTranslationMap.get(categoryName));
-
-        return translatedCategoryName;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
     public static String getTranslatedServingTypeName(Context context, String servingTypeName) {
 
         String translatedServingTypeName;
@@ -192,110 +163,106 @@ public abstract class AppHelper {
 
 //-------------------------------------------------------------------------------------------------
 
-    public static AllergenAndDiet[] getAllDietList(Context context) {
-
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-
-        AllergenAndDiet[] dietList = new AllergenAndDiet[3];
-
-        AllergenAndDiet diet = new AllergenAndDiet(
-                2, AppConsts.Filters.VEGAN, "390^Vegan", sp.getBoolean(AppConsts.SharedPrefs.VEGAN, false));
-        dietList[0] = diet;
-
-        diet = new AllergenAndDiet(
-                3, AppConsts.Filters.VEGETARIAN, "387^Lacto-ovo vegetarian", sp.getBoolean(AppConsts.SharedPrefs.VEGETARIAN, false));
-        dietList[1] = diet;
-
-        diet = new AllergenAndDiet(
-                4, AppConsts.Filters.PALEO, "403^Paleo", sp.getBoolean(AppConsts.SharedPrefs.PALEO, false));
-        dietList[2] = diet;
-
-        return dietList;
-    }
+//    public static AllergenAndDiet[] getAllDietList() {
+//
+//        AllergenAndDiet[] dietList = new AllergenAndDiet[3];
+//
+//        AllergenAndDiet diet = new AllergenAndDiet(
+//                2, AppConsts.Filters.VEGAN, "390^Vegan");
+//        dietList[0] = diet;
+//
+//        diet = new AllergenAndDiet(
+//                3, AppConsts.Filters.VEGETARIAN, "387^Lacto-ovo vegetarian");
+//        dietList[1] = diet;
+//
+//        diet = new AllergenAndDiet(
+//                4, AppConsts.Filters.PALEO, "403^Paleo");
+//        dietList[2] = diet;
+//
+//        return dietList;
+//    }
 
 //-------------------------------------------------------------------------------------------------
 
-    public static AllergenAndDiet[] getAllAllergiesList(Context context) {
-
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(context);
-
-        AllergenAndDiet[] allergiesList = new AllergenAndDiet[9];
-
-        AllergenAndDiet allergen = new AllergenAndDiet(
-                6, AppConsts.Filters.DAIRY_FREE, "396^Dairy-Free", sp.getBoolean(AppConsts.SharedPrefs.DAIRY_FREE, false));
-        allergiesList[0] = allergen;
-
-        allergen = new AllergenAndDiet(
-                7, AppConsts.Filters.EGG_FREE, "397^Egg-Free", sp.getBoolean(AppConsts.SharedPrefs.EGG_FREE, false));
-        allergiesList[1] = allergen;
-
-        allergen = new AllergenAndDiet(
-                8, AppConsts.Filters.GLUTEN_FREE, "393^Gluten-Free", sp.getBoolean(AppConsts.SharedPrefs.GLUTEN_FREE, false));
-        allergiesList[2] = allergen;
-
-        allergen = new AllergenAndDiet(
-                9, AppConsts.Filters.PEANUT_FREE, "394^Peanut-Free", sp.getBoolean(AppConsts.SharedPrefs.PEANUT_FREE, false));
-        allergiesList[3] = allergen;
-
-        allergen = new AllergenAndDiet(
-                10, AppConsts.Filters.SEAFOOD_FREE, "398^Seafood-Free", sp.getBoolean(AppConsts.SharedPrefs.SEAFOOD_FREE, false));
-        allergiesList[4] = allergen;
-
-        allergen = new AllergenAndDiet(
-                11, AppConsts.Filters.SESAME_FREE, "399^Sesame-Free", sp.getBoolean(AppConsts.SharedPrefs.SESAME_FREE, false));
-        allergiesList[5] = allergen;
-
-        allergen = new AllergenAndDiet(
-                12, AppConsts.Filters.SOY_FREE, "400^Soy-Free", sp.getBoolean(AppConsts.SharedPrefs.SOY_FREE, false));
-        allergiesList[6] = allergen;
-
-        allergen = new AllergenAndDiet(
-                13, AppConsts.Filters.TREE_NUT_FREE, "395^Tree Nut-Free", sp.getBoolean(AppConsts.SharedPrefs.TREE_NUT_FREE, false));
-        allergiesList[7] = allergen;
-
-        allergen = new AllergenAndDiet(
-                14, AppConsts.Filters.WHEAT_FREE, "392^Wheat-Free", sp.getBoolean(AppConsts.SharedPrefs.WHEAT_FREE, false));
-        allergiesList[8] = allergen;
-
-        return allergiesList;
-    }
+//    public static AllergenAndDiet[] getAllAllergiesList() {
+//
+//        AllergenAndDiet[] allergiesList = new AllergenAndDiet[9];
+//
+//        AllergenAndDiet allergen = new AllergenAndDiet(
+//                6, AppConsts.Filters.DAIRY_FREE, "396^Dairy-Free");
+//        allergiesList[0] = allergen;
+//
+//        allergen = new AllergenAndDiet(
+//                7, AppConsts.Filters.EGG_FREE, "397^Egg-Free");
+//        allergiesList[1] = allergen;
+//
+//        allergen = new AllergenAndDiet(
+//                8, AppConsts.Filters.GLUTEN_FREE, "393^Gluten-Free");
+//        allergiesList[2] = allergen;
+//
+//        allergen = new AllergenAndDiet(
+//                9, AppConsts.Filters.PEANUT_FREE, "394^Peanut-Free");
+//        allergiesList[3] = allergen;
+//
+//        allergen = new AllergenAndDiet(
+//                10, AppConsts.Filters.SEAFOOD_FREE, "398^Seafood-Free");
+//        allergiesList[4] = allergen;
+//
+//        allergen = new AllergenAndDiet(
+//                11, AppConsts.Filters.SESAME_FREE, "399^Sesame-Free");
+//        allergiesList[5] = allergen;
+//
+//        allergen = new AllergenAndDiet(
+//                12, AppConsts.Filters.SOY_FREE, "400^Soy-Free");
+//        allergiesList[6] = allergen;
+//
+//        allergen = new AllergenAndDiet(
+//                13, AppConsts.Filters.TREE_NUT_FREE, "395^Tree Nut-Free");
+//        allergiesList[7] = allergen;
+//
+//        allergen = new AllergenAndDiet(
+//                14, AppConsts.Filters.WHEAT_FREE, "392^Wheat-Free");
+//        allergiesList[8] = allergen;
+//
+//        return allergiesList;
+//    }
 
 //-------------------------------------------------------------------------------------------------
 
-    public static ArrayList<AllergenAndDiet> getUserAllowedDietPrefsList(Context context) {
-
-        ArrayList<AllergenAndDiet> allowedDietList = new ArrayList<>();
-
-        AllergenAndDiet[] dietList = getAllDietList(context);
-
-        for (int i = 0; i < dietList.length; i++) {
-
-            if (dietList[i].isChosen) {
-                allowedDietList.add(dietList[i]);
-            }
-        }
-
-        return allowedDietList;
-    }
+//    public static ArrayList<AllergenAndDiet> getUserAllowedDietPrefsList(Context context) {
+//
+//        ArrayList<AllergenAndDiet> allowedDietList = new ArrayList<>();
+//
+//        AllergenAndDiet[] dietList = getAllDietList(context);
+//
+//        for (int i = 0; i < dietList.length; i++) {
+//
+//            if (dietList[i].isChosen) {
+//                allowedDietList.add(dietList[i]);
+//            }
+//        }
+//
+//        return allowedDietList;
+//    }
 
 //-------------------------------------------------------------------------------------------------
 
-    public static ArrayList<AllergenAndDiet> getUserAllowedAllergiesPrefsList(Context context) {
-
-        ArrayList<AllergenAndDiet> allowedAllergiesList = new ArrayList<>();
-
-        AllergenAndDiet[] allergiesList = getAllAllergiesList(context);
-
-        for (int i = 0; i < allergiesList.length; i++) {
-
-            if (allergiesList[i].isChosen) {
-
-                allowedAllergiesList.add(allergiesList[i]);
-            }
-        }
-
-        return allowedAllergiesList;
-    }
+//    public static ArrayList<AllergenAndDiet> getUserAllowedAllergiesPrefsList(Context context) {
+//
+//        ArrayList<AllergenAndDiet> allowedAllergiesList = new ArrayList<>();
+//
+//        AllergenAndDiet[] allergiesList = getAllAllergiesList(context);
+//
+//        for (int i = 0; i < allergiesList.length; i++) {
+//
+//            if (allergiesList[i].isChosen) {
+//
+//                allowedAllergiesList.add(allergiesList[i]);
+//            }
+//        }
+//
+//        return allowedAllergiesList;
+//    }
 
 //-------------------------------------------------------------------------------------------------
 

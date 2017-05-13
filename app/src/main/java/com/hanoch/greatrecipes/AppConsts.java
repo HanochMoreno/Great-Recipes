@@ -4,6 +4,8 @@ package com.hanoch.greatrecipes;
 import android.Manifest;
 import android.util.SparseArray;
 
+import com.hanoch.greatrecipes.model.AllergenAndDiet;
+
 public class AppConsts {
 
 //    public static final int NEW_RECIPE = -1;
@@ -14,6 +16,26 @@ public class AppConsts {
 
     public static final String SIGNATURE_BASE_64_LICENSE_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoB80Hzf+3qCy8wVXsCtqPh7BjTtFIfolF28MYCOYqLDb2nsiET+V599lG8KDw/JhgQd6SfvknoVWEnV4uuMXdBpeJh+hKW4bJgAQhtpg6P27pg9C+g08tP1/R9nq+vnNONoY3T+wTmhTn0mqeAijqbghke6Rx5hJv6RPgt60KYFnxmwAffk6xg9HRn9rLNP3v1okhfOqNzQjXyrs+h5Mr2S5WaU52tewGZ1W4258ts2B8bxca0adJNl4R86lxS3GliFnS9NA/tb7BEo3SAJzFoQ9GSnWCABXwNkX/1UtH1BTTkps1imjQRBT921qjWMBM2caHZGAXZB8FmejwtVcFwIDAQAB";
     public static final String SKU_PREMIUM = "great_recipes_premium_access";
+
+//-------------------------------------------------------------------------------------------------
+
+    public static final AllergenAndDiet[] ALLERGENS_AND_DIET_LIST = {
+            // Diet
+            new AllergenAndDiet(true, 2, AppConsts.Filters.VEGAN, "390^Vegan"),
+            new AllergenAndDiet(true, 3, AppConsts.Filters.VEGETARIAN, "387^Lacto-ovo vegetarian"),
+            new AllergenAndDiet(true, 4, AppConsts.Filters.PALEO, "403^Paleo"),
+
+            // Allergens
+            new AllergenAndDiet(false, 6, AppConsts.Filters.DAIRY_FREE, "396^Dairy-Free"),
+            new AllergenAndDiet(false, 7, AppConsts.Filters.EGG_FREE, "397^Egg-Free"),
+            new AllergenAndDiet(false, 8, AppConsts.Filters.GLUTEN_FREE, "393^Gluten-Free"),
+            new AllergenAndDiet(false, 9, AppConsts.Filters.PEANUT_FREE, "394^Peanut-Free"),
+            new AllergenAndDiet(false, 10, AppConsts.Filters.SEAFOOD_FREE, "398^Seafood-Free"),
+            new AllergenAndDiet(false, 11, AppConsts.Filters.SESAME_FREE, "399^Sesame-Free"),
+            new AllergenAndDiet(false, 12, AppConsts.Filters.SOY_FREE, "400^Soy-Free"),
+            new AllergenAndDiet(false, 13, AppConsts.Filters.TREE_NUT_FREE, "395^Tree Nut-Free"),
+            new AllergenAndDiet(false, 14, AppConsts.Filters.WHEAT_FREE, "392^Wheat-Free"),
+    };
 
 //-------------------------------------------------------------------------------------------------
 
@@ -63,7 +85,6 @@ public class AppConsts {
     public class Extras {
 
         public static final String EXTRA_RECIPE_ID = "extra_recipeId";
-        public static final String EXTRA_IS_USER_RECIPE = "extra_isUserRecipe";
 
         public static final String EXTRA_SERVING = "extra_serving";
         public static final String ADD_SERVING = "addServing";
@@ -214,17 +235,10 @@ public class AppConsts {
 
 //-------------------------------------------------------------------------------------------------
 
-    public static class FavouriteIndex {
-
-        public static final int NOT_FAVOURITE = 0;
-        public static final int FAVOURITE = 1;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
     public class ApiAccess {
 
         public static final String YUMMLY_BASE_URL = "http://api.yummly.com/v1/api/";
+        public static final String GREAT_RECIPES_BASE_URL = "http://10.0.0.4:3000";
         public static final String YUMMLY_KEY_SEARCH = YUMMLY_BASE_URL + "recipes";
         public static final String YUMMLY_RECIPE_SEARCH = YUMMLY_BASE_URL + "recipe/";
 

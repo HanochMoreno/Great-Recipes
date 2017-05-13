@@ -12,7 +12,9 @@ import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.GenericRecipe;
+import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.api.great_recipes_api.User;
+import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 
 import java.util.ArrayList;
 
@@ -104,13 +106,17 @@ public class SearchInListsFragment2 extends MyListFragment {
 
         ArrayList<GenericRecipe> searchResults = new ArrayList<>();
 
-        user.userRecipes.values().stream()
-                .filter(userRecipe -> userRecipe.recipeTitle.contains(keyToSearch))
-                .forEach(searchResults::add);
+        for (UserRecipe recipe : user.userRecipes.values()) {
+            if (recipe.recipeTitle.contains(keyToSearch)) {
+                searchResults.add(recipe);
+            }
+        }
 
-        user.yummlyRecipes.values().stream()
-                .filter(yummlyRecipe -> yummlyRecipe.recipeTitle.contains(keyToSearch))
-                .forEach(searchResults::add);
+        for (YummlyRecipe recipe : user.yummlyRecipes.values()) {
+            if (recipe.recipeTitle.contains(keyToSearch)) {
+                searchResults.add(recipe);
+            }
+        }
 
         adapter.refreshList(searchResults);
     }

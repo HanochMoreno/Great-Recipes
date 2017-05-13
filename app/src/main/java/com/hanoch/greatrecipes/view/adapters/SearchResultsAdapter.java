@@ -46,7 +46,7 @@ public class SearchResultsAdapter extends CursorAdapter {
     @Override
     public void bindView(View view, final Context context, Cursor cursor) {
 
-        final long resultId = cursor.getLong(cursor.getColumnIndex(RecipesContract.SearchResults._ID));
+        final String resultYummlyId = cursor.getString(cursor.getColumnIndex(RecipesContract.SearchResults.YUMMLY_ID));
         String resultTitle = cursor.getString(cursor.getColumnIndex(RecipesContract.SearchResults.TITLE));
         String resultImageUrl = cursor.getString(cursor.getColumnIndex(RecipesContract.SearchResults.IMAGE_URL));
 
@@ -57,7 +57,8 @@ public class SearchResultsAdapter extends CursorAdapter {
         final ImageView imageView_resultImage = (ImageView) view.findViewById(R.id.imageView_resultImage);
         final TextView textView_noImageAvailable = (TextView) view.findViewById(R.id.textView_noImageAvailable);
 
-        Bitmap bitmap = ImageStorage.getImageBitmapByName(context, AppConsts.Images.RESULT_IMAGE_PREFIX + resultId);
+        String imageName = AppConsts.Images.RESULT_IMAGE_PREFIX + resultYummlyId;
+        Bitmap bitmap = ImageStorage.getImageBitmapByName(context, imageName);
         if (bitmap != null) {
             imageView_resultImage.setImageBitmap(bitmap);
             textView_noImageAvailable.setVisibility(View.INVISIBLE);
@@ -67,7 +68,6 @@ public class SearchResultsAdapter extends CursorAdapter {
             Target target = new Target() {
                 @Override
                 public void onBitmapLoaded(Bitmap bitmap, Picasso.LoadedFrom from) {
-                    String imageName = AppConsts.Images.RESULT_IMAGE_PREFIX + resultId;
                     ImageStorage.saveToSdCard(context, bitmap, imageName);
                     imageView_resultImage.setImageBitmap(bitmap);
                     textView_noImageAvailable.setVisibility(View.INVISIBLE);

@@ -10,4 +10,5 @@ public final class BusConsts {
     public static final int ACTION_EDIT = 2;
     public static final int ACTION_DELETE = 3;
     public static final int ACTION_TOGGLE_FAVOURITE = 4;
+    public static final int ACTION_TOGGLE_VEGAN_OR_ALLERGEN = 5;
 }
