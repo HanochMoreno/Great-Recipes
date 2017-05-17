@@ -80,9 +80,8 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
     private ArrayList<ObjectAnimator> fadingInAnimationsList;
 
-    private String extra_serving;
+    private boolean isAddServingAction;
     private String mRecipeId;
-    private YummlyRecipe yummlyRecipe;
     private String mResultYummlyId;
 
     /**
@@ -123,7 +122,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         mResultYummlyId = "";
 
         Intent prevIntent = getIntent();
-        extra_serving = prevIntent.getStringExtra(AppConsts.Extras.EXTRA_SERVING);
+        isAddServingAction = prevIntent.getAction() != null;
 
         activityToolbarTitle = getString(R.string.online_search);
         toolbarTitle = activityToolbarTitle;
@@ -300,7 +299,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
         mResultYummlyId = savedInstanceState.getString("mResultYummlyId");
         mRecipeId = savedInstanceState.getString("mRecipeId");
-        extra_serving = savedInstanceState.getString("extra_serving");
+        isAddServingAction = savedInstanceState.getBoolean("isAddServingAction");
 
         if (getResources().getBoolean(R.bool.isTablet)) {
             int layout_logoVisibility = savedInstanceState.getInt("layout_logoVisibility");
@@ -318,7 +317,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
         outState.putString("mResultYummlyId", mResultYummlyId);
         outState.putString("mRecipeId", mRecipeId);
-        outState.putString("extra_serving", extra_serving);
+        outState.putBoolean("isAddServingAction", isAddServingAction);
 
         if (getResources().getBoolean(R.bool.isTablet)) {
 
@@ -509,7 +508,12 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             case R.id.action_addServing:
 
                 Intent resultIntent = new Intent();
-                resultIntent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, mRecipeId);
+
+                Bundle extras = new Bundle();
+                extras.putString(AppConsts.Extras.RECIPE_ID, appStateManager.yummlySearchResult._id);
+                extras.putBoolean(AppConsts.Extras.EXTRA_IS_USER_RECIPE, false);
+                resultIntent.putExtras(extras);
+
                 setResult(Activity.RESULT_OK, resultIntent);
                 finish();
 
@@ -543,7 +547,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 progressDialog.show();
 
                 ArrayList<YummlyRecipe> yummlyRecipes = new ArrayList<>();
-                yummlyRecipes.add(yummlyRecipe);
+                yummlyRecipes.add(appStateManager.yummlySearchResult);
 
                 dbManager.updateUserRecipes(null, yummlyRecipes, BusConsts.ACTION_ADD_NEW);
                 break;
@@ -758,7 +762,11 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
             FragmentManager fm = getSupportFragmentManager();
             FragmentTransaction ft = fm.beginTransaction();
-            Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(searchResult._id, true, extra_serving);
+
+            Fragment recipeReviewFragment;
+            int action = isAddServingAction ? AppConsts.Actions.ADD_SERVING_FROM_YUMMLY : AppConsts.Actions.REVIEW_YUMMLY_ONLINE;
+
+            recipeReviewFragment = RecipeReviewFragment2.newInstance(AppConsts.Actions.REVIEW_YUMMLY_ONLINE, searchResult._id);
 
             if (getResources().getBoolean(R.bool.isTablet)) {
                 // tablet
@@ -772,7 +780,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                     return;
                 }
 
-                yummlyRecipe = searchResult;
                 mResultYummlyId = searchResult.yummlyId;
                 mRecipeId = searchResult._id;
 
@@ -786,7 +793,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
                 ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
 
-                if (extra_serving != null && extra_serving.equals(AppConsts.Extras.ADD_SERVING)) {
+                if (isAddServingAction) {
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING);
                 } else {
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_LIST);
@@ -806,6 +813,16 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
                 // Remove the Hamburger icon
                 mDrawerToggle.setDrawerIndicatorEnabled(false);
+
+                ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
+
+                if (action == AppConsts.Actions.ADD_SERVING_FROM_YUMMLY) {
+                    toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING);
+                } else {
+                    toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_LIST);
+                }
+
+                setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
             }
 
             ft.commit();
@@ -837,6 +854,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
     @Subscribe
     public void onEvent(OnUpdateUserRecipesEvent event) {
         // After updating the user's yummlyRecipes in the database
+        progressDialog.dismiss();
         View rootView = findViewById(android.R.id.content);
 
         if (event.isSuccess) {
@@ -844,7 +862,13 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             switch (event.action) {
 
                 case BusConsts.ACTION_ADD_NEW:
-                    if (extra_serving == null) {
+                    if (isAddServingAction) {
+                        // The user chose a yummly recipe as a serving
+                        Intent resultIntent = new Intent();
+                        resultIntent.putExtra(AppConsts.Extras.RECIPE_ID, mRecipeId);
+                        setResult(Activity.RESULT_OK, resultIntent);
+                        finish();
+                    } else {
                         // The user saved a yummly recipe to his online list
 
                         AppHelper.hideKeyboardFrom(this, getCurrentFocus());
@@ -870,13 +894,6 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
                         AppHelper.showSnackBar(rootView, R.string.added_to_online_list, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
                         setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
-
-                    } else {
-                        // The user chose a yummly recipe as a serving
-                        Intent resultIntent = new Intent();
-                        resultIntent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, mRecipeId);
-                        setResult(Activity.RESULT_OK, resultIntent);
-                        finish();
                     }
 
                     break;
@@ -999,11 +1016,10 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
             ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
 
-            if (extra_serving == null) {
-                toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_LIST);
-
-            } else {
+            if (isAddServingAction) {
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING);
+            } else {
+                toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_LIST);
             }
 
             setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);

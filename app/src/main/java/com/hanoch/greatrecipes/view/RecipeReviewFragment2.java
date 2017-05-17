@@ -26,6 +26,7 @@ import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
+import com.hanoch.greatrecipes.model.Serving;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 
 import java.util.ArrayList;
@@ -33,9 +34,8 @@ import java.util.ArrayList;
 
 public class RecipeReviewFragment2 extends Fragment implements View.OnClickListener {
 
-    private static final String ARG_EXTRA_SERVING = "ARG_EXTRA_SERVING";
-    private static final String ARG_RECIPE_ID = "ARG_RECIPE_ID";
-    private static final String ARG_IS_YUMMLY_SEARCH_RESULT = "ARG_IS_YUMMLY_SEARCH_RESULT";
+    private static final String ARG_ACTION = "ARG_ACTION";
+    private static final String ARG_EXTRA = "ARG_EXTRA";
 
     private FragmentRecipeReviewListener mListener;
 
@@ -61,10 +61,20 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 
     private boolean viewsHaveBeenDestroyed;
 
-    private boolean isYummlySearchResult;
-    private String mRecipeId;
+    /**
+     * Optional actions for this fragment:
+     * REVIEW_YUMMLY_RECIPE
+     * REVIEW_USER_RECIPE
+     * REVIEW_SHARED_USER_RECIPE
+     * REVIEW_YUMMLY_ONLINE
+     * REVIEW_SERVING
+     */
+    private int action;
 
-    private String extra_serving;
+    /**
+     * Could be a recipeId or servingId
+     */
+    private String extra;
 
     private Bitmap recipeImage;
     private AppStateManager appStateManager;
@@ -78,19 +88,11 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 
 //-------------------------------------------------------------------------------------------------
 
-    public static RecipeReviewFragment2 newInstance(String recipeId, String extra_serving) {
-        return newInstance(recipeId, false, extra_serving) ;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    public static RecipeReviewFragment2 newInstance(String recipeId, boolean isYummlySearchResult, String extra_serving) {
-
+    public static RecipeReviewFragment2 newInstance(int action, String extra) {
         RecipeReviewFragment2 fragment = new RecipeReviewFragment2();
         Bundle args = new Bundle();
-        args.putString(ARG_RECIPE_ID, recipeId);
-        args.putBoolean(ARG_IS_YUMMLY_SEARCH_RESULT, isYummlySearchResult);
-        args.putString(ARG_EXTRA_SERVING, extra_serving);
+        args.putInt(ARG_ACTION, action);
+        args.putString(ARG_EXTRA, extra);
         fragment.setArguments(args);
 
         return fragment;
@@ -156,32 +158,42 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
         cardView_energy = (CardView) view.findViewById(R.id.cardView_energy);
 
         Bundle args = getArguments();
-        mRecipeId = args.getString(ARG_RECIPE_ID);
-        extra_serving = args.getString(ARG_EXTRA_SERVING);
-        isYummlySearchResult = args.getBoolean(ARG_IS_YUMMLY_SEARCH_RESULT);
+        action = args.getInt(ARG_ACTION);
+        extra = args.getString(ARG_EXTRA);
 
         if (savedInstanceState == null) {
 
-            if (isYummlySearchResult) {
+            if (action == AppConsts.Actions.REVIEW_YUMMLY_ONLINE) {
                 // Going to show an online search result
 
                 recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
                         appStateManager.yummlySearchResult.imageByteArrayAsString);
 
+            } else if (action == AppConsts.Actions.REVIEW_SERVING) {
+                Serving serving = appStateManager.user.servings.get(extra);
+                if (serving.isUserRecipe) {
+                    recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
+                            serving.userRecipe.imageByteArrayAsString);
+                } else {
+                    recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
+                            serving.yummlyRecipe.imageByteArrayAsString);
+                }
             } else {
                 // Going to show a recipe from the lists
 
-                if (appStateManager.user.isUserRecipe(mRecipeId)) {
+                if (appStateManager.user.isUserRecipe(extra)) {
                     recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
-                            appStateManager.user.userRecipes.get(mRecipeId).imageByteArrayAsString);
+                            appStateManager.user.userRecipes.get(extra).imageByteArrayAsString);
 
                 } else {
                     recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
-                            appStateManager.user.yummlyRecipes.get(mRecipeId).imageByteArrayAsString);
+                            appStateManager.user.yummlyRecipes.get(extra).imageByteArrayAsString);
                 }
             }
         } else {
             // Restore recipe details from the state
+            action = savedInstanceState.getInt("action");
+            extra = savedInstanceState.getString("extra");
             recipeImage = savedInstanceState.getParcelable("recipeImage");
 
             if (recipeImage == null) {
@@ -189,12 +201,19 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
             }
         }
 
-        if (isYummlySearchResult) {
+        if (action == AppConsts.Actions.REVIEW_YUMMLY_ONLINE) {
             setYummlyRecipeDetailsView(appStateManager.yummlySearchResult);
-        } else if (appStateManager.user.isUserRecipe(mRecipeId)) {
-            setUserRecipeDetailsView();
+        } else if (action == AppConsts.Actions.REVIEW_SERVING) {
+            Serving serving = appStateManager.user.servings.get(extra);
+            if (serving.isUserRecipe) {
+                setUserRecipeDetailsView(serving.userRecipe);
+            } else {
+                setYummlyRecipeDetailsView(serving.yummlyRecipe);
+            }
+        } else if (appStateManager.user.isUserRecipe(extra)) {
+            setUserRecipeDetailsView(appStateManager.user.userRecipes.get(extra));
         } else {
-            setYummlyRecipeDetailsView(appStateManager.user.yummlyRecipes.get(mRecipeId));
+            setYummlyRecipeDetailsView(appStateManager.user.yummlyRecipes.get(extra));
         }
 
         AppHelper.hideTheKeyboard(getActivity());
@@ -205,9 +224,7 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 
 //-------------------------------------------------------------------------------------------------
 
-    private void setUserRecipeDetailsView() {
-
-        UserRecipe userRecipe = appStateManager.user.userRecipes.get(mRecipeId);
+    private void setUserRecipeDetailsView(UserRecipe userRecipe) {
 
         imageView_recipeImage.setImageBitmap(recipeImage);
 
@@ -373,7 +390,8 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
         super.onSaveInstanceState(outState);
 
         outState.putParcelable("recipeImage", recipeImage);
-
+        outState.putInt("action", action);
+        outState.putString("extra", extra);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -384,7 +402,15 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
         switch (v.getId()) {
 
             case R.id.floatingButton_getInstructions:
-                YummlyRecipe yummlyRecipe = appStateManager.user.yummlyRecipes.get(mRecipeId);
+                YummlyRecipe yummlyRecipe;
+                if (action == AppConsts.Actions.REVIEW_YUMMLY_ONLINE) {
+                    yummlyRecipe = appStateManager.user.yummlyRecipes.get(extra);
+                } else if (action == AppConsts.Actions.REVIEW_SERVING) {
+                    yummlyRecipe = appStateManager.user.servings.get(extra).yummlyRecipe;
+                } else {
+//                    action == AppConsts.Actions.REVIEW_YUMMLY_RECIPE
+                    yummlyRecipe = appStateManager.yummlySearchResult;
+                }
                 mListener.onGetInstructionsClick(yummlyRecipe.url);
 
                 break;

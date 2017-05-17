@@ -116,7 +116,11 @@ public class SplashActivity extends AppCompatActivity {
                 handler.post(() -> progressBar.setProgress(progressStatus));
 
                 try {
-                    Thread.sleep(50);
+                    if (isGotLoginResponse) {
+                        Thread.sleep(30);
+                    } else {
+                        Thread.sleep(200);
+                    }
                 } catch (InterruptedException e) {
                     e.printStackTrace();
                 }

@@ -32,7 +32,8 @@ public abstract class MyListFragment extends Fragment implements
         View.OnClickListener,
         AdapterView.OnItemLongClickListener {
 
-    protected static final String ARG_EXTRA_SERVING = "serving";
+//    protected static final String ARG_EXTRA_SERVING = "serving";
+    protected static final String ARG_ACTION = "ARG_ACTION";
 
     protected ListFragmentListener mListListener;
 
@@ -48,7 +49,7 @@ public abstract class MyListFragment extends Fragment implements
 
     protected Bundle savedInstanceState;
 
-    protected String extra_serving;
+    protected int action;
     protected String selectedId;
     protected AppStateManager appStateManager;
 
@@ -60,9 +61,9 @@ public abstract class MyListFragment extends Fragment implements
 
 //-------------------------------------------------------------------------------------------------
 
-    public static MyListFragment newInstance(MyListFragment fragment, String extra_serving) {
+    public static MyListFragment newInstance(MyListFragment fragment, int action) {
         Bundle args = new Bundle();
-        args.putString(ARG_EXTRA_SERVING, extra_serving);
+        args.putInt(ARG_ACTION, action);
         fragment.setArguments(args);
 
         return fragment;
@@ -95,9 +96,9 @@ public abstract class MyListFragment extends Fragment implements
         floatingButton_addRecipe = (FloatingActionButton) view.findViewById(R.id.floatingButton_addRecipe);
         floatingButton_addRecipe.setOnClickListener(this);
 
-        extra_serving = getArguments().getString(ARG_EXTRA_SERVING);
+        action = getArguments().getInt(ARG_ACTION);
 
-        if (extra_serving == null) {
+        if (action != AppConsts.Actions.ADD_SERVING_FROM_LISTS) {
             listView_recipes.setOnItemLongClickListener(this);
 
         } else {
@@ -108,6 +109,7 @@ public abstract class MyListFragment extends Fragment implements
         if (savedInstanceState != null) {
 
             selectedId = savedInstanceState.getString("selectedId");
+            action = savedInstanceState.getInt("action");
 
             boolean isListViewEnabled = savedInstanceState.getBoolean("isListViewEnabled");
             listView_recipes.setEnabled(isListViewEnabled);
@@ -163,6 +165,7 @@ public abstract class MyListFragment extends Fragment implements
         outState.putBoolean("isListViewEnabled", listView_recipes.isEnabled());
         outState.putParcelable("listViewState", listView_recipes.onSaveInstanceState());
 
+        outState.putInt("action", action);
         outState.putString("selectedId", selectedId);
         outState.putStringArrayList("checkedItemsIdList", checkedItemsIdList);
 

@@ -146,8 +146,6 @@ public class ServingsListAdapter extends BaseAdapter {
 
         String translatedServingTypeName = AppHelper.getTranslatedServingTypeName(context, serving.servingType);
         holder.tv_servingType.setText(translatedServingTypeName);
-        holder.iv_image.setVisibility(View.INVISIBLE);
-        holder.tv_noImageAvailable.setVisibility(View.INVISIBLE);
 
         view.setTag(holder);
 
@@ -190,15 +188,15 @@ public class ServingsListAdapter extends BaseAdapter {
 
     public void getYummlyRecipeFromGreatRecipesApi(ViewHolder holder, Serving serving) {
 
-//        Action1<YummlyRecipe> subscriber = (recipe -> onRecipeDataReceived(holder, serving, recipe));
-//
-//        Single<YummlyRecipe> getYummlyRecipe =
-//                ApiProvider.getGreatRecipesApi().getYummlyRecipe(serving.recipeId);
-//
-//        getYummlyRecipe
-//                .subscribeOn(Schedulers.io())
-//                .observeOn(AndroidSchedulers.mainThread())
-//                .subscribe(subscriber);
+        Action1<YummlyRecipe> subscriber = (recipe -> onRecipeDataReceived(holder, serving, recipe));
+
+        Single<YummlyRecipe> getYummlyRecipe =
+                ApiProvider.getGreatRecipesApi().getYummlyRecipe(serving.recipeId);
+
+        getYummlyRecipe
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -208,8 +206,6 @@ public class ServingsListAdapter extends BaseAdapter {
             holder.tv_recipeTitle.setText(recipe.recipeTitle);
             String translatedServingTypeName = AppHelper.getTranslatedServingTypeName(context, serving.servingType);
             holder.tv_servingType.setText(translatedServingTypeName);
-            holder.iv_image.setVisibility(View.INVISIBLE);
-            holder.tv_noImageAvailable.setVisibility(View.INVISIBLE);
 
             if (selectedIds.contains(serving.servingId)) {
                 holder.iv_checked.setVisibility(View.VISIBLE);
@@ -218,10 +214,12 @@ public class ServingsListAdapter extends BaseAdapter {
 
             Bitmap image = ImageStorage.convertByteArrayAsStringAsToBitmap(recipe.imageByteArrayAsString);
             if (image == null) {
+                holder.iv_image.setVisibility(View.INVISIBLE);
                 holder.tv_noImageAvailable.setVisibility(View.VISIBLE);
             } else {
-                holder.iv_image.setImageBitmap(image);
+                holder.tv_noImageAvailable.setVisibility(View.INVISIBLE);
                 holder.iv_image.setVisibility(View.VISIBLE);
+                holder.iv_image.setImageBitmap(image);
             }
         }
     }

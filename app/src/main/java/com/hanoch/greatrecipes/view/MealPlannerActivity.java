@@ -3,6 +3,7 @@ package com.hanoch.greatrecipes.view;
 import android.animation.ObjectAnimator;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
@@ -31,13 +32,13 @@ import android.widget.RadioGroup;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.gson.Gson;
 import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.bus.BusConsts;
+import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnUpdateServingsListEvent;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
@@ -75,17 +76,18 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
     private ArrayList<String> selectedItemsId;
 
-    private int listSize;
-    private Serving mServing;
     private String servingType;
 
-    private ArrayList<ServingType> servingTypesList = new ArrayList<>();;
+    private ArrayList<ServingType> servingTypesList = new ArrayList<>();
+    ;
 
     private int toolbarColor;
     private String toolbarTitle;
 
     private GreatRecipesDbManager dbManager;
     private AppStateManager appStateManager;
+    private ProgressDialog progressDialog;
+    private MyBus bus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -94,6 +96,14 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         dbManager = GreatRecipesDbManager.getInstance();
         appStateManager = AppStateManager.getInstance();
+        bus = MyBus.getInstance();
+        bus.register(this);
+
+        progressDialog = new ProgressDialog(this);
+        progressDialog.setTitle(getString(R.string.loading_info));
+        progressDialog.setMessage(getString(R.string.please_wait));
+        progressDialog.setCancelable(false);
+        progressDialog.setCanceledOnTouchOutside(false);
 
         selectedItemsId = new ArrayList<>();
 
@@ -143,7 +153,8 @@ public class MealPlannerActivity extends AppCompatActivity implements
         super.onResume();
 
         if (getResources().getBoolean(R.bool.isTablet)) {
-            if (getResources().getBoolean(R.bool.isSmallTablet)) setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            if (getResources().getBoolean(R.bool.isSmallTablet))
+                setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
 
         } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
@@ -170,10 +181,17 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         selectedItemsId = savedInstanceState.getStringArrayList("selectedItemsId");
         servingType = savedInstanceState.getString("servingType");
-        mServing = new Gson().fromJson(savedInstanceState.getString("servingAsJson"), Serving.class);
-
-        listSize = savedInstanceState.getInt("listSize");
     }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+
+        bus.unregister(this);
+    }
+
 
 //-------------------------------------------------------------------------------------------------
 
@@ -186,13 +204,8 @@ public class MealPlannerActivity extends AppCompatActivity implements
             outState.putInt("layout_logoVisibility", layout_logoVisibility);
         }
 
-        if (mServing != null) {
-            outState.putString("servingAsJson", new Gson().toJson(mServing, Serving.class));
-        }
-
         outState.putStringArrayList("selectedItemsId", selectedItemsId);
         outState.putString("servingType", servingType);
-        outState.putInt("listSize", listSize);
         outState.putInt("toolbarColor", toolbarColor);
         outState.putString("toolbarTitle", toolbarTitle);
 
@@ -222,7 +235,6 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
     @Override
     public void onListSizeChanged(int listSize) {
-        this.listSize = listSize;
 
         if (toolbar_clearServingsList != null) {
 
@@ -257,31 +269,23 @@ public class MealPlannerActivity extends AppCompatActivity implements
         if (getResources().getBoolean(R.bool.isTablet)) {
             // tablet
 
-            recipeReviewFragment = fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
-
-            if (mServing != null && mServing.recipeId.equals(serving.recipeId) && recipeReviewFragment != null) {
-                return;
-            }
-
             if (layout_logo.getVisibility() == View.VISIBLE) {
                 AnimationHelper.animateViewFadingOut(this, layout_logo, 500, 0);
             }
-
-            mServing = serving;
 
             Fragment webViewFragment = fm.findFragmentByTag(AppConsts.Fragments.WEB_VIEW);
             if (webViewFragment != null) {
                 onBackPressed();
             }
 
-            recipeReviewFragment = RecipeReviewFragment2.newInstance(serving.recipeId, AppConsts.Extras.REVIEW_SERVING);
+            recipeReviewFragment = RecipeReviewFragment2.newInstance(AppConsts.Actions.REVIEW_SERVING, serving.servingId);
             ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
             ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
 
         } else {
             // phone
 
-            recipeReviewFragment = RecipeReviewFragment2.newInstance(serving.recipeId, AppConsts.Extras.REVIEW_SERVING);
+            recipeReviewFragment = RecipeReviewFragment2.newInstance(AppConsts.Actions.REVIEW_SERVING, serving.servingId);
             ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left, R.anim.slide_in_right, R.anim.slide_out_right);
             ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
             ft.addToBackStack(null);
@@ -308,7 +312,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
             selectedItemsId.remove(serving.servingId);
 
             if (selectedItemsId.isEmpty()) {
-                updateClearListButtonVisibility(listSize);
+                updateClearListButtonVisibility(listFragment.adapter.getCount());
             }
         }
 
@@ -535,7 +539,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
         if (savedInstanceState == null) {
 
-            if (listSize > 0) {
+            if (listFragment != null && listFragment.adapter != null && listFragment.adapter.getCount() > 0) {
                 toolbar_clearServingsList.setVisible(true);
             }
 
@@ -557,7 +561,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
             } else {
                 // Specific case: the user uses phone and got in the activity in landscape mode
 
-                if (listSize > 0) {
+                if (listFragment.adapter.getCount() > 0) {
                     toolbar_clearServingsList.setVisible(true);
                 }
             }
@@ -601,7 +605,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
     private void openOnlineSearchActivity() {
 
         Intent intent = new Intent(this, OnlineSearchActivity.class);
-        intent.putExtra(AppConsts.Extras.EXTRA_SERVING, AppConsts.Extras.ADD_SERVING);
+        intent.setAction(String.valueOf(AppConsts.Actions.ADD_SERVING_FROM_YUMMLY));
         startActivityForResult(intent, REQ_CODE_ONLINE_SEARCH_ACTIVITY);
     }
 
@@ -610,7 +614,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
     private void openListsActivity() {
 
         Intent intent = new Intent(this, RecipesListsActivity.class);
-        intent.putExtra(AppConsts.Extras.EXTRA_SERVING, AppConsts.Extras.ADD_SERVING);
+        intent.setAction(String.valueOf(AppConsts.Actions.ADD_SERVING_FROM_LISTS));
         startActivityForResult(intent, REQ_CODE_LISTS_ACTIVITY);
     }
 
@@ -624,11 +628,14 @@ public class MealPlannerActivity extends AppCompatActivity implements
         if (resultCode == Activity.RESULT_OK) {
             // The request code doesn't matter in this case
 
-            String recipeId = data.getStringExtra(AppConsts.Extras.EXTRA_RECIPE_ID);
+            progressDialog.show();
+            Bundle extras = data.getExtras();
+            String recipeId = extras.getString(AppConsts.Extras.RECIPE_ID);
+            boolean isUserRecipe = extras.getBoolean(AppConsts.Extras.EXTRA_IS_USER_RECIPE);
 
             Serving serving = new Serving();
             serving.recipeId = recipeId;
-            serving.isUserRecipe = appStateManager.user.isUserRecipe(recipeId);
+            serving.isUserRecipe = isUserRecipe;
             serving.servingId = String.valueOf(System.currentTimeMillis());
             serving.servingType = servingType;
 
@@ -642,20 +649,20 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
     @Subscribe
     public void onEvent(OnUpdateServingsListEvent event) {
+        progressDialog.dismiss();
+
         if (event.isSuccess) {
             FragmentManager fm = getSupportFragmentManager();
             ServingsListFragment2 servingsListFragment = (ServingsListFragment2) fm.findFragmentByTag(AppConsts.Fragments.SERVINGS_LIST);
             servingsListFragment.adapter.refreshAdapter();
+            Serving mServing = appStateManager.user.getLastServing();
 
             if (getResources().getBoolean(R.bool.isTablet)) {
                 switch (event.action) {
                     case BusConsts.ACTION_ADD_NEW:
                         onListSizeChanged(appStateManager.user.servings.size());
-                        mServing = appStateManager.user.servings.get(mServing.servingId);
-                        showRecipeDetails(mServing);
-                        break;
+                        // no break...
                     case BusConsts.ACTION_EDIT:
-                        mServing = appStateManager.user.servings.get(mServing.servingId);
                         showRecipeDetails(mServing);
                         break;
                     case BusConsts.ACTION_DELETE:
@@ -789,7 +796,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
             listFragment.backToDefaultDisplay(true);
 
-            updateClearListButtonVisibility(listSize);
+            updateClearListButtonVisibility(listFragment.adapter.getCount());
 
         } else {
 
@@ -804,7 +811,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
                     // Always on phone
                     // The user was watching the recipe URL
 
-                    updateClearListButtonVisibility(listSize);
+                    updateClearListButtonVisibility(listFragment.adapter.getCount());
 
                 } else {
                     // Tablet only

@@ -5,7 +5,6 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -13,7 +12,7 @@ import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
 import android.os.ParcelFileDescriptor;
-import android.preference.PreferenceManager;
+import android.support.annotation.NonNull;
 import android.support.v4.app.Fragment;
 import android.view.ContextMenu;
 import android.view.LayoutInflater;
@@ -40,12 +39,10 @@ import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
-import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 import com.hanoch.greatrecipes.utilities.PicUtils;
 
-import java.io.File;
 import java.io.FileDescriptor;
 import java.util.ArrayList;
 
@@ -79,7 +76,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
     private boolean viewsHaveBeenDestroyed;
 
-    //    private DbManager dbManager;
     private OnFragmentEditRecipeListener mListener;
     private LayoutInflater inflater;
 
@@ -92,30 +88,26 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
     private Bitmap recipeImage;
     private Bitmap selectedImage;
 
-    private Dialog loginDialog;
-    private Dialog servingsDialog;
-    private Dialog totalTimeDialog;
+    private Dialog servingsPicker;
+    private Dialog cookingTimePicker;
 
     private ProgressDialog progressDialog;
-    private GreatRecipesDbManager dbManager;
     private AppStateManager appStateManager;
 
 //-------------------------------------------------------------------------------------------------
 
     public interface OnFragmentEditRecipeListener {
 
-        void onCancelLoginButtonClicked();
-
         void onAddCategoriesClick(ArrayList<String> categoriesList);
     }
 
 //-------------------------------------------------------------------------------------------------
 
-    public static EditRecipeFragment2 newInstance(String action, String recipeId) {
+    public static EditRecipeFragment2 newInstance(int action, String recipeId) {
 
         EditRecipeFragment2 fragment = new EditRecipeFragment2();
         Bundle args = new Bundle();
-        args.putString(ARG_ACTION, action);
+        args.putInt(ARG_ACTION, action);
         args.putString(ARG_RECIPE_ID, recipeId);
         fragment.setArguments(args);
         return fragment;
@@ -127,9 +119,8 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        dbManager = GreatRecipesDbManager.getInstance();
         appStateManager = AppStateManager.getInstance();
-        
+
         progressDialog = new ProgressDialog(getActivity());
         progressDialog.setTitle(getString(R.string.loading_info));
         progressDialog.setMessage(getString(R.string.please_wait));
@@ -149,27 +140,17 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
             if (savedInstanceState != null) {
 
-                boolean loginDialogIsShowing = savedInstanceState.getBoolean("loginDialogIsShowing");
-                if (loginDialogIsShowing) {
-                    String currentEmail = savedInstanceState.getString("currentEmail");
-                    String currentUsername = savedInstanceState.getString("currentUsername");
-                    String currentPassword = savedInstanceState.getString("currentPassword");
-                    String currentRetypePassword = savedInstanceState.getString("currentRetypePassword");
-                    showLoginDialog(currentEmail, currentUsername, currentPassword, currentRetypePassword);
+                boolean servingsPickerIsShowing = savedInstanceState.getBoolean("servingsPickerIsShowing");
+                if (servingsPickerIsShowing) {
+                    int currentServingsValue = savedInstanceState.getInt("currentServingsValue");
+                    showServingsChooserDialog(currentServingsValue);
 
                 } else {
-                    boolean servingDialogIsShowing = savedInstanceState.getBoolean("servingDialogIsShowing");
-                    if (servingDialogIsShowing) {
-                        int currentServingsValue = savedInstanceState.getInt("currentServingsValue");
-                        showServingsChooserDialog(currentServingsValue);
-
-                    } else {
-                        boolean totalTimeDialogIsShowing = savedInstanceState.getBoolean("totalTimeDialogIsShowing");
-                        if (totalTimeDialogIsShowing) {
-                            int currentHoursValue = savedInstanceState.getInt("currentHoursValue");
-                            int currentMinutesValue = savedInstanceState.getInt("currentMinutesValue");
-                            showTimeChooserDialog(currentHoursValue, currentMinutesValue);
-                        }
+                    boolean cookingTimePickerIsShowing = savedInstanceState.getBoolean("cookingTimePickerIsShowing");
+                    if (cookingTimePickerIsShowing) {
+                        int currentHoursValue = savedInstanceState.getInt("currentHoursValue");
+                        int currentMinutesValue = savedInstanceState.getInt("currentMinutesValue");
+                        showTimeChooserDialog(currentHoursValue, currentMinutesValue);
                     }
                 }
             }
@@ -226,16 +207,11 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         if (savedInstanceState == null) {
 
             Bundle args = getArguments();
-            mRecipeId = args.getString(ARG_RECIPE_ID, null);
+            mRecipeId = args.getString(ARG_RECIPE_ID);
             User user = appStateManager.user;
 
             if (mRecipeId == null || !user.userRecipes.containsKey(mRecipeId)) {
                 // Adding a new recipe to 'My Own Recipes' list
-
-                // TODO: cannot happen, unless in test mode:
-                if (user.username == null) {
-                    showLoginDialog("", "", "", "");
-                }
 
                 userRecipe = new UserRecipe();
             } else {
@@ -250,7 +226,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
                 isFavourite = appStateManager.isRecipeFavourite(mRecipeId);
             }
         } else {
-
             userRecipe = new Gson().fromJson(savedInstanceState.getString("userRecipeAsJson"), UserRecipe.class);
             mRecipeId = savedInstanceState.getString("mRecipeId");
             imageWasDeleted = savedInstanceState.getBoolean("imageWasDeleted");
@@ -371,38 +346,18 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         outState.putBoolean("imageWasDeleted", imageWasDeleted);
         outState.putBoolean("isFavourite", isFavourite);
 
-        if (loginDialog != null && loginDialog.isShowing()) {
-            outState.putBoolean("loginDialogIsShowing", true);
+        if (servingsPicker != null && servingsPicker.isShowing()) {
+            outState.putBoolean("servingsPickerIsShowing", true);
 
-            EditText editText_email = (EditText) loginDialog.findViewById(R.id.editText_email);
-            EditText editText_username = (EditText) loginDialog.findViewById(R.id.editText_username);
-            EditText editText_password = (EditText) loginDialog.findViewById(R.id.editText_password);
-            EditText editText_repeatPassword = (EditText) loginDialog.findViewById(R.id.editText_repeatPassword);
-
-            String currentEmail = editText_email.getText().toString();
-            outState.putString("currentEmail", currentEmail);
-
-            String currentUsername = editText_username.getText().toString();
-            outState.putString("currentUsername", currentUsername);
-
-            String currentPassword = editText_password.getText().toString();
-            outState.putString("currentPassword", currentPassword);
-
-            String currentRetypePassword = editText_repeatPassword.getText().toString();
-            outState.putString("currentRetypePassword", currentRetypePassword);
-
-        } else if (servingsDialog != null && servingsDialog.isShowing()) {
-            outState.putBoolean("servingDialogIsShowing", true);
-
-            NumberPicker servingsPicker = (NumberPicker) servingsDialog.findViewById(R.id.numberPicker_servings);
+            NumberPicker servingsPicker = (NumberPicker) this.servingsPicker.findViewById(R.id.numberPicker_servings);
             int currentServingsValue = servingsPicker.getValue();
             outState.putInt("currentServingsValue", currentServingsValue);
 
-        } else if (totalTimeDialog != null && totalTimeDialog.isShowing()) {
-            outState.putBoolean("totalTimeDialogIsShowing", true);
+        } else if (cookingTimePicker != null && cookingTimePicker.isShowing()) {
+            outState.putBoolean("cookingTimePickerIsShowing", true);
 
-            NumberPicker hoursPicker = (NumberPicker) totalTimeDialog.findViewById(R.id.numberPicker_hours);
-            NumberPicker minutesPicker = (NumberPicker) totalTimeDialog.findViewById(R.id.numberPicker_minutes);
+            NumberPicker hoursPicker = (NumberPicker) cookingTimePicker.findViewById(R.id.numberPicker_hours);
+            NumberPicker minutesPicker = (NumberPicker) cookingTimePicker.findViewById(R.id.numberPicker_minutes);
 
             int currentHoursValue = hoursPicker.getValue();
             int currentMinutesValue = minutesPicker.getValue();
@@ -488,7 +443,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults);
 
         if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
@@ -539,18 +494,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
 //-------------------------------------------------------------------------------------------------
 
-    public void setFavouriteImage() {
-
-        if (isFavourite) {
-            AnimationHelper.animateViewFadingIn(getContext(), image_favourite, 500, 0);
-
-        } else {
-            AnimationHelper.animateViewFadingOut(getContext(), image_favourite, 500, 0);
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
     public UserRecipe onSaveUserRecipeClicked() {
         User user = appStateManager.user;
 
@@ -584,18 +527,8 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
             if (selectedImage == null || imageWasDeleted) {
                 // No image selected
                 userRecipe.imageByteArrayAsString = "";
-//                userRecipe.thumbnailByteArrayAsString = "";
             } else {
                 userRecipe.imageByteArrayAsString = ImageStorage.convertBitmapToByteArrayAsString(selectedImage);
-
-//                String imageName = AppConsts.Images.RECIPE_IMAGE;
-//                File file = ImageStorage.saveToSdCard(getContext(), selectedImage, imageName);
-//
-//                if (file != null) {
-//                    Bitmap thumbnail = ImageStorage.decodeSampledBitmapFromFile(file.getPath(), Bitmap.Config.ARGB_8888, 100, 100);
-//                    userRecipe.thumbnailByteArrayAsString = ImageStorage.convertBitmapToByteArrayAsString(thumbnail);
-//                    thumbnail.recycle();
-//                }
             }
 
         } else {
@@ -605,21 +538,11 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
                 // No image selected as a replacement
 
                 userRecipe.imageByteArrayAsString = "";
-//                userRecipe.thumbnailByteArrayAsString = "";
 
             } else if (selectedImage != null) {
                 // The original image replaced by another
 
                 userRecipe.imageByteArrayAsString = ImageStorage.convertBitmapToByteArrayAsString(selectedImage);
-
-//                String imageName = AppConsts.Images.RECIPE_IMAGE;
-//                File file = ImageStorage.saveToSdCard(getContext(), selectedImage, imageName);
-//
-//                if (file != null) {
-//                    Bitmap thumbnail = ImageStorage.decodeSampledBitmapFromFile(file.getPath(), Bitmap.Config.ARGB_8888, 100, 100);
-//                    userRecipe.thumbnailByteArrayAsString = ImageStorage.convertBitmapToByteArrayAsString(thumbnail);
-//                    thumbnail.recycle();
-//                }
             }
         }
 
@@ -748,12 +671,12 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
     private void showTimeChooserDialog(int currentHours, int currentMinutes) {
 
-        totalTimeDialog = new Dialog(getContext());
-        totalTimeDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        totalTimeDialog.setContentView(R.layout.dialog_number_picker_time);
-        Button buttonSet = (Button) totalTimeDialog.findViewById(R.id.buttonSet);
-        final NumberPicker hoursPicker = (NumberPicker) totalTimeDialog.findViewById(R.id.numberPicker_hours);
-        final NumberPicker minutesPicker = (NumberPicker) totalTimeDialog.findViewById(R.id.numberPicker_minutes);
+        cookingTimePicker = new Dialog(getContext());
+        cookingTimePicker.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        cookingTimePicker.setContentView(R.layout.dialog_number_picker_time);
+        Button buttonSet = (Button) cookingTimePicker.findViewById(R.id.buttonSet);
+        final NumberPicker hoursPicker = (NumberPicker) cookingTimePicker.findViewById(R.id.numberPicker_hours);
+        final NumberPicker minutesPicker = (NumberPicker) cookingTimePicker.findViewById(R.id.numberPicker_minutes);
 
         hoursPicker.setMinValue(0);
         hoursPicker.setMaxValue(20);
@@ -768,7 +691,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         minutesPicker.setWrapSelectorWheel(false);
 
         buttonSet.setOnClickListener(v -> {
-            totalTimeDialog.dismiss();
+            cookingTimePicker.dismiss();
             userRecipe.cookingTime = (hoursPicker.getValue() * 3600 + minutesPicker.getValue() * 60);
 
             if (userRecipe.cookingTime > 0) {
@@ -780,18 +703,18 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
             textView_totalTime.setText(AppHelper.getStringRecipeTotalTime(getContext(), userRecipe.cookingTime));
         });
 
-        totalTimeDialog.show();
+        cookingTimePicker.show();
     }
 
 //-------------------------------------------------------------------------------------------------
 
     private void showServingsChooserDialog(int currentServingsValue) {
 
-        servingsDialog = new Dialog(getContext());
-        servingsDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        servingsDialog.setContentView(R.layout.dialog_number_picker_servings);
-        Button buttonSet = (Button) servingsDialog.findViewById(R.id.buttonSet);
-        final NumberPicker servingsPicker = (NumberPicker) servingsDialog.findViewById(R.id.numberPicker_servings);
+        servingsPicker = new Dialog(getContext());
+        servingsPicker.requestWindowFeature(Window.FEATURE_NO_TITLE);
+        servingsPicker.setContentView(R.layout.dialog_number_picker_servings);
+        Button buttonSet = (Button) servingsPicker.findViewById(R.id.buttonSet);
+        final NumberPicker servingsPicker = (NumberPicker) this.servingsPicker.findViewById(R.id.numberPicker_servings);
 
         servingsPicker.setMinValue(0);
         servingsPicker.setMaxValue(20);
@@ -811,10 +734,10 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
                 textView_servings.setTextColor(Color.RED);
             }
 
-            servingsDialog.dismiss();
+            this.servingsPicker.dismiss();
         });
 
-        servingsDialog.show();
+        this.servingsPicker.show();
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -822,7 +745,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
     private void onAddIngredientClicked() {
         // pop-up custom alert-dialog to insert a new ingredient:
 
-        // Create custom dialog object
         final Dialog dialog = new Dialog(getActivity());
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
@@ -835,7 +757,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         Button button_addIngredient = (Button) dialog.findViewById(R.id.buttonAlert_add);
         button_addIngredient.setOnClickListener(v -> {
 
-            // Get the input text and add it to the list
             String ing = editText_inputIngredient.getText().toString();
 
             if (userRecipe.ingredientsList.get(0).equals(AppConsts.Category.NO_INFO)) {
@@ -978,122 +899,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
             }
 
             layout_categoriesList.addView(listItem);
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private void showLoginDialog(String currentEmail, String currentUsername, String  currentPassword, String currentRetypePassword) {
-        // TODO: handle register
-
-        loginDialog = new Dialog(getContext());
-        loginDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        final View view = inflater.inflate(R.layout.dialog_login, null, false);
-
-        loginDialog.setCancelable(false);
-        loginDialog.setContentView(view);
-
-        TextView textView_dialogTitleNote = (TextView) loginDialog.findViewById(R.id.textView_titleNote);
-
-        String titleNote = getString(R.string.to_add_your_own_recipe_you_have_to_login) +
-                "\n" + getString(R.string.the_username_used_as_author);
-
-        textView_dialogTitleNote.setText(titleNote);
-
-        final EditText editText_email = (EditText) loginDialog.findViewById(R.id.editText_email);
-        final EditText editText_username = (EditText) loginDialog.findViewById(R.id.editText_username);
-        final EditText editText_password = (EditText) loginDialog.findViewById(R.id.editText_password);
-        final EditText editText_repeatPassword = (EditText) loginDialog.findViewById(R.id.editText_repeatPassword);
-
-        editText_email.setText(currentEmail);
-        editText_username.setText(currentUsername);
-        editText_password.setText(currentPassword);
-        editText_repeatPassword.setText(currentRetypePassword);
-
-        // Relocating the selection after the last char of the editText
-        int pos = editText_email.getText().length();
-        editText_email.setSelection(pos);
-
-        pos = editText_username.getText().length();
-        editText_username.setSelection(pos);
-
-        pos = editText_password.getText().length();
-        editText_password.setSelection(pos);
-
-        pos = editText_repeatPassword.getText().length();
-        editText_repeatPassword.setSelection(pos);
-
-        Button button_save = (Button) loginDialog.findViewById(R.id.button_save);
-        button_save.setOnClickListener(v -> {
-
-            String email = editText_email.getText().toString();
-            String author = editText_username.getText().toString();
-            String password = editText_password.getText().toString();
-            String retypePassword = editText_repeatPassword.getText().toString();
-
-            if (areFieldsValid(email, author, password, retypePassword)) {
-                dbManager.register(email, author, password);
-
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                SharedPreferences.Editor editor = sp.edit();
-                editor.putString(AppConsts.SharedPrefs.USER_NAME, author);
-                editor.apply();
-
-                AnalyticsHelper.sendEvent(EditRecipeFragment2.this, AppConsts.Analytics.CATEGORY_LOGIN, "Register successfully", author);
-
-                loginDialog.dismiss();
-            }
-        });
-
-        Button btnCancel = (Button) loginDialog.findViewById(R.id.button_cancel);
-        btnCancel.setText(R.string.not_now);
-        btnCancel.setOnClickListener(v -> {
-            loginDialog.dismiss();
-            mListener.onCancelLoginButtonClicked();
-        });
-
-        loginDialog.show();
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private boolean areFieldsValid(String email, String author, String password, String retypePassword) {
-        //TODO: Handle validation
-        if (usernameTooShort(author)) {
-            AppHelper.showSnackBar(getView(), R.string.at_least_6_characters_are_required, Color.RED);
-            return false;
-        } else if (usernameTooLong(author)) {
-            AppHelper.showSnackBar(getView(), R.string.max_20_chars_are_allowed, Color.RED);
-            return false;
-        } else if (!password.equals(retypePassword)) {
-            AppHelper.showSnackBar(getView(), R.string.passwords_are_not_identical, Color.RED);
-            return false;
-        }
-
-        return true;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private boolean usernameTooShort(String username) {
-        // checks if the username has less than 6 letters excluding spaces.
-        int trimmedLength = username.trim().length();
-        if (trimmedLength >= 6) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private boolean usernameTooLong(String username) {
-        // checks if the username has less than 6 letters excluding spaces.
-        int trimmedLength = username.trim().length();
-        if (trimmedLength > 20) {
-            return true;
-        } else {
-            return false;
         }
     }
 

@@ -21,17 +21,18 @@ import java.util.ArrayList;
 
 public class SearchInListsFragment2 extends MyListFragment {
 
+    private static final String ARG_ACTION = "ARG_ACTION";
     private View view;
 
     private String keyToSearch;
 
 //-------------------------------------------------------------------------------------------------
 
-    public static SearchInListsFragment2 newInstance(String extra_serving) {
+    public static SearchInListsFragment2 newInstance(int action) {
 
         SearchInListsFragment2 fragment = new SearchInListsFragment2();
         Bundle args = new Bundle();
-        args.putString(ARG_EXTRA_SERVING, extra_serving);
+        args.putInt(ARG_ACTION, action);
         fragment.setArguments(args);
 
         return fragment;

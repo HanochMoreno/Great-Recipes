@@ -322,9 +322,9 @@
 //                    ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
 //
 //                    if ((extra_serving != null) &&
-//                            (extra_serving.equals(AppConsts.Extras.ADD_SERVING))) {
+//                            (extra_serving.equals(AppConsts.Extras.ADD_SERVING_FROM_YUMMLY))) {
 //
-//                        toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING);
+//                        toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING_FROM_YUMMLY);
 //
 //                    } else {
 //                        toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_LIST);
@@ -483,8 +483,8 @@
 //
 //                ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
 //
-//                if (extra_serving != null && extra_serving.equals(AppConsts.Extras.ADD_SERVING)) {
-//                    toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING);
+//                if (extra_serving != null && extra_serving.equals(AppConsts.Extras.ADD_SERVING_FROM_YUMMLY)) {
+//                    toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING_FROM_YUMMLY);
 //                } else {
 //                    toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_LIST);
 //                }

@@ -27,7 +27,6 @@ import com.hanoch.greatrecipes.model.ApiProvider;
 import com.hanoch.greatrecipes.model.Serving;
 import com.hanoch.greatrecipes.utilities.ImageStorage;
 
-import java.io.File;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -36,7 +35,6 @@ import retrofit2.Response;
 import rx.Single;
 import rx.Subscriber;
 import rx.android.schedulers.AndroidSchedulers;
-import rx.functions.Func0;
 import rx.schedulers.Schedulers;
 
 
@@ -174,7 +172,7 @@ public class GreatRecipesDbManager {
 
         HashMap<String, Object> body = new HashMap<>();
         body.put("_id", currentUser._id);
-        body.put("servings", currentUser.servings.values());
+        body.put("servings", currentServings.values());
 
         Single<UserResponse> updateUser = ApiProvider.getGreatRecipesApi().updateUser(body);
 
@@ -213,18 +211,7 @@ public class GreatRecipesDbManager {
             }
         };
 
-        HashMap<String, Object> body = new HashMap<>();
-        body.put("recipeTitle", recipe.recipeTitle);
-        body.put("author", recipe.author);
-        body.put("userId", recipe.userId);
-        body.put("yield", recipe.yield);
-        body.put("imageByteArrayAsString", recipe.imageByteArrayAsString);
-//        body.put("thumbnailByteArrayAsString", recipe.thumbnailByteArrayAsString);
-        body.put("instructions", recipe.instructions);
-        body.put("notes", recipe.notes);
-        body.put("cookingTime", recipe.cookingTime);
-        body.put("ingredientsList", recipe.ingredientsList);
-        body.put("categoriesList", recipe.categoriesList);
+        HashMap<String, Object> body = recipe.generateBody();
 
         Single<UserRecipe> addUserRecipe = ApiProvider.getGreatRecipesApi().addUserRecipe(body);
 
@@ -238,10 +225,8 @@ public class GreatRecipesDbManager {
 
     /**
      * Update exist user recipe to database
-     *
-     * @param userRecipe
      */
-    public void updateUserRecipe(UserRecipe userRecipe) {
+    public void updateUserRecipe(UserRecipe recipe) {
         MyBus bus = MyBus.getInstance();
 
         Subscriber<UserRecipe> subscriber = new Subscriber<UserRecipe>() {
@@ -263,8 +248,9 @@ public class GreatRecipesDbManager {
             }
         };
 
+        HashMap<String, Object> body = recipe.generateBody();
 
-        Single<UserRecipe> updateUserRecipe = ApiProvider.getGreatRecipesApi().updateUserRecipe(userRecipe);
+        Single<UserRecipe> updateUserRecipe = ApiProvider.getGreatRecipesApi().updateUserRecipe(body);
 
         updateUserRecipe
                 .subscribeOn(Schedulers.io())
@@ -342,13 +328,44 @@ public class GreatRecipesDbManager {
     /**
      * http://api.yummly.com/v1/api/recipe/French-Onion-Soup-1292648?_app_id=418b707a&_app_key=249ec501a990bd7d5fa5dd5218bf7e14
      */
-    public void downloadRecipeFromYummlyApi(Context context, String resultYummlyId) {
+    private void downloadRecipeFromYummlyApi(Context context, String resultYummlyId) {
         MyBus bus = MyBus.getInstance();
 
         HashMap<String, String> query = new HashMap<>();
         query.put("_app_id", AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL);
         query.put("_app_key", AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL);
         query.put("requirePictures", "true");
+
+        Subscriber<YummlyRecipeResponse2> subscriber = new Subscriber<YummlyRecipeResponse2>() {
+            @Override
+            public void onCompleted() {
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                bus.post(new OnYummlyRecipeDownloadedEvent(false, t));
+            }
+
+            @Override
+            public void onNext(YummlyRecipeResponse2 recipe) {
+                HashMap<String, Object> body = recipe.generateBody(context);
+                addYummlyRecipeToGreatRecipeApi(body);
+            }
+        };
+
+        Single<YummlyRecipeResponse2> getYummlyRecipeFromYummlyApi =
+                ApiProvider.getYummlyApi().getYummlyRecipe(resultYummlyId, query);
+
+        getYummlyRecipeFromYummlyApi
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    private void addYummlyRecipeToGreatRecipeApi(HashMap<String, Object> body) {
+        MyBus bus = MyBus.getInstance();
 
         Subscriber<YummlyRecipe> subscriber = new Subscriber<YummlyRecipe>() {
             @Override
@@ -367,107 +384,18 @@ public class GreatRecipesDbManager {
             }
         };
 
-        Single<YummlyRecipeResponse2> getYummlyRecipe =
-                ApiProvider.getYummlyApi().getYummlyRecipe(resultYummlyId, query);
-
-        Single.defer((Func0<Single<YummlyRecipeResponse2>>) () -> getYummlyRecipe)
+        Single<YummlyRecipe> getYummlyRecipe = ApiProvider.getGreatRecipesApi().addYummlyRecipe(body);
+        getYummlyRecipe
                 .subscribeOn(Schedulers.io())
-                .map(recipeResponse -> generateRecipeResult(context, recipeResponse))
-//                .flatMap(yummlyRecipe -> ApiProvider.getGreatRecipesApi().addYummlyRecipe(yummlyRecipe))
-                .flatMap(body -> ApiProvider.getGreatRecipesApi().addYummlyRecipe(body))
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(subscriber);
     }
 
 //-------------------------------------------------------------------------------------------------
 
-//    private YummlyRecipe generateRecipeResult(Context context, YummlyRecipeResponse2 yummlyRecipe) {
-    private HashMap<String, Object> generateRecipeResult(Context context, YummlyRecipeResponse2 yummlyRecipe) {
-        HashMap<String, Object> body = new HashMap<>();
-        body.put("yummlyId", yummlyRecipe.yummlyId);
-        body.put("recipeTitle", yummlyRecipe.title);
-        body.put("yield", yummlyRecipe.yield);
-        body.put("cookingTime", yummlyRecipe.time);
-        body.put("author", AppConsts.Category.NO_INFO);
-        body.put("url", "");
-        body.put("imageUrl", ""); // ToDO: HANDLE!!
-        body.put("ingredientsList", yummlyRecipe.ingredients);
-        body.put("categoriesList", new ArrayList<String>());
-        body.put("energy", "0");
-        body.put("imageByteArrayAsString", "");
-
-//        YummlyRecipe searchResult = new YummlyRecipe();
-//        searchResult.yummlyId = yummlyRecipe.yummlyId;
-//
-//        searchResult.recipeTitle = yummlyRecipe.title;
-//        searchResult.yield = yummlyRecipe.yield;
-//        searchResult.cookingTime = yummlyRecipe.time;
-//
-//        searchResult.author = AppConsts.Category.NO_INFO;
-//        searchResult.url = AppConsts.Category.NO_INFO;
-//        searchResult.ingredientsList = yummlyRecipe.ingredients;
-
-        if (yummlyRecipe.source != null) {
-            if (yummlyRecipe.source.containsKey("sourceDisplayName")) {
-//                searchResult.author = yummlyRecipe.source.get("sourceDisplayName");
-                body.put("author", yummlyRecipe.source.get("sourceDisplayName"));
-
-            }
-
-            if (yummlyRecipe.source.containsKey("sourceRecipeUrl")) {
-//                searchResult.url = yummlyRecipe.source.get("sourceRecipeUrl");
-                body.put("url", yummlyRecipe.source.get("sourceRecipeUrl"));
-            }
-        }
-
-        if (yummlyRecipe.attributes != null) {
-            if (yummlyRecipe.attributes.containsKey("course")) {
-//                categories = yummlyRecipe.attributes.get("course");
-                body.put("categoriesList", yummlyRecipe.attributes.get("course"));
-            }
-        }
-//        searchResult.categoriesList = categories;
-
-        if (yummlyRecipe.nutritions != null) {
-            for (HashMap<String, Object> nutrition : yummlyRecipe.nutritions) {
-                if (nutrition.containsKey("attribute") && nutrition.get("attribute").equals("ENERC_KCAL")) {
-                    double calories = (double) nutrition.get("value");
-//                    searchResult.energy = (int) calories;
-                    body.put("energy", String.valueOf((int) calories));
-                    break;
-                }
-            }
-        }
-
-        String imageName = AppConsts.Images.RESULT_IMAGE_PREFIX + yummlyRecipe.yummlyId;
-        Bitmap recipeImage = ImageStorage.getImageBitmapByName(context, imageName);
-
-        if (recipeImage != null) {
-//            searchResult.imageByteArrayAsString = ImageStorage.convertBitmapToByteArrayAsString(recipeImage);
-            body.put("imageByteArrayAsString", ImageStorage.convertBitmapToByteArrayAsString(recipeImage));
-
-//            File imageFile = ImageStorage.getImageFileByName(context, imageName);
-//            if (imageFile != null) {
-//                Bitmap thumbnail = ImageStorage.decodeSampledBitmapFromFile(imageFile.getPath(), Bitmap.Config.ARGB_8888, 100, 100);
-//                searchResult.thumbnailByteArrayAsString = ImageStorage.convertBitmapToByteArrayAsString(recipeImage, 50);
-//                thumbnail.recycle();
-//            }
-//            recipeImage.recycle();
-        }
-//        } else {
-//            searchResult.imageByteArrayAsString = "";
-//            body.put("imageByteArrayAsString", "");
-//
-//            searchResult.thumbnailByteArrayAsString = "";
-//        }
-
-//        return searchResult;
-        return body;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
     public void getYummlyRecipeFromGreatRecipesApi(Context context, String resultYummlyId) {
+        AppStateManager.getInstance().yummlySearchResult = null;
+
         MyBus bus = MyBus.getInstance();
 
         Subscriber<YummlyRecipe> subscriber = new Subscriber<YummlyRecipe>() {
@@ -533,7 +461,7 @@ public class GreatRecipesDbManager {
 //-------------------------------------------------------------------------------------------------
 
     /**
-     * Update the user's recipes lists after adding/editing/deleting recipes
+     * Update the user's recipes lists after adding/editing/deleting recipes or servings
      */
     public void updateUserRecipes(ArrayList<UserRecipe> userRecipes, ArrayList<YummlyRecipe> yummlyRecipes, int action) {
         MyBus bus = MyBus.getInstance();
@@ -572,8 +500,10 @@ public class GreatRecipesDbManager {
                         newUserRecipes.put(recipe._id, recipe);
                     }
                 }
+
                 if (yummlyRecipes != null) {
                     newYummlyRecipes = new HashMap<>(currentUser.yummlyRecipes);
+
                     for (YummlyRecipe recipe : yummlyRecipes) {
                         newYummlyRecipes.put(recipe._id, recipe);
                     }
@@ -652,10 +582,10 @@ public class GreatRecipesDbManager {
         HashMap<String, Object> body = new HashMap<>();
         body.put("_id", currentUser._id);
         if (newUserRecipes != null) {
-            body.put("userRecipes", newUserRecipes.values());
+            body.put("userRecipesIds", newUserRecipes.keySet());
         }
         if (newYummlyRecipes != null) {
-            body.put("yummlyRecipes", newYummlyRecipes.values());
+            body.put("yummlyRecipesIds", newYummlyRecipes.keySet());
         }
         if (newFavouriteRecipesIds != null) {
             body.put("favouriteRecipesIds", newFavouriteRecipesIds);
@@ -731,13 +661,6 @@ public class GreatRecipesDbManager {
     public void clearAllLists(int action) {
         MyBus bus = MyBus.getInstance();
 
-//        User user = new User();
-//        user._id = AppStateManager.getInstance().user._id;
-//        user.servings = new HashMap<>();
-//        user.userRecipes = new HashMap<>();
-//        user.yummlyRecipes = new HashMap<>();
-//        user.favouriteRecipesIds = new ArrayList<>();
-
         Subscriber<UserResponse> subscriber = new Subscriber<UserResponse>() {
             @Override
             public void onCompleted() {
@@ -769,13 +692,5 @@ public class GreatRecipesDbManager {
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(subscriber);
     }
-
-//-------------------------------------------------------------------------------------------------
-
-
-//-------------------------------------------------------------------------------------------------
-
-
-//-------------------------------------------------------------------------------------------------
 
 }

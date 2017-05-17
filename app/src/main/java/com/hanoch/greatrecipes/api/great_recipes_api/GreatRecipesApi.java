@@ -24,15 +24,13 @@ public interface GreatRecipesApi {
     Single<UserRecipe> getUserRecipe(@Query("recipeId") String recipeId);
 
     @POST(AppConsts.ApiAccess.GREAT_RECIPES_BASE_URL + "/recipes/add-user-recipe")
-//    Single<UserRecipe> addUserRecipe(@Body UserRecipe userRecipe);
     Single<UserRecipe> addUserRecipe(@Body HashMap<String, Object> body);
 
     @POST(AppConsts.ApiAccess.GREAT_RECIPES_BASE_URL + "/recipes/add-yummly-recipe")
-//    Single<YummlyRecipe> addYummlyRecipe(@Body YummlyRecipe yummlyRecipe);
     Single<YummlyRecipe> addYummlyRecipe(@Body HashMap<String, Object> body);
 
     @PUT(AppConsts.ApiAccess.GREAT_RECIPES_BASE_URL + "/recipes/update-user-recipe")
-    Single<UserRecipe> updateUserRecipe(@Body UserRecipe userRecipe);
+    Single<UserRecipe> updateUserRecipe(@Body HashMap<String, Object> body);
 
     @POST(AppConsts.ApiAccess.GREAT_RECIPES_BASE_URL + "/user/register")
     Single<UserResponse> register(@Body HashMap<String, String> body);
@@ -41,6 +39,5 @@ public interface GreatRecipesApi {
     Single<UserResponse> login(@Body HashMap<String, String> body);
 
     @PUT(AppConsts.ApiAccess.GREAT_RECIPES_BASE_URL + "/user/update-user")
-//    Single<User> updateUser(@Body User user);
     Single<UserResponse> updateUser(@Body HashMap<String, Object> body);
 }

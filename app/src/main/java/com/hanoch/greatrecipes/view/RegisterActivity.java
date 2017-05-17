@@ -38,7 +38,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     private View tv_haveAccountOrRegisterClickHere;
     private View tv_testAppClickHere;
     private View btn_loginOrRegister;
-    private String action;
+    private int action;
     private GreatRecipesDbManager dbManager;
 
     private String email;
@@ -115,7 +115,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
         super.onSaveInstanceState(outState, outPersistentState);
 
-        outState.putString("action", action);
+        outState.putInt("action", action);
 
         outState.putString("email", email);
         outState.putString("username", username);
@@ -129,12 +129,12 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
-        action = savedInstanceState.getString("action", action);
+        action = savedInstanceState.getInt("action");
 
-        email = savedInstanceState.getString("email", email);
-        username = savedInstanceState.getString("username", username);
-        password = savedInstanceState.getString("password", password);
-        retypePassword = savedInstanceState.getString("retypePassword", retypePassword);
+        email = savedInstanceState.getString("email");
+        username = savedInstanceState.getString("username");
+        password = savedInstanceState.getString("password");
+        retypePassword = savedInstanceState.getString("retypePassword");
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -144,7 +144,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         switch (view.getId()) {
 
             case R.id.tv_haveAccountOrRegisterClickHere:
-                if (action.equals(AppConsts.Actions.ACTION_REGISTER)) {
+                if (action == AppConsts.Actions.ACTION_REGISTER) {
                     showLoginScreen();
                 } else {
                     showRegisterScreen();
@@ -207,7 +207,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         username = et_username.getText().toString();
         password = et_password.getText().toString();
 
-        if (action.equals(AppConsts.Actions.ACTION_REGISTER)) {
+        if (action == AppConsts.Actions.ACTION_REGISTER) {
             email = et_email.getText().toString();
 
             Pattern emailPattern = Pattern.compile(AppConsts.Regex.EMAIL_PATTERN);
@@ -236,7 +236,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             }
         }
 
-        if (action.equals(AppConsts.Actions.ACTION_REGISTER)) {
+        if (action == AppConsts.Actions.ACTION_REGISTER) {
             retypePassword = et_retypePassword.getText().toString();
 
             if (!password.equals(retypePassword)) {

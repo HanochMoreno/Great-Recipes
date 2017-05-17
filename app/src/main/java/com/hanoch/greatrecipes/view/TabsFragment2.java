@@ -17,16 +17,16 @@ import com.hanoch.greatrecipes.view.adapters.PagerAdapter;
 
 public class TabsFragment2 extends Fragment {
 
-    private static final String ARG_EXTRA_SERVING = "serving";
+    private static final String ARG_ACTION = "ARG_ACTION";
     private ViewPager viewPager;
     private MyBus bus;
     private ProgressDialog progressDialog;
 
-    public static TabsFragment2 newInstance(String extra_serving) {
+    public static TabsFragment2 newInstance(int action) {
 
         TabsFragment2 fragment = new TabsFragment2();
         Bundle args = new Bundle();
-        args.putString(ARG_EXTRA_SERVING, extra_serving);
+        args.putInt(ARG_ACTION, action);
         fragment.setArguments(args);
 
         return fragment;
@@ -61,11 +61,11 @@ public class TabsFragment2 extends Fragment {
 
         tabLayout.setTabGravity(TabLayout.GRAVITY_FILL);
 
-        String extra_serving = getArguments().getString(ARG_EXTRA_SERVING);
+        int action = getArguments().getInt(ARG_ACTION);
 
         viewPager = (ViewPager) view.findViewById(R.id.pager);
         viewPager.setOffscreenPageLimit(2);
-        PagerAdapter adapter = new PagerAdapter(getFragmentManager(), tabLayout.getTabCount(), extra_serving);
+        PagerAdapter adapter = new PagerAdapter(getFragmentManager(), tabLayout.getTabCount(), action);
         viewPager.setAdapter(adapter);
         viewPager.addOnPageChangeListener(new TabLayout.TabLayoutOnPageChangeListener(tabLayout));
 

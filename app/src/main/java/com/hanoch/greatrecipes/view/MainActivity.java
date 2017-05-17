@@ -437,6 +437,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
             case R.id.layout_myRecipesLists:
                 intent = new Intent(this, RecipesListsActivity.class);
+                intent.setAction(String.valueOf(AppConsts.Actions.NO_ACTION));
                 startActivity(intent);
                 break;
 
@@ -471,7 +472,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 }
 
                 intent = new Intent(this, RecipeDetailsActivity.class);
-                intent.setAction(AppConsts.Actions.ACTION_ADD_NEW);
+                intent.setAction(String.valueOf(AppConsts.Actions.ADD_NEW_USER_RECIPE));
                 startActivity(intent);
                 break;
 

@@ -35,7 +35,6 @@ import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
-import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
@@ -67,7 +66,16 @@ public class RecipesListsActivity extends AppCompatActivity implements
     private CategoriesChooserFragment categoriesChooserFragment;
 
     private Toolbar toolbar;
-    private String extra_serving;
+
+    /**
+     * Optional actions to this activity:
+     * ADD_SERVING_FROM_LISTS
+     * REVIEW_USER_RECIPE
+     * REVIEW_YUMMLY_RECIPE
+     * ADD_NEW_USER_RECIPE
+     * EDIT_USER_RECIPE
+     */
+    private int action;
 
     private int currentlyShownList;
 
@@ -139,7 +147,8 @@ public class RecipesListsActivity extends AppCompatActivity implements
         AppHelper.hideTheKeyboard(this);
 
         Intent prevIntent = getIntent();
-        extra_serving = prevIntent.getStringExtra(AppConsts.Extras.EXTRA_SERVING);
+        action = Integer.parseInt(prevIntent.getAction());
+
         int containerResId;
 
         if (getResources().getBoolean(R.bool.isTablet)) {
@@ -161,7 +170,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
             // only add fragments if the state is null!
             // if there's a state - they will be re-attached automatically
 
-            Fragment tabsFragment = TabsFragment.newInstance(extra_serving);
+            Fragment tabsFragment = TabsFragment2.newInstance(action);
             FragmentManager fm = getSupportFragmentManager();
             FragmentTransaction ft = fm.beginTransaction();
             ft.add(containerResId, tabsFragment, AppConsts.Fragments.TABS);
@@ -226,8 +235,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
         outState.putStringArrayList("checkedItemsId", checkedItemsId);
 
         outState.putString("mRecipeId", mRecipeId);
-//        outState.putLong("mRecipeId", mRecipeId);
-        outState.putString("extra_serving", extra_serving);
+        outState.putInt("action", action);
         outState.putInt("toolbarColor", toolbarColor);
         outState.putString("toolbarTitle", toolbarTitle);
         outState.putInt("currentlyShownList", currentlyShownList);
@@ -283,7 +291,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
         checkedItemsId = savedInstanceState.getStringArrayList("checkedItemsId");
         mRecipeId = savedInstanceState.getString("mRecipeId");
-        extra_serving = savedInstanceState.getString("extra_serving");
+        action = savedInstanceState.getInt("action");
         currentlyShownList = savedInstanceState.getInt("currentlyShownList");
 
         List<Fragment> fragments = getSupportFragmentManager().getFragments();
@@ -414,8 +422,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
                     AnimationHelper.animateViewFadingOut(this, layout_logo, 500, 0);
                 }
 
-                User user = appStateManager.user;
-
                 mRecipeId = recipeId;
 
                 ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
@@ -424,7 +430,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
                 }
 
-                if (extra_serving == null) {
+                if (action != AppConsts.Actions.ADD_SERVING_FROM_LISTS) {
 
                     if (appStateManager.isRecipeFavourite(recipeId)) {
                         toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
@@ -451,9 +457,16 @@ public class RecipesListsActivity extends AppCompatActivity implements
             mRecipeId = recipeId;
 
             Intent intent = new Intent(this, RecipeDetailsActivity.class);
-            intent.setAction(AppConsts.Actions.ACTION_REVIEW);
-            intent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, recipeId);
-            intent.putExtra(AppConsts.Extras.EXTRA_SERVING, extra_serving);
+            if (action != AppConsts.Actions.ADD_SERVING_FROM_LISTS) {
+                if (appStateManager.user.isUserRecipe(mRecipeId)) {
+                    action = AppConsts.Actions.REVIEW_USER_RECIPE;
+                } else {
+                    action = AppConsts.Actions.REVIEW_YUMMLY_RECIPE;
+                }
+            }
+
+            intent.setAction(String.valueOf(action));
+            intent.putExtra(AppConsts.Extras.RECIPE_ID, recipeId);
             startActivityForResult(intent, REQ_CODE_RECIPE_DETAILS_ACTIVITY);
         }
     }
@@ -491,6 +504,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 if (toolbar_closeWebView.isVisible()) {
                     fm.popBackStack();
                 }
+
 
                 updateRecipeReviewFragment();
                 ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
@@ -583,11 +597,11 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
                     Intent resultIntent = new Intent();
                     setResult(Activity.RESULT_OK, resultIntent);
-                    long recipeId = -1;
+                    String recipeId = null;
                     if (data != null) {
-                        recipeId = data.getLongExtra(AppConsts.Extras.EXTRA_RECIPE_ID, -1);
+                        recipeId = data.getStringExtra(AppConsts.Extras.RECIPE_ID);
                     }
-                    resultIntent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, recipeId);
+                    resultIntent.putExtra(AppConsts.Extras.RECIPE_ID, recipeId);
                     finish();
             }
         }
@@ -672,6 +686,8 @@ public class RecipesListsActivity extends AppCompatActivity implements
                     }
                 }
 
+                action = AppConsts.Actions.ADD_NEW_USER_RECIPE;
+
                 if (getResources().getBoolean(R.bool.isTablet)) {
                     // tablet
 
@@ -692,7 +708,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                         ft.remove(recipeReviewFragment);
                     }
 
-                    editRecipeFragment = EditRecipeFragment2.newInstance(AppConsts.Actions.ACTION_ADD_NEW, null);
+                    editRecipeFragment = EditRecipeFragment2.newInstance(action, null);
                     ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left);
                     ft.replace(R.id.layout_detailsContainer, editRecipeFragment, AppConsts.Fragments.EDIT_RECIPE);
                     ft.commit();
@@ -707,72 +723,11 @@ public class RecipesListsActivity extends AppCompatActivity implements
                     // phone
 
                     intent = new Intent(this, RecipeDetailsActivity.class);
-                    intent.setAction(AppConsts.Actions.ACTION_ADD_NEW);
+                    intent.setAction(String.valueOf(AppConsts.Actions.ADD_NEW_USER_RECIPE));
                     startActivity(intent);
                 }
 
                 break;
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-//    @Override
-//    public void onRecipeWasSaved(UserRecipe userRecipe) {
-//        // Tablet only
-//
-//        mRecipeId = userRecipe._id;
-//
-//        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
-//
-//        FragmentManager fm = getSupportFragmentManager();
-//
-//        recipeReviewFragment = (RecipeReviewFragment2) fm.findFragmentByTag(AppConsts.Fragments.RECIPE_REVIEW);
-//
-//        FragmentTransaction ft = fm.beginTransaction();
-//
-//        updateRecipeReviewFragment();
-//        ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_up);
-//        ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
-//        ft.commit();
-//
-//        ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
-//
-//        toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
-//
-//        if (appStateManager.user.favouriteRecipesIds.contains(userRecipe._id)) {
-//            toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
-//        } else {
-//            toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
-//        }
-//
-//        setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);
-//    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
-    public void onCancelLoginButtonClicked() {
-        // in edit recipe fragment
-
-        if (getResources().getBoolean(R.bool.isTablet)) {
-
-            FragmentManager fm = getSupportFragmentManager();
-            FragmentTransaction ft = fm.beginTransaction();
-
-            editRecipeFragment = (EditRecipeFragment2) fm.findFragmentByTag(AppConsts.Fragments.EDIT_RECIPE);
-            ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
-            ft.remove(editRecipeFragment);
-            ft.commit();
-
-            setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
-
-            AnimationHelper.animateViewFadingIn(this, layout_logo, 500, 500);
-
-            listFragment.backToDefaultDisplay(true);
-
-        } else {
-            finish();
         }
     }
 
@@ -942,7 +897,10 @@ public class RecipesListsActivity extends AppCompatActivity implements
             case R.id.action_search:
 
                 intent = new Intent(this, SearchInListsActivity.class);
-                intent.putExtra(AppConsts.Extras.EXTRA_SERVING, extra_serving);
+                if (action != AppConsts.Actions.ADD_SERVING_FROM_LISTS) {
+                    action = AppConsts.Actions.NO_ACTION;
+                }
+                intent.setAction(String.valueOf(action));
                 startActivityForResult(intent, REQ_CODE_SEARCH_IN_LISTS_ACTIVITY);
 
                 break;
@@ -950,10 +908,12 @@ public class RecipesListsActivity extends AppCompatActivity implements
             case R.id.action_edit:
                 // Tablet only - "my Own" recipe only
 
+                action = AppConsts.Actions.EDIT_USER_RECIPE;
+
                 ListView listView = (ListView) listFragment.getView().findViewById(R.id.listView_recipesList);
                 listView.setEnabled(false);
 
-                editRecipeFragment = EditRecipeFragment2.newInstance(AppConsts.Actions.ACTION_EDIT, mRecipeId);
+                editRecipeFragment = EditRecipeFragment2.newInstance(action, mRecipeId);
                 ft.setCustomAnimations(R.anim.slide_in_bottom, R.anim.slide_out_right, R.anim.slide_in_left, R.anim.slide_out_up);
                 ft.replace(R.id.layout_detailsContainer, editRecipeFragment, AppConsts.Fragments.EDIT_RECIPE);
                 ft.commit();
@@ -1009,7 +969,12 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 // Tablet only, while reviewing a recipe
 
                 Intent resultIntent = new Intent();
-                resultIntent.putExtra(AppConsts.Extras.EXTRA_RECIPE_ID, mRecipeId);
+
+                Bundle extras = new Bundle();
+                extras.putString(AppConsts.Extras.RECIPE_ID, mRecipeId);
+                extras.putBoolean(AppConsts.Extras.EXTRA_IS_USER_RECIPE, appStateManager.user.isUserRecipe(mRecipeId));
+                resultIntent.putExtras(extras);
+
                 setResult(Activity.RESULT_OK, resultIntent);
                 finish();
 
@@ -1188,7 +1153,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
         if (toolbar_save.isVisible()) {
             // The user renounced editing an exiting recipe
 
-            showExitWithoutSavingDialog(AppConsts.Actions.ACTION_EDIT);
+            showExitWithoutSavingDialog(AppConsts.Actions.EDIT_USER_RECIPE);
 
             return;
         }
@@ -1196,7 +1161,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
         if (toolbar_addToList.isVisible()) {
             // The user renounced adding a new recipe to "My own" list
 
-            showExitWithoutSavingDialog(AppConsts.Actions.ACTION_ADD_NEW);
+            showExitWithoutSavingDialog(AppConsts.Actions.ADD_NEW_USER_RECIPE);
 
             return;
         }
@@ -1208,7 +1173,10 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
             YummlyRecipe yummlyRecipe = appStateManager.user.yummlyRecipes.get(mRecipeId);
 
-            if (extra_serving == null) {
+            if (action == AppConsts.Actions.ADD_SERVING_FROM_LISTS) {
+                // The user was watching the recipe URL while choosing a recipe to meal planner
+                toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING);
+            } else {
 
                 if (checkedItemsId.isEmpty()) {
 
@@ -1224,9 +1192,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.DELETE);
                 }
 
-            } else {
-                // The user was watching the recipe URL while choosing a recipe to meal planner
-                toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING);
             }
 
             setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.NO_CHANGE, null);
@@ -1252,11 +1217,18 @@ public class RecipesListsActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     private void updateRecipeReviewFragment() {
-        recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, extra_serving);
+        if (action != AppConsts.Actions.ADD_SERVING_FROM_LISTS) {
+            action = appStateManager.user.isUserRecipe(mRecipeId)
+                    ? AppConsts.Actions.REVIEW_USER_RECIPE
+                    : AppConsts.Actions.REVIEW_YUMMLY_RECIPE;
+        }
+
+        recipeReviewFragment = RecipeReviewFragment2.newInstance(action, mRecipeId);
     }
+
 //-------------------------------------------------------------------------------------------------
 
-    public void showExitWithoutSavingDialog(final String action) {
+    public void showExitWithoutSavingDialog(final int action) {
 
         AppHelper.vibrate(this);
 
@@ -1283,7 +1255,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
             FragmentManager fm = getSupportFragmentManager();
             FragmentTransaction ft = fm.beginTransaction();
 
-            if (action.equals(AppConsts.Actions.ACTION_ADD_NEW)) {
+            if (action == AppConsts.Actions.ADD_NEW_USER_RECIPE) {
 
                 editRecipeFragment = (EditRecipeFragment2) fm.findFragmentByTag(AppConsts.Fragments.EDIT_RECIPE);
                 ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
@@ -1299,7 +1271,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 listFragment.backToDefaultDisplay(true);
 
             } else {
-                // action = ACTION_EDIT
+                // action = EDIT_USER_RECIPE
 
                 ListView listView = (ListView) listFragment.getView().findViewById(R.id.listView_recipesList);
                 listView.setEnabled(true);
@@ -1349,27 +1321,28 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
             FragmentManager fm = getSupportFragmentManager();
 
-            switch (event.action) {
+            if ((event.action) == BusConsts.ACTION_DELETE) {
+                onRecipesWereDeleted();
+            } else if (getResources().getBoolean(R.bool.isTablet)) {
+                switch (event.action) {
 
-                case BusConsts.ACTION_DELETE:
+                    case BusConsts.ACTION_ADD_NEW:
+                        // Tablet only
 
-                    onRecipesWereDeleted();
-                    break;
+                        mRecipeId = appStateManager.user.getLastUserRecipe()._id;
+                        // no break...
+                    case BusConsts.ACTION_EDIT:
+                        // Tablet only
 
-                case BusConsts.ACTION_ADD_NEW:
-                    mRecipeId = appStateManager.user.getLastUserRecipe()._id;
-                    // no break...
-                case BusConsts.ACTION_EDIT:
-                    // Tablet only
+                        onRecipeWasSaved(event.action == BusConsts.ACTION_ADD_NEW);
+                        break;
 
-                    onRecipeWasSaved(event.action == BusConsts.ACTION_ADD_NEW);
-                    break;
+                    case BusConsts.ACTION_TOGGLE_FAVOURITE:
+                        // Tablet only
 
-                case BusConsts.ACTION_TOGGLE_FAVOURITE:
-                    // Tablet only
-
-                    onToggleFavourite();
-                    break;
+                        onToggleFavourite();
+                        break;
+                }
             }
 
             for (Fragment fragment : fm.getFragments()) {
@@ -1379,8 +1352,11 @@ public class RecipesListsActivity extends AppCompatActivity implements
             }
 
         } else {
-            View mainView = findViewById(android.R.id.content);
-            AppHelper.onApiErrorReceived(event.t, mainView);
+            if (event.action == BusConsts.ACTION_DELETE || getResources().getBoolean(R.bool.isTablet)) {
+
+                View mainView = findViewById(android.R.id.content);
+                AppHelper.onApiErrorReceived(event.t, mainView);
+            }
         }
     }
 
@@ -1484,7 +1460,13 @@ public class RecipesListsActivity extends AppCompatActivity implements
             return;
         }
 
-        Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(mRecipeId, null);
+        if (appStateManager.user.isUserRecipe(mRecipeId)) {
+            action = AppConsts.Actions.REVIEW_USER_RECIPE;
+        } else {
+            action = AppConsts.Actions.REVIEW_YUMMLY_RECIPE;
+        }
+
+        Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(action, mRecipeId);
 
         ft.setCustomAnimations(R.anim.slide_in_right, R.anim.slide_out_right);
         ft.replace(R.id.layout_detailsContainer, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
@@ -1515,6 +1497,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
     @Subscribe
     public void onEvent(OnTabChangedEvent event) {
         // Bus event
+        action = AppConsts.Actions.NO_ACTION;
 
         tabChanged = true;
 

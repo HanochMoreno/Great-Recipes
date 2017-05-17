@@ -36,6 +36,7 @@ public class AppConsts {
             new AllergenAndDiet(false, 13, AppConsts.Filters.TREE_NUT_FREE, "395^Tree Nut-Free"),
             new AllergenAndDiet(false, 14, AppConsts.Filters.WHEAT_FREE, "392^Wheat-Free"),
     };
+    public static final String NEW_RECIPE = "NEW_RECIPE";
 
 //-------------------------------------------------------------------------------------------------
 
@@ -56,12 +57,22 @@ public class AppConsts {
 
     public class Actions {
 
-        public static final String ACTION_REGISTER = "ACTION_REGISTER";
-        public static final String ACTION_LOGIN = "ACTION_LOGIN";
+        public static final int NO_ACTION = 0;
 
-        public static final String ACTION_ADD_NEW = "action_addNew";
-        public static final String ACTION_EDIT = "action_edit";
-        public static final String ACTION_REVIEW = "action_review";
+        public static final int ACTION_REGISTER = 1;
+        public static final int ACTION_LOGIN = 2;
+
+        public static final int ADD_NEW_USER_RECIPE = 3;
+        public static final int EDIT_USER_RECIPE = 4;
+
+        public static final int REVIEW_YUMMLY_RECIPE = 6;
+        public static final int REVIEW_USER_RECIPE = 7;
+        public static final int REVIEW_SHARED_USER_RECIPE = 8;
+        public static final int REVIEW_YUMMLY_ONLINE = 9;
+        public static final int REVIEW_SERVING = 10;
+
+        public static final int ADD_SERVING_FROM_LISTS = 11;
+        public static final int ADD_SERVING_FROM_YUMMLY = 12;
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -84,11 +95,13 @@ public class AppConsts {
 
     public class Extras {
 
-        public static final String EXTRA_RECIPE_ID = "extra_recipeId";
+        public static final String RECIPE_ID = "RECIPE_ID";
+        public static final String EXTRA_YUMMLY_ID = "EXTRA_YUMMLY_ID";
 
-        public static final String EXTRA_SERVING = "extra_serving";
-        public static final String ADD_SERVING = "addServing";
-        public static final String REVIEW_SERVING = "reviewServing";
+//        public static final String EXTRA_SERVING = "EXTRA_SERVING";
+        public static final String ADD_SERVING = "ADD_SERVING_FROM_YUMMLY";
+        public static final String REVIEW_SERVING = "REVIEW_SERVING";
+        public static final String EXTRA_IS_USER_RECIPE = "EXTRA_IS_USER_RECIPE";
     }
 
 //-------------------------------------------------------------------------------------------------

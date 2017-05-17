@@ -12,12 +12,12 @@ import com.hanoch.greatrecipes.view.ListOnlineFragment2;
 public class PagerAdapter extends FragmentStatePagerAdapter {
 
     private int mNumOfTabs;
-    private String extra_serving;
+    private int action;
 
-    public PagerAdapter(FragmentManager fm, int NumOfTabs, String extra_serving) {
+    public PagerAdapter(FragmentManager fm, int NumOfTabs, int action) {
         super(fm);
         this.mNumOfTabs = NumOfTabs;
-        this.extra_serving = extra_serving;
+        this.action = action;
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -28,13 +28,13 @@ public class PagerAdapter extends FragmentStatePagerAdapter {
         switch (position) {
 
             case 0:
-                return MyListFragment.newInstance(new ListOnlineFragment2(), extra_serving);
+                return MyListFragment.newInstance(new ListOnlineFragment2(), action);
 
             case 1:
-                return MyListFragment.newInstance(new ListMyOwnFragment2(), extra_serving);
+                return MyListFragment.newInstance(new ListMyOwnFragment2(), action);
 
             case 2:
-                return MyListFragment.newInstance(new ListFavouriteFragment2(), extra_serving);
+                return MyListFragment.newInstance(new ListFavouriteFragment2(), action);
 
             default:
                 return null;
@@ -47,9 +47,5 @@ public class PagerAdapter extends FragmentStatePagerAdapter {
     public int getCount() {
         return mNumOfTabs;
     }
+
 }
-
-
-
-
-

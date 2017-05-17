@@ -68,8 +68,21 @@ public class User {
         }
     }
 
+    public Serving getLastServing() {
+        ArrayList<Serving> list = new ArrayList<>(servings.values());
+        if (list.isEmpty()) {
+            return null;
+        } else {
+            return list.get(list.size() - 1);
+        }
+    }
+
     public boolean isUserRecipe(String recipeId) {
         return userRecipes.containsKey(recipeId);
+    }
+
+    public boolean isUserRecipeCreatedByThisUser(String recipeId) {
+        return isUserRecipe(recipeId) && userRecipes.get(recipeId).userId.equals(_id);
     }
 
 }
