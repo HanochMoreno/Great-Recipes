@@ -13,10 +13,15 @@
 
         <EditTextPreference
             android:icon="@mipmap/ic_prefs_username"
-            android:defaultValue="New User"
-            android:dialogTitle="@string/please_enter_user_name"
-            android:key="userName"
+            android:dialogTitle="@string/enter_new_user_name"
+            android:key="username"
             android:title="@string/change_user_name" />
+
+        <EditTextPreference
+            android:icon="@mipmap/ic_prefs_password"
+            android:dialogTitle="@string/enter_new_password"
+            android:key="password"
+            android:title="@string/change_password" />
 
         <ListPreference
             android:icon="@mipmap/ic_prefs_main_menu"

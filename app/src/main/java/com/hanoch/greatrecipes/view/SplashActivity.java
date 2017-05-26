@@ -13,11 +13,14 @@ import android.widget.TextView;
 
 import com.crashlytics.android.ndk.CrashlyticsNdk;
 import com.hanoch.greatrecipes.AppConsts;
+import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.crashlytics.android.Crashlytics;
+import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnLoginEvent;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
+import com.hanoch.greatrecipes.model.UserEmailVerification;
 import com.hanoch.greatrecipes.utilities.MyFonts;
 import com.squareup.otto.Subscribe;
 
@@ -47,15 +50,15 @@ public class SplashActivity extends AppCompatActivity {
         bus = MyBus.getInstance();
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        String username = sp.getString(AppConsts.SharedPrefs.USER_NAME, null);
+        String email = sp.getString(AppConsts.SharedPrefs.EMAIL, null);
         String password = sp.getString(AppConsts.SharedPrefs.PASSWORD, null);
 
-        if (username == null || password == null) {
+        if (email == null || password == null) {
             isGotLoginResponse = true;
             isUserLoggedIn = false;
         } else {
             isGotLoginResponse = false;
-            dbManager.login(username, password);
+            dbManager.login(email, password);
         }
 //        if (BuildConfig.DEBUG) {
 //            Intent intent = new Intent(this, MainActivity.class);
@@ -165,6 +168,15 @@ public class SplashActivity extends AppCompatActivity {
         isGotLoginResponse = true;
 
         if (event.isSuccess) {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = sp.edit();
+
+            User user = AppStateManager.getInstance().user;
+            editor.putString(AppConsts.SharedPrefs.EMAIL, user.preferences.email);
+            editor.putString(AppConsts.SharedPrefs.USER_NAME, user.preferences.username);
+            editor.putString(AppConsts.SharedPrefs.PASSWORD, user.preferences.password);
+            editor.apply();
+
             isUserLoggedIn = true;
 
             if (progressStatus == 100) {

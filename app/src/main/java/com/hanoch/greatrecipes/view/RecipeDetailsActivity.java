@@ -27,10 +27,10 @@ import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
+import com.hanoch.greatrecipes.bus.OnToggleRecipeFavouriteEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
@@ -454,6 +454,8 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
                 if (!isPremium) {
 
+//                    appStateManager.user.onlineDownloadsCount++ jkjhkjh;
+
 //                    int createdRecipesCount = sp.getInt(AppConsts.SharedPrefs.CREATED_COUNTER, 0);
 //                    createdRecipesCount++;
 //                    SharedPreferences.Editor editor = sp.edit();
@@ -496,19 +498,8 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
             case R.id.action_removeFromFavourites:
 
                 progressDialog.show();
+                dbManager.toggleRecipeFavourite(mRecipeId);
 
-                ArrayList<UserRecipe> userRecipes = null;
-                ArrayList<YummlyRecipe> yummlyRecipes = null;
-
-                if (appStateManager.user.isUserRecipe(mRecipeId)) {
-                    userRecipes = new ArrayList<>();
-                    userRecipes.add(appStateManager.user.userRecipes.get(mRecipeId));
-                } else {
-                    yummlyRecipes = new ArrayList<>();
-                    yummlyRecipes.add(appStateManager.user.yummlyRecipes.get(mRecipeId));
-                }
-
-                dbManager.updateUserRecipes(userRecipes, yummlyRecipes, BusConsts.ACTION_TOGGLE_FAVOURITE);
                 break;
 
             case R.id.action_ok:
@@ -524,6 +515,10 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
             case R.id.action_closeWebview:
                 onBackPressed();
                 break;
+
+//            case R.id.share:
+//
+//                break;
 
             default:
                 return super.onOptionsItemSelected(item);
@@ -563,6 +558,22 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
+    public void onEvent(OnToggleRecipeFavouriteEvent event) {
+        // After toggling recipe favourite index
+
+        progressDialog.dismiss();
+
+        if (event.isSuccess) {
+            onToggleFavourite();
+        } else {
+            View mainView = findViewById(android.R.id.content);
+            AppHelper.onApiErrorReceived(event.t, mainView);
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
     public void onEvent(OnUpdateUserRecipesEvent event) {
         // After saving a new or edited user-recipe
 
@@ -574,10 +585,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
                     onRecipeWasSaved(true, appStateManager.user.getLastUserRecipe());
                     break;
                 case BusConsts.ACTION_EDIT:
-                    onRecipeWasSaved(false, appStateManager.user.userRecipes.get(mRecipeId));
-                    break;
-                case BusConsts.ACTION_TOGGLE_FAVOURITE:
-                    onToggleFavourite();
+                    onRecipeWasSaved(false, appStateManager.user.recipes.userRecipes.get(mRecipeId));
                     break;
             }
         } else {
@@ -707,7 +715,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
             if (action == AppConsts.Actions.EDIT_USER_RECIPE) {
                 // Settings are the same as after saving
-                onRecipeWasSaved(null, appStateManager.user.userRecipes.get(mRecipeId));
+                onRecipeWasSaved(null, appStateManager.user.recipes.userRecipes.get(mRecipeId));
             } else {
                 finish();
             }

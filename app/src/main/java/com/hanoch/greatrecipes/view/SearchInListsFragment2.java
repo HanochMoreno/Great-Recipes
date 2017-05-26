@@ -107,13 +107,13 @@ public class SearchInListsFragment2 extends MyListFragment {
 
         ArrayList<GenericRecipe> searchResults = new ArrayList<>();
 
-        for (UserRecipe recipe : user.userRecipes.values()) {
+        for (UserRecipe recipe : user.recipes.userRecipes.values()) {
             if (recipe.recipeTitle.contains(keyToSearch)) {
                 searchResults.add(recipe);
             }
         }
 
-        for (YummlyRecipe recipe : user.yummlyRecipes.values()) {
+        for (YummlyRecipe recipe : user.recipes.yummlyRecipes.values()) {
             if (recipe.recipeTitle.contains(keyToSearch)) {
                 searchResults.add(recipe);
             }

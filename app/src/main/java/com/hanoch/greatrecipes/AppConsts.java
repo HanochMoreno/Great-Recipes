@@ -16,6 +16,8 @@ public class AppConsts {
 
     public static final String SIGNATURE_BASE_64_LICENSE_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoB80Hzf+3qCy8wVXsCtqPh7BjTtFIfolF28MYCOYqLDb2nsiET+V599lG8KDw/JhgQd6SfvknoVWEnV4uuMXdBpeJh+hKW4bJgAQhtpg6P27pg9C+g08tP1/R9nq+vnNONoY3T+wTmhTn0mqeAijqbghke6Rx5hJv6RPgt60KYFnxmwAffk6xg9HRn9rLNP3v1okhfOqNzQjXyrs+h5Mr2S5WaU52tewGZ1W4258ts2B8bxca0adJNl4R86lxS3GliFnS9NA/tb7BEo3SAJzFoQ9GSnWCABXwNkX/1UtH1BTTkps1imjQRBT921qjWMBM2caHZGAXZB8FmejwtVcFwIDAQAB";
     public static final String SKU_PREMIUM = "great_recipes_premium_access";
+    public static final String HANOCH_MAIL_ADDRESS = "hanoch001@gmail.com";
+    public static final String HANOCH_MAIL_PASSWORD = "hanmor57";
 
 //-------------------------------------------------------------------------------------------------
 
@@ -61,9 +63,10 @@ public class AppConsts {
 
         public static final int ACTION_REGISTER = 1;
         public static final int ACTION_LOGIN = 2;
+        public static final int ACTION_FORGOT_PASSWORD = 3;
 
-        public static final int ADD_NEW_USER_RECIPE = 3;
-        public static final int EDIT_USER_RECIPE = 4;
+        public static final int ADD_NEW_USER_RECIPE = 4;
+        public static final int EDIT_USER_RECIPE = 5;
 
         public static final int REVIEW_YUMMLY_RECIPE = 6;
         public static final int REVIEW_USER_RECIPE = 7;
@@ -206,20 +209,21 @@ public class AppConsts {
 
     public static class SharedPrefs {
 
-        public static final String VEGAN = "Vegan";
-        public static final String VEGETARIAN = "Vegetarian";
-        public static final String PALEO = "Paleo";
-        public static final String DAIRY_FREE = "Dairy-free";
-        public static final String EGG_FREE = "Egg-free";
-        public static final String GLUTEN_FREE = "Gluten-free";
-        public static final String PEANUT_FREE = "Peanut-free";
-        public static final String SEAFOOD_FREE = "Seafood-free";
-        public static final String SESAME_FREE = "Sesame-free";
-        public static final String SOY_FREE = "Soy-free";
-        public static final String TREE_NUT_FREE = "Tree-nut-free";
-        public static final String WHEAT_FREE = "Wheat-free";
+        public static final String VEGAN = "390^Vegan";
+        public static final String VEGETARIAN = "387^Lacto-ovo vegetarian";
+        public static final String PALEO = "403^Paleo";
+        public static final String DAIRY_FREE = "396^Dairy-Free";
+        public static final String EGG_FREE = "397^Egg-Free";
+        public static final String GLUTEN_FREE = "393^Gluten-Free";
+        public static final String PEANUT_FREE = "394^Peanut-Free";
+        public static final String SEAFOOD_FREE = "398^Seafood-Free";
+        public static final String SESAME_FREE = "399^Sesame-Free";
+        public static final String SOY_FREE = "400^Soy-Free";
+        public static final String TREE_NUT_FREE = "395^Tree Nut-Free";
+        public static final String WHEAT_FREE = "392^Wheat-Free";
 
-        public static final String USER_NAME = "userName";
+        public static final String EMAIL = "email";
+        public static final String USER_NAME = "username";
         public static final String PASSWORD = "password";
         public static final String MAIN_MENU_DISPLAY = "mainMenuDisplay";
         public static final String MAX_ONLINE_SEARCH_RESULTS = "maxOnlineSearchResults";
@@ -232,14 +236,14 @@ public class AppConsts {
         public static final String CONTACT_US = "contactUs";
         public static final String VIBRATION = "vibration";
 
-        public static final String NOT_PREMIUM = "notPremium";
-        public static final String PREMIUM = "premium";
+//        public static final String NOT_PREMIUM = "notPremium";
+//        public static final String PREMIUM = "premium";
 
         public static final String SHOW_FAVOURITES_DIALOG = "showFavouritesDialogAgain";
         public static final String FAVOURITES_DIALOG_WAS_SHOWN = "favouritesDialogWasShown";
 
-        public static final String DOWNLOADED_COUNTER = "downloadedCounter";
-        public static final String CREATED_COUNTER = "createdCounter";
+//        public static final String DOWNLOADED_COUNTER = "downloadedCounter";
+//        public static final String CREATED_COUNTER = "createdCounter";
 
         public static final int RATE_US_DIALOG_COUNTER_REPEAT = 6;
         public static final int RATE_US_DIALOG_NEVER_SHOW_AGAIN = -1;
@@ -276,7 +280,9 @@ public class AppConsts {
 
         public static final String CATEGORY_PREMIUM_HANDLING = "Premium Handling";
         public static final String CATEGORY_LOGIN = "Login";
+        public static final String CATEGORY_REGISTER = "Register";
         public static final String CATEGORY_RATE_US = "Rate Us";
+        public static final String CATEGORY_PREFERENCES = "Preferences";
     }
 
 //-------------------------------------------------------------------------------------------------

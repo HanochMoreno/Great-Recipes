@@ -355,7 +355,7 @@ public abstract class MyListFragment extends Fragment implements
 
             case R.id.floatingButton_addRecipe:
 
-                mListListener.onAddNewRecipeClick(this, AppConsts.RecipeOrigin.ADDED_MANUALLY);
+                mListListener.onAddNewRecipeClick(this);
 
                 if (getResources().getBoolean(R.bool.isTablet)) {
 

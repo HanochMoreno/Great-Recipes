@@ -36,6 +36,7 @@ import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
+import com.hanoch.greatrecipes.BuildConfig;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
@@ -341,7 +342,6 @@ public class MealPlannerActivity extends AppCompatActivity implements
         dialog.setCanceledOnTouchOutside(false);
         dialog.setContentView(view);
 
-        // Retrieve views from the inflated dialog layout and update their values
         final TextView dialogTitle = (TextView) dialog.findViewById(R.id.textView_dialogTitle);
         dialogTitle.setText(R.string.choose_serving_type);
 
@@ -368,10 +368,10 @@ public class MealPlannerActivity extends AppCompatActivity implements
         }
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        final boolean premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
-        final int downloadedRecipesCount = (premium ? 0 : (sp.getInt(AppConsts.SharedPrefs.DOWNLOADED_COUNTER, 0)));
+        final boolean isPremium = appStateManager.user.isPremium;
+        final int downloadedRecipesCount = (isPremium ? 0 : appStateManager.user.onlineDownloadsCount);
 
-        ServingTypesAdapter adapter = new ServingTypesAdapter(this, servingTypesList, premium);
+        ServingTypesAdapter adapter = new ServingTypesAdapter(this, servingTypesList, isPremium);
         gridView_servingTypesList.setAdapter(adapter);
 
         gridView_servingTypesList.setOnItemClickListener((parent, view1, position, id) -> {
@@ -417,7 +417,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
                 openListsActivity();
 
             } else {
-                if (!premium && downloadedRecipesCount == 3) {
+                if (!BuildConfig.DEBUG && !isPremium && downloadedRecipesCount >= 3) {
                     AnalyticsHelper.sendEvent(thisActivity, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
                     AppHelper.showSnackBar(view, R.string.you_exceeded_the_downloaded_recipes_limit, ContextCompat.getColor(thisActivity, R.color.colorSnackbarFreeTrial));
                     return;
@@ -641,7 +641,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
             ArrayList<Serving> servingsList = new ArrayList<>();
             servingsList.add(serving);
-            dbManager.updateUserServingsMap(servingsList, BusConsts.ACTION_ADD_NEW);
+            dbManager.updateUserServings(servingsList, BusConsts.ACTION_ADD_NEW);
         }
     }
 
@@ -757,7 +757,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
                 }
             }
 
-            dbManager.updateUserServingsMap(servingsList, BusConsts.ACTION_DELETE);
+            dbManager.updateUserServings(servingsList, BusConsts.ACTION_DELETE);
 
             dialog.dismiss();
         });

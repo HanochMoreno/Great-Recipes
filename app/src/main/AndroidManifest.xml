@@ -24,6 +24,7 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
         <provider
             android:name=".database.RecipesProvider"
             android:authorities="com.hanoch.recipesdbprovider.provider.recipes"
@@ -35,16 +36,30 @@
             android:label="@string/app_name">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
-
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+
         </activity>
         <activity
             android:name=".view.MainActivity"
             android:label="@string/app_name" />
         <activity
             android:name=".view.RegisterActivity"
-            android:label="@string/register" />
+            android:label="@string/register">
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <!--TODO: Change host to real host from heroku  android:host="10.0.0.4:3000"-->
+                <data
+                    android:scheme="http"
+                    android:host="www.example.com"
+                    android:pathPrefix="/" />
+            </intent-filter>
+        </activity>
+
         <activity
             android:name=".view.OnlineSearchActivity"
             android:label="@string/online_search"

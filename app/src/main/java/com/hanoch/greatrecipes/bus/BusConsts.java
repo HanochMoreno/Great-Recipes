@@ -1,14 +1,10 @@
 package com.hanoch.greatrecipes.bus;
 
-/**
- * Created by Hanoc_000 on 03/05/2017.
- */
 
 public final class BusConsts {
 
     public static final int ACTION_ADD_NEW = 1;
     public static final int ACTION_EDIT = 2;
     public static final int ACTION_DELETE = 3;
-    public static final int ACTION_TOGGLE_FAVOURITE = 4;
-    public static final int ACTION_TOGGLE_VEGAN_OR_ALLERGEN = 5;
+    public static final int ACTION_DELETE_ALL_LISTS = 4;
 }

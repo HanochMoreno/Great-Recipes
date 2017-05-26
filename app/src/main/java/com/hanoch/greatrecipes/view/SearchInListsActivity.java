@@ -34,10 +34,10 @@ import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 import com.hanoch.greatrecipes.bus.BusConsts;
+import com.hanoch.greatrecipes.bus.OnToggleRecipeFavouriteEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.control.ListFragmentListener;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
@@ -455,7 +455,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onAddNewRecipeClick(MyListFragment listFragment, int listTypeIndex) {
+    public void onAddNewRecipeClick(MyListFragment listFragment) {
         // No implementation in this activity
     }
 
@@ -732,17 +732,8 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 // Tablet only, while reviewing a recipe
 
                 progressDialog.show();
-                ArrayList<UserRecipe> userRecipes = null;
-                ArrayList<YummlyRecipe> yummlyRecipes = null;
+                dbManager.toggleRecipeFavourite(mRecipeId);
 
-                if (appStateManager.user.isUserRecipe(mRecipeId)) {
-                    userRecipes = new ArrayList<>();
-                    userRecipes.add(appStateManager.user.userRecipes.get(mRecipeId));
-                } else {
-                    yummlyRecipes = new ArrayList<>();
-                    yummlyRecipes.add(appStateManager.user.yummlyRecipes.get(mRecipeId));
-                }
-                dbManager.updateUserRecipes(userRecipes, yummlyRecipes, BusConsts.ACTION_TOGGLE_FAVOURITE);
                 break;
 
             case R.id.action_ok:
@@ -773,13 +764,11 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
         AppHelper.vibrate(this);
 
-        final Context context = SearchInListsActivity.this;
-
         final Dialog dialog = new Dialog(this);
 
         dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        LayoutInflater inflater = LayoutInflater.from(context);
+        LayoutInflater inflater = LayoutInflater.from(this);
 
         final View view = inflater.inflate(R.layout.dialog_warning, null, false);
 
@@ -807,22 +796,18 @@ public class SearchInListsActivity extends AppCompatActivity implements
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
         button_yes.setOnClickListener(v -> {
 
-            ArrayList<UserRecipe> userRecipes = new ArrayList<>();
-            ArrayList<YummlyRecipe> yummlyRecipes = new ArrayList<>();
+            ArrayList<String> userRecipesIds = new ArrayList<>();
+            ArrayList<String> yummlyRecipesIds = new ArrayList<>();
 
-            for (UserRecipe userRecipe : appStateManager.user.userRecipes.values()) {
-                if (checkedItemsId.contains(userRecipe._id)) {
-                    userRecipes.add(userRecipe);
+            for (String checkedId : checkedItemsId) {
+                if (appStateManager.user.isUserRecipe(checkedId)) {
+                    userRecipesIds.add(checkedId);
+                } else {
+                    yummlyRecipesIds.add(checkedId);
                 }
             }
 
-            for (YummlyRecipe yummlyRecipe : appStateManager.user.yummlyRecipes.values()) {
-                if (checkedItemsId.contains(yummlyRecipe._id)) {
-                    yummlyRecipes.add(yummlyRecipe);
-                }
-            }
-
-            dbManager.updateUserRecipes(userRecipes, yummlyRecipes, BusConsts.ACTION_DELETE);
+            dbManager.updateUserRecipes(userRecipesIds, yummlyRecipesIds, BusConsts.ACTION_DELETE);
 
             dialog.dismiss();
         });
@@ -1020,6 +1005,25 @@ public class SearchInListsActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
+    public void onEvent(OnToggleRecipeFavouriteEvent event) {
+        // After toggling recipe favourite index
+
+        progressDialog.dismiss();
+
+        if (event.isSuccess) {
+            onToggleFavourite();
+
+            listFragment.refreshAdapter();
+
+        } else {
+            View mainView = findViewById(android.R.id.content);
+            AppHelper.onApiErrorReceived(event.t, mainView);
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
     public void onEvent(OnUpdateUserRecipesEvent event) {
         // After toggling favourite, or adding/editing/deleting Recipes
 
@@ -1035,10 +1039,6 @@ public class SearchInListsActivity extends AppCompatActivity implements
 
                 case BusConsts.ACTION_EDIT:
                     onRecipeWasSaved();
-                    break;
-
-                case BusConsts.ACTION_TOGGLE_FAVOURITE:
-                    onToggleFavourite();
                     break;
             }
 

@@ -16,12 +16,14 @@ import android.widget.Toast;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
+import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.model.FreeTrialPreference;
+import com.hanoch.greatrecipes.model.Preferences;
 import com.squareup.otto.Subscribe;
 
 public class PreferencesListsFragment extends PreferenceFragment implements
@@ -30,8 +32,8 @@ public class PreferencesListsFragment extends PreferenceFragment implements
 
     private Preference maxOnlineSearchResults;
     private View view;
-    private boolean premium;
-    private MyBus bus;
+    private boolean isPremium;
+    private Preferences newPreferences;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -39,15 +41,13 @@ public class PreferencesListsFragment extends PreferenceFragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        bus = MyBus.getInstance();
+        isPremium = AppStateManager.getInstance().user.isPremium;
 
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
-
-        if (premium)
+        if (isPremium) {
             addPreferencesFromResource(R.xml.prefs_lists);
-        else
+        } else {
             addPreferencesFromResource(R.xml.prefs_lists_free_trial);
+        }
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -63,7 +63,7 @@ public class PreferencesListsFragment extends PreferenceFragment implements
 
         maxOnlineSearchResults = findPreference(AppConsts.SharedPrefs.MAX_ONLINE_SEARCH_RESULTS);
 
-        if (premium) {
+        if (isPremium) {
 
             // TODO: getArguments().getString("...")
 
@@ -83,30 +83,23 @@ public class PreferencesListsFragment extends PreferenceFragment implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onStart() {
-        super.onStart();
+    public void onResume() {
+        super.onResume();
 
-        bus.register(this);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
-    public void onStop() {
-        super.onStop();
-
-        bus.unregister(this);
+        newPreferences = ((PreferencesActivityForLargeTablet) getActivity()).newPreferences;
     }
 
 //-------------------------------------------------------------------------------------------------
 
     @Override
     public boolean onPreferenceChange(Preference preference, Object newValue) {
+        String newVal = (String) newValue;
 
         switch (preference.getKey()) {
 
             case AppConsts.SharedPrefs.MAX_ONLINE_SEARCH_RESULTS:
-                maxOnlineSearchResults.setSummary((String) newValue);
+                maxOnlineSearchResults.setSummary(newVal);
+                newPreferences.maxOnlineSearchResults = Integer.parseInt(newVal);
                 return true;
         }
 
@@ -167,16 +160,13 @@ public class PreferencesListsFragment extends PreferenceFragment implements
 
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
         button_yes.setOnClickListener(v -> {
-
-            GreatRecipesDbManager.getInstance().clearAllLists(BusConsts.ACTION_DELETE);
+            ((PreferencesActivity) getActivity()).isToClearAllRecipesListsOnSave = false;
             dialog.dismiss();
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
         btnCancel.setOnClickListener(v -> {
-
-            String toastMessage = getString(R.string.the_operation_was_aborted);
-            Toast.makeText(getActivity(), toastMessage, Toast.LENGTH_LONG).show();
+            ((PreferencesActivity) getActivity()).isToClearAllRecipesListsOnSave = false;
             dialog.dismiss();
         });
 
@@ -188,7 +178,7 @@ public class PreferencesListsFragment extends PreferenceFragment implements
     @Subscribe
     public void onEvent(OnUpdateUserRecipesEvent event) {
         if (event.isSuccess) {
-            if (event.action == BusConsts.ACTION_DELETE) {
+            if (event.action == BusConsts.ACTION_DELETE_ALL_LISTS) {
                 AppHelper.showSnackBar(view, R.string.all_the_recipe_were_deleted, ContextCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
             }
         } else {

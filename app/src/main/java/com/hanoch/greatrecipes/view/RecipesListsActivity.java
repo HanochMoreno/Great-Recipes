@@ -33,10 +33,12 @@ import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
+import com.hanoch.greatrecipes.BuildConfig;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 import com.hanoch.greatrecipes.bus.BusConsts;
+import com.hanoch.greatrecipes.bus.OnToggleRecipeFavouriteEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.control.ListFragmentListener;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
@@ -633,7 +635,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onAddNewRecipeClick(MyListFragment listFragment, int listTypeIndex) {
+    public void onAddNewRecipeClick(MyListFragment listFragment) {
 
         mRecipeId = null;
 
@@ -643,18 +645,17 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
         Intent intent;
 
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        boolean premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
+        boolean isPremium = appStateManager.user.isPremium;
 
-        switch (listTypeIndex) {
+        switch (currentlyShownList) {
 
-            case AppConsts.RecipeOrigin.FROM_ONLINE_SEARCH:
+            case AppConsts.ListType.ONLINE_RECIPES:
 
-                if (!premium) {
+                if (!BuildConfig.DEBUG && !isPremium) {
 
-                    int downloadedRecipesCount = sp.getInt(AppConsts.SharedPrefs.DOWNLOADED_COUNTER, 0);
+                    int onlineSearchesCount = appStateManager.user.onlineDownloadsCount;
 
-                    if (downloadedRecipesCount == 3) {
+                    if (onlineSearchesCount == 3) {
                         // The free-trial limitation for downloading recipes is exceeded
 
                         AnalyticsHelper.sendEvent(RecipesListsActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
@@ -669,22 +670,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 startActivity(intent);
                 break;
 
-            case AppConsts.RecipeOrigin.ADDED_MANUALLY:
-
-                if (!premium) {
-
-                    int createdRecipesCount = sp.getInt(AppConsts.SharedPrefs.CREATED_COUNTER, 0);
-
-                    if (createdRecipesCount == 3) {
-                        // The free-trial limitation for creating recipes is exceeded
-
-                        AnalyticsHelper.sendEvent(RecipesListsActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
-
-                        View view = this.findViewById(android.R.id.content);
-                        AppHelper.showSnackBar(view, R.string.you_exceeded_the_recipes_creation_limit, ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial));
-                        break;
-                    }
-                }
+            case AppConsts.ListType.MY_OWN_RECIPES:
 
                 action = AppConsts.Actions.ADD_NEW_USER_RECIPE;
 
@@ -939,19 +925,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
             case R.id.action_addToList:
                 // Tablet only - "my Own" recipe only
 
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-                boolean premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
-
-                if (!premium) {
-
-                    int createdRecipesCount = sp.getInt(AppConsts.SharedPrefs.CREATED_COUNTER, 0);
-                    createdRecipesCount++;
-                    SharedPreferences.Editor editor = sp.edit();
-
-                    editor.putInt(AppConsts.SharedPrefs.CREATED_COUNTER, createdRecipesCount);
-                    editor.apply();
-                }
-
                 progressDialog.show();
 
                 UserRecipe userRecipeToAdd = editRecipeFragment.onSaveUserRecipeClicked();
@@ -985,17 +958,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 // Tablet only, while reviewing a recipe
 
                 progressDialog.show();
-
-                ArrayList<UserRecipe> userRecipes = null;
-                ArrayList<YummlyRecipe> yummlyRecipes = null;
-                if (appStateManager.user.isUserRecipe(mRecipeId)) {
-                    userRecipes = new ArrayList<>();
-                    userRecipes.add(appStateManager.user.userRecipes.get(mRecipeId));
-                } else {
-                    yummlyRecipes = new ArrayList<>();
-                    yummlyRecipes.add(appStateManager.user.yummlyRecipes.get(mRecipeId));
-                }
-                dbManager.updateUserRecipes(userRecipes, yummlyRecipes, BusConsts.ACTION_TOGGLE_FAVOURITE);
+                dbManager.toggleRecipeFavourite(mRecipeId);
                 break;
 
             case R.id.action_ok:
@@ -1061,22 +1024,18 @@ public class RecipesListsActivity extends AppCompatActivity implements
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
         button_yes.setOnClickListener(v -> {
 
-            ArrayList<UserRecipe> userRecipes = new ArrayList<>();
-            ArrayList<YummlyRecipe> yummlyRecipes = new ArrayList<>();
+            ArrayList<String> userRecipesIds = new ArrayList<>();
+            ArrayList<String> yummlyRecipesIds = new ArrayList<>();
 
-            for (UserRecipe recipe : appStateManager.user.userRecipes.values()) {
-                if (checkedItemsId.contains(recipe._id)) {
-                    userRecipes.add(recipe);
+            for (String checkedId : checkedItemsId) {
+                if (appStateManager.user.isUserRecipe(checkedId)) {
+                    userRecipesIds.add(checkedId);
+                } else {
+                    yummlyRecipesIds.add(checkedId);
                 }
             }
 
-            for (YummlyRecipe recipe : appStateManager.user.yummlyRecipes.values()) {
-                if (checkedItemsId.contains(recipe._id)) {
-                    yummlyRecipes.add(recipe);
-                }
-            }
-
-            dbManager.updateUserRecipes(userRecipes, yummlyRecipes, BusConsts.ACTION_DELETE);
+            dbManager.updateUserRecipes(userRecipesIds, yummlyRecipesIds, BusConsts.ACTION_DELETE);
 
             dialog.dismiss();
         });
@@ -1171,7 +1130,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
             fm.popBackStack();
 
-            YummlyRecipe yummlyRecipe = appStateManager.user.yummlyRecipes.get(mRecipeId);
+            YummlyRecipe yummlyRecipe = appStateManager.user.recipes.yummlyRecipes.get(mRecipeId);
 
             if (action == AppConsts.Actions.ADD_SERVING_FROM_LISTS) {
                 // The user was watching the recipe URL while choosing a recipe to meal planner
@@ -1311,9 +1270,33 @@ public class RecipesListsActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
+    public void onEvent(OnToggleRecipeFavouriteEvent event) {
+        // After toggling recipe favourite index
+        // Tablet only
+
+        progressDialog.dismiss();
+
+        if (event.isSuccess) {
+            onToggleFavourite();
+
+            FragmentManager fm = getSupportFragmentManager();
+            for (Fragment fragment : fm.getFragments()) {
+                if (fragment instanceof MyListFragment) {
+                    ((MyListFragment) fragment).refreshAdapter();
+                }
+            }
+
+        } else {
+            View mainView = findViewById(android.R.id.content);
+            AppHelper.onApiErrorReceived(event.t, mainView);
+        }
+    }
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
     public void onEvent(OnUpdateUserRecipesEvent event) {
-        // Tablet: After toggling favourite, or adding/editing/deleting Recipes
-        // Phone: deleting Recipes
+        // Tablet: after adding/editing/deleting Recipes
+        // Phone: after deleting Recipes
 
         progressDialog.dismiss();
 
@@ -1335,12 +1318,6 @@ public class RecipesListsActivity extends AppCompatActivity implements
                         // Tablet only
 
                         onRecipeWasSaved(event.action == BusConsts.ACTION_ADD_NEW);
-                        break;
-
-                    case BusConsts.ACTION_TOGGLE_FAVOURITE:
-                        // Tablet only
-
-                        onToggleFavourite();
                         break;
                 }
             }

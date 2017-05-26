@@ -128,14 +128,14 @@ public class ServingsListAdapter extends BaseAdapter {
         GenericRecipe recipe;
 
         if (serving.isUserRecipe) {
-            recipe = appStateManager.user.userRecipes.get(serving.recipeId);
+            recipe = appStateManager.user.recipes.userRecipes.get(serving.recipeId);
             if (recipe == null) {
 //                getUserRecipeFromGreatRecipesApi(holder, serving);
             } else {
                 onRecipeDataReceived(holder, serving, recipe);
             }
         } else {
-            recipe = appStateManager.user.yummlyRecipes.get(serving.recipeId);
+            recipe = appStateManager.user.recipes.yummlyRecipes.get(serving.recipeId);
             if (recipe == null) {
 //                getYummlyRecipeFromGreatRecipesApi(holder, serving);
             } else {

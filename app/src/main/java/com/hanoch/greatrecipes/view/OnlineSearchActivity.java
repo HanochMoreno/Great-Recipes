@@ -6,11 +6,9 @@ import android.app.ProgressDialog;
 import android.app.SearchManager;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.graphics.drawable.ColorDrawable;
-import android.preference.PreferenceManager;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
@@ -36,15 +34,18 @@ import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
+import com.hanoch.greatrecipes.BuildConfig;
 import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
+//import com.hanoch.greatrecipes.bus.OnUpdateOnlineDownloadedCountEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserDietAndAllergensEvent;
 import com.hanoch.greatrecipes.bus.OnYummlyRecipeDownloadedEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
+import com.hanoch.greatrecipes.database.SqLiteDbManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.ObjectDrawerItem;
 import com.hanoch.greatrecipes.utilities.MyFonts;
@@ -190,7 +191,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             mDrawerList.setDivider(color);
         }
 
-        for (String sPosition : appStateManager.user.dietAndAllergensList) {
+        for (String sPosition : appStateManager.user.preferences.dietAndAllergensList) {
             mDrawerList.setItemChecked(Integer.parseInt(sPosition), true);
         }
 
@@ -364,6 +365,11 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         super.onDestroy();
 
         bus.unregister(this);
+
+        if (!BuildConfig.DEBUG && !appStateManager.user.isPremium) {
+            SqLiteDbManager sqliteManager = new SqLiteDbManager(this);
+            sqliteManager.deleteAllSearchResults();
+        }
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -521,12 +527,11 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
             case R.id.action_addToList:
 
-                if (!isPremium) {
+                if (!isPremium && !BuildConfig.DEBUG) {
 
-                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-                    int downloadedRecipesCount = sp.getInt(AppConsts.SharedPrefs.DOWNLOADED_COUNTER, 0);
+                    int downloadedRecipesCount = appStateManager.user.onlineDownloadsCount;
 
-                    if (downloadedRecipesCount == 3) {
+                    if (downloadedRecipesCount >= 3) {
                         // The free-trial limitation for downloading recipes is exceeded
 
                         AnalyticsHelper.sendEvent(OnlineSearchActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
@@ -537,19 +542,16 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
                     } else {
                         downloadedRecipesCount++;
-                        SharedPreferences.Editor editor = sp.edit();
-
-                        editor.putInt(AppConsts.SharedPrefs.DOWNLOADED_COUNTER, downloadedRecipesCount);
-                        editor.apply();
+                        dbManager.updateOnlineDownloadsCount(downloadedRecipesCount);
                     }
                 }
 
                 progressDialog.show();
 
-                ArrayList<YummlyRecipe> yummlyRecipes = new ArrayList<>();
-                yummlyRecipes.add(appStateManager.yummlySearchResult);
+                ArrayList<String> yummlyRecipesIds = new ArrayList<>();
+                yummlyRecipesIds.add(appStateManager.yummlySearchResult._id);
 
-                dbManager.updateUserRecipes(null, yummlyRecipes, BusConsts.ACTION_ADD_NEW);
+                dbManager.updateUserRecipes(null, yummlyRecipesIds, BusConsts.ACTION_ADD_NEW);
                 break;
 
             case R.id.action_closeWebview:
@@ -655,7 +657,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 return;
             }
 
-            dbManager.updateUserDietAndAllergensLists(position);
+            dbManager.updateUserDietOrAllergenPreference(position);
 
 //            if (drawerCheckedItemsPositionList.contains(position + "")) {
 //                mDrawerList.setItemChecked(position, false);
@@ -846,8 +848,17 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         if (event.isSuccess) {
             mDrawerList.setItemChecked(event.position, event.action == BusConsts.ACTION_ADD_NEW);
         }
-
     }
+
+//-------------------------------------------------------------------------------------------------
+
+//    @Subscribe
+//    public void onEvent(OnUpdateOnlineDownloadedCountEvent event) {
+//        // After toggling a diet or allergen pref
+//
+//        if (event.isSuccess) {
+//        }
+//    }
 
 //-------------------------------------------------------------------------------------------------
 

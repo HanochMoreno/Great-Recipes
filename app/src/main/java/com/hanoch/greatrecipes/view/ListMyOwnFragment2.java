@@ -26,7 +26,7 @@ public class ListMyOwnFragment2 extends MyListFragment {
     }
 
     public void refreshAdapter() {
-        adapter.refreshList(new ArrayList<>(appStateManager.user.userRecipes.values()));
+        adapter.refreshList(new ArrayList<>(appStateManager.user.recipes.userRecipes.values()));
     }
 
 }

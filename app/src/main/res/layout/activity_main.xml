@@ -181,7 +181,7 @@
             </LinearLayout>
 
             <LinearLayout
-                android:id="@+id/layout_login"
+                android:id="@+id/layout_logout"
                 android:layout_width="0dp"
                 android:layout_height="match_parent"
                 android:layout_weight="1"
@@ -204,7 +204,7 @@
                     android:gravity="center|top"
                     android:minLines="2"
                     android:paddingTop="@dimen/padding_menu_item_text_top"
-                    android:text="@string/login"
+                    android:text="@string/logout"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="@dimen/text_size_menu_item" />
             </LinearLayout>

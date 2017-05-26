@@ -40,4 +40,5 @@ public class GreatRecipesApplication extends Application {
         }
         return mTracker;
     }
+
 }

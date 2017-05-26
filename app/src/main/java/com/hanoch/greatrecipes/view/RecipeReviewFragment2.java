@@ -18,7 +18,6 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
-import com.google.gson.Gson;
 import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
@@ -183,11 +182,11 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 
                 if (appStateManager.user.isUserRecipe(extra)) {
                     recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
-                            appStateManager.user.userRecipes.get(extra).imageByteArrayAsString);
+                            appStateManager.user.recipes.userRecipes.get(extra).imageByteArrayAsString);
 
                 } else {
                     recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
-                            appStateManager.user.yummlyRecipes.get(extra).imageByteArrayAsString);
+                            appStateManager.user.recipes.yummlyRecipes.get(extra).imageByteArrayAsString);
                 }
             }
         } else {
@@ -211,9 +210,9 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
                 setYummlyRecipeDetailsView(serving.yummlyRecipe);
             }
         } else if (appStateManager.user.isUserRecipe(extra)) {
-            setUserRecipeDetailsView(appStateManager.user.userRecipes.get(extra));
+            setUserRecipeDetailsView(appStateManager.user.recipes.userRecipes.get(extra));
         } else {
-            setYummlyRecipeDetailsView(appStateManager.user.yummlyRecipes.get(extra));
+            setYummlyRecipeDetailsView(appStateManager.user.recipes.yummlyRecipes.get(extra));
         }
 
         AppHelper.hideTheKeyboard(getActivity());
@@ -404,7 +403,7 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
             case R.id.floatingButton_getInstructions:
                 YummlyRecipe yummlyRecipe;
                 if (action == AppConsts.Actions.REVIEW_YUMMLY_ONLINE) {
-                    yummlyRecipe = appStateManager.user.yummlyRecipes.get(extra);
+                    yummlyRecipe = appStateManager.user.recipes.yummlyRecipes.get(extra);
                 } else if (action == AppConsts.Actions.REVIEW_SERVING) {
                     yummlyRecipe = appStateManager.user.servings.get(extra).yummlyRecipe;
                 } else {

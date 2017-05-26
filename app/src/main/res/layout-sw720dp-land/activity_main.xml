@@ -186,7 +186,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:id="@+id/layout_login"
+                android:id="@+id/layout_logout"
                 android:layout_margin="40dp">
 
                 <ImageView
@@ -203,7 +203,7 @@
                     android:layout_height="wrap_content"
                     android:layout_gravity="center"
                     android:gravity="center|top"
-                    android:text="@string/login"
+                    android:text="@string/logout"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="25sp"
                     android:minLines="2"

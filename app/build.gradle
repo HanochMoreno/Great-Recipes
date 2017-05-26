@@ -13,6 +13,11 @@ apply plugin: 'io.fabric'
 
 repositories {
     maven { url 'https://maven.fabric.io/public' }
+    jcenter()
+    maven {
+        url "https://maven.java.net/content/groups/public/"
+    }
+
 }
 
 android {
@@ -20,6 +25,7 @@ android {
     buildToolsVersion '25.0.2'
 
     packagingOptions {
+        pickFirst 'META-INF/LICENSE.txt' // picks the JavaMail license file
         exclude 'META-INF/LICENSE'
         exclude 'META-INF/NOTICE'
     }
@@ -30,6 +36,7 @@ android {
         targetSdkVersion 25
         versionCode 16
         versionName "2.7"
+        multiDexEnabled true
 
         jackOptions {
             enabled true
@@ -44,13 +51,15 @@ android {
     buildTypes {
         release {
             minifyEnabled false
+//            runProguard true
+            proguardFile 'proguard-google-api-client.txt'
             proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
         }
     }
 }
 
 dependencies {
-    compile fileTree(dir: 'libs', include: ['*.jar'])
+    compile fileTree(include: ['*.jar'], dir: 'libs')
     compile('com.crashlytics.sdk.android:crashlytics:2.5.2@aar') {
         transitive = true;
     }
@@ -69,6 +78,9 @@ dependencies {
     compile 'com.squareup.retrofit2:converter-gson:2.0.2'
     compile 'com.squareup.retrofit2:adapter-rxjava:2.2.0'
     compile 'io.reactivex:rxandroid:1.0.0'
+    compile 'com.sun.mail:android-mail:1.5.5'
+    compile 'com.sun.mail:android-activation:1.5.5'
+    compile 'com.android.support:multidex:1.0.1'
 }
 
 crashlytics {

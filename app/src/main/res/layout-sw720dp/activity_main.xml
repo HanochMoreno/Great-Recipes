@@ -190,7 +190,7 @@
                 android:layout_height="match_parent"
                 android:layout_weight="1"
                 android:orientation="vertical"
-                android:id="@+id/layout_login"
+                android:id="@+id/layout_logout"
                 android:padding="40dp">
 
                 <ImageView
@@ -210,7 +210,7 @@
                     android:gravity="center|top"
                     android:minLines="2"
                     android:paddingTop="5dp"
-                    android:text="@string/login"
+                    android:text="@string/logout"
                     android:textColor="@color/colorTextPrimary"
                     android:textSize="25sp" />
 

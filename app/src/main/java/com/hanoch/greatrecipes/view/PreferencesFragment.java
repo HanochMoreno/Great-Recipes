@@ -6,17 +6,15 @@ import android.app.ProgressDialog;
 import android.content.ActivityNotFoundException;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.res.Configuration;
 import android.graphics.Color;
 import android.net.Uri;
 import android.os.Bundle;
+import android.preference.CheckBoxPreference;
 import android.preference.EditTextPreference;
 import android.preference.ListPreference;
 import android.preference.Preference;
 import android.preference.PreferenceFragment;
-import android.preference.PreferenceManager;
-import android.support.v4.content.ContextCompat;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.LayoutInflater;
@@ -25,22 +23,19 @@ import android.view.ViewGroup;
 import android.view.Window;
 import android.widget.Button;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
-import com.hanoch.greatrecipes.BuildConfig;
+import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.bus.BusConsts;
-import com.hanoch.greatrecipes.bus.MyBus;
-import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
-import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.google.IabHelperNonStatic;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.FreeTrialCheckBoxPreference;
 import com.hanoch.greatrecipes.model.FreeTrialPreference;
 import com.hanoch.greatrecipes.model.MyIllegalStateException;
-import com.squareup.otto.Subscribe;
+import com.hanoch.greatrecipes.model.Preferences;
+
+import static com.hanoch.greatrecipes.google.AnalyticsHelper.sendEvent;
 
 
 public class PreferencesFragment extends PreferenceFragment
@@ -51,11 +46,12 @@ public class PreferencesFragment extends PreferenceFragment
     private static final String TAG = "PreferencesFragment";
 
     private EditTextPreference userName;
+    private EditTextPreference password;
 
     private ListPreference mainMenuDisplay;
     private ListPreference maxOnlineSearchResults;
 
-    private PreferencesFragmentListener mListener;
+    private PreferencesFragmentListener mPurchasePremiumListener;
     private View view;
 
     private IabHelperNonStatic mIabHelper;
@@ -63,7 +59,8 @@ public class PreferencesFragment extends PreferenceFragment
     private boolean iabHelperWasAlreadySetUpSuccessfully;
     private ProgressDialog progressDialog;
     private Preference prefUpgradeToPremium;
-    private MyBus bus;
+
+    private Preferences newPreferences;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -82,21 +79,21 @@ public class PreferencesFragment extends PreferenceFragment
     @Override
     public View onCreateView(LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState) {
 
-        bus = MyBus.getInstance();
+        AppStateManager appStateManager = AppStateManager.getInstance();
+
+        newPreferences = ((PreferencesActivity) getActivity()).newPreferences;
 
         view = inflater.inflate(R.layout.fragment_preferences, container, false);
 
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-        boolean premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
+        String maxOnlineSearchResultsPref = String.valueOf(appStateManager.user.preferences.maxOnlineSearchResults);
 
-        if (premium) {
+        boolean isPremium = appStateManager.user.isPremium;
+        if (isPremium) {
 
             addPreferencesFromResource(R.xml.preference_screen);
 
             maxOnlineSearchResults = (ListPreference) findPreference(AppConsts.SharedPrefs.MAX_ONLINE_SEARCH_RESULTS);
             maxOnlineSearchResults.setOnPreferenceChangeListener(this);
-
-            String maxOnlineSearchResultsPref = sp.getString(AppConsts.SharedPrefs.MAX_ONLINE_SEARCH_RESULTS, "10");
             maxOnlineSearchResults.setSummary(maxOnlineSearchResultsPref);
 
         } else {
@@ -106,48 +103,59 @@ public class PreferencesFragment extends PreferenceFragment
             prefUpgradeToPremium = findPreference(AppConsts.SharedPrefs.PREMIUM_ACCESS);
             prefUpgradeToPremium.setOnPreferenceClickListener(this);
 
-            FreeTrialPreference maxOnlineSearchResultsFreeTrial = (FreeTrialPreference) findPreference(AppConsts.SharedPrefs.MAX_ONLINE_SEARCH_RESULTS);
+            Preference maxOnlineSearchResultsFreeTrial = findPreference(AppConsts.SharedPrefs.MAX_ONLINE_SEARCH_RESULTS);
             maxOnlineSearchResultsFreeTrial.setOnPreferenceClickListener(this);
-            maxOnlineSearchResultsFreeTrial.setSummary("5");
-
-            FreeTrialCheckBoxPreference checkBox = (FreeTrialCheckBoxPreference) findPreference(AppConsts.SharedPrefs.VEGAN);
-            checkBox.setOnPreferenceClickListener(this);
-
-            checkBox = (FreeTrialCheckBoxPreference) findPreference(AppConsts.SharedPrefs.VEGETARIAN);
-            checkBox.setOnPreferenceClickListener(this);
-
-            checkBox = (FreeTrialCheckBoxPreference) findPreference(AppConsts.SharedPrefs.DAIRY_FREE);
-            checkBox.setOnPreferenceClickListener(this);
-
-            checkBox = (FreeTrialCheckBoxPreference) findPreference(AppConsts.SharedPrefs.EGG_FREE);
-            checkBox.setOnPreferenceClickListener(this);
-
-            checkBox = (FreeTrialCheckBoxPreference) findPreference(AppConsts.SharedPrefs.GLUTEN_FREE);
-            checkBox.setOnPreferenceClickListener(this);
-
-            checkBox = (FreeTrialCheckBoxPreference) findPreference(AppConsts.SharedPrefs.PEANUT_FREE);
-            checkBox.setOnPreferenceClickListener(this);
-
-            checkBox = (FreeTrialCheckBoxPreference) findPreference(AppConsts.SharedPrefs.SEAFOOD_FREE);
-            checkBox.setOnPreferenceClickListener(this);
-
-            checkBox = (FreeTrialCheckBoxPreference) findPreference(AppConsts.SharedPrefs.TREE_NUT_FREE);
-            checkBox.setOnPreferenceClickListener(this);
-
-            checkBox = (FreeTrialCheckBoxPreference) findPreference(AppConsts.SharedPrefs.WHEAT_FREE);
-            checkBox.setOnPreferenceClickListener(this);
+            maxOnlineSearchResultsFreeTrial.setSummary(maxOnlineSearchResultsPref);
         }
+
+        Preference checkBox = findPreference(AppConsts.SharedPrefs.VEGAN);
+        checkBox.setOnPreferenceClickListener(this);
+
+        checkBox = findPreference(AppConsts.SharedPrefs.VEGETARIAN);
+        checkBox.setOnPreferenceClickListener(this);
+
+        checkBox = findPreference(AppConsts.SharedPrefs.PALEO);
+        checkBox.setOnPreferenceClickListener(this);
+
+        checkBox = findPreference(AppConsts.SharedPrefs.DAIRY_FREE);
+        checkBox.setOnPreferenceClickListener(this);
+
+        checkBox = findPreference(AppConsts.SharedPrefs.EGG_FREE);
+        checkBox.setOnPreferenceClickListener(this);
+
+        checkBox = findPreference(AppConsts.SharedPrefs.GLUTEN_FREE);
+        checkBox.setOnPreferenceClickListener(this);
+
+        checkBox = findPreference(AppConsts.SharedPrefs.PEANUT_FREE);
+        checkBox.setOnPreferenceClickListener(this);
+
+        checkBox = findPreference(AppConsts.SharedPrefs.SEAFOOD_FREE);
+        checkBox.setOnPreferenceClickListener(this);
+
+        checkBox = findPreference(AppConsts.SharedPrefs.SESAME_FREE);
+        checkBox.setOnPreferenceClickListener(this);
+
+        checkBox = findPreference(AppConsts.SharedPrefs.SOY_FREE);
+        checkBox.setOnPreferenceClickListener(this);
+
+        checkBox = findPreference(AppConsts.SharedPrefs.TREE_NUT_FREE);
+        checkBox.setOnPreferenceClickListener(this);
+
+        checkBox = findPreference(AppConsts.SharedPrefs.WHEAT_FREE);
+        checkBox.setOnPreferenceClickListener(this);
 
         Preference prefContactUs = findPreference(AppConsts.SharedPrefs.CONTACT_US);
         prefContactUs.setOnPreferenceClickListener(this);
 
-        String userNamePref = sp.getString(AppConsts.SharedPrefs.USER_NAME, AppConsts.SharedPrefs.NEW_USER);
-
         userName = (EditTextPreference) findPreference(AppConsts.SharedPrefs.USER_NAME);
         userName.setOnPreferenceChangeListener(this);
-        userName.setSummary(userNamePref);
+        userName.setSummary(newPreferences.username);
 
-        String mainMenuDisplayPref = sp.getString(AppConsts.SharedPrefs.MAIN_MENU_DISPLAY, AppConsts.SharedPrefs.COLORFUL);
+        password = (EditTextPreference) findPreference(AppConsts.SharedPrefs.PASSWORD);
+        password.setOnPreferenceChangeListener(this);
+        password.setSummary(newPreferences.password);
+
+        String mainMenuDisplayPref = newPreferences.colorfulMenu ? AppConsts.SharedPrefs.COLORFUL : AppConsts.SharedPrefs.SIMPLE;
 
         mainMenuDisplay = (ListPreference) findPreference(AppConsts.SharedPrefs.MAIN_MENU_DISPLAY);
         mainMenuDisplay.setOnPreferenceChangeListener(this);
@@ -175,7 +183,7 @@ public class PreferencesFragment extends PreferenceFragment
         AnalyticsHelper.setScreenName(this);
 
         try {
-            mListener = (PreferencesFragmentListener) getActivity();
+            mPurchasePremiumListener = (PreferencesFragmentListener) getActivity();
         } catch (ClassCastException e) {
             throw new ClassCastException(getActivity().toString()
                     + " must implement PreferencesFragmentListener");
@@ -196,7 +204,7 @@ public class PreferencesFragment extends PreferenceFragment
     public void onDetach() {
         super.onDetach();
 
-        mListener = null;
+        mPurchasePremiumListener = null;
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -205,7 +213,6 @@ public class PreferencesFragment extends PreferenceFragment
     public void onResume() {
         super.onResume();
 
-        bus.register(this);
         AnalyticsHelper.setScreenName(this);
     }
 
@@ -214,8 +221,6 @@ public class PreferencesFragment extends PreferenceFragment
     @Override
     public void onDestroy() {
         super.onDestroy();
-
-        bus.unregister(this);
 
         if (mIabHelper != null) {
             try {
@@ -237,22 +242,58 @@ public class PreferencesFragment extends PreferenceFragment
         switch (preference.getKey()) {
 
             case AppConsts.SharedPrefs.USER_NAME:
+                int trimmedLength = newVal.trim().length();
+                if (trimmedLength < 6 || trimmedLength > 20) {
+                    AppHelper.showSnackBar(getView(), R.string.username_should_contain_6_to_20_chars, Color.RED);
+                    return false;
+                }
+                char[] chars = newVal.toCharArray();
+                for (char aChar : chars) {
+                    String sChar = String.valueOf(aChar);
+                    if (!AppConsts.Regex.USERNAME_PATTERN.contains(sChar)) {
+                        AppHelper.showSnackBar(getView(), R.string.invalid_username, Color.RED);
+                        return false;
+                    }
+                }
+
                 userName.setSummary(newVal);
-                AnalyticsHelper.sendEvent(PreferencesFragment.this, AppConsts.Analytics.CATEGORY_LOGIN, "Username was changed successfully", newVal);
+                newPreferences.username = newVal;
+                return true;
+
+            case AppConsts.SharedPrefs.PASSWORD:
+                chars = newVal.toCharArray();
+                for (char aChar : chars) {
+                    String sChar = String.valueOf(aChar);
+                    if (!AppConsts.Regex.PASSWORD_PATTERN.contains(sChar)) {
+                        AppHelper.showSnackBar(getView(), R.string.invalid_password, Color.RED);
+                        return false;
+                    }
+                }
+                trimmedLength = newVal.trim().length();
+                if (trimmedLength < 6 || trimmedLength > 10) {
+                    AppHelper.showSnackBar(getView(), R.string.password_should_contain_6_to_10_chars, Color.RED);
+                    return false;
+                }
+
+                password.setSummary(newVal);
+                newPreferences.password = newVal;
                 return true;
 
             case AppConsts.SharedPrefs.MAIN_MENU_DISPLAY:
                 if (newVal.equals(AppConsts.SharedPrefs.COLORFUL)) {
                     mainMenuDisplay.setSummary(getActivity().getString(R.string.colorful));
+                    newPreferences.colorfulMenu = true;
 
                 } else {
                     mainMenuDisplay.setSummary(getActivity().getString(R.string.simple));
+                    newPreferences.colorfulMenu = false;
                 }
 
                 return true;
 
             case AppConsts.SharedPrefs.MAX_ONLINE_SEARCH_RESULTS:
-                maxOnlineSearchResults.setSummary((String) newValue);
+                maxOnlineSearchResults.setSummary(newVal);
+                newPreferences.maxOnlineSearchResults = Integer.parseInt(newVal);
                 return true;
         }
 
@@ -281,26 +322,17 @@ public class PreferencesFragment extends PreferenceFragment
 
             case AppConsts.SharedPrefs.DELETE_ALL:
 
-                onDeleteAllListClicked();
-
+                onDeleteAllRecipesListClicked();
                 break;
 
             case AppConsts.SharedPrefs.PREMIUM_ACCESS:
 
-                AnalyticsHelper.sendEvent(this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "Purchase Premium button clicked");
+                sendEvent(this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "Purchase Premium button clicked");
 
                 preference.setEnabled(false);
 
-                if (BuildConfig.DEBUG) {
-                    mListener.onPremiumAccessPurchased();
-
-                    return true;
-                }
-
                 if (mIabHelper != null && iabHelperWasAlreadySetUpSuccessfully) {
-
                     purchasePremiumAccess();
-
                 } else {
 
                     progressDialog = new ProgressDialog(getActivity());
@@ -330,10 +362,9 @@ public class PreferencesFragment extends PreferenceFragment
 
                             } else {
                                 // Oh noes, there was a problem.
-                                if (result.toString().contains("unavailable on device")) {
+                                if (result.toString().contains("unavailable on device") || result.toString().contains("Billing Unavailable")) {
                                     errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + getString(R.string.Billing_unavailable_for_device);
                                 } else {
-
                                     errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + result;
                                 }
                                 showGoogleErrorDialog(errorMessage);
@@ -358,6 +389,12 @@ public class PreferencesFragment extends PreferenceFragment
                     ((FreeTrialCheckBoxPreference) preference).onPreferenceClick(preference);
                 } else if (preference instanceof FreeTrialPreference) {
                     ((FreeTrialPreference) preference).onPreferenceClick(preference);
+                } else if (preference instanceof CheckBoxPreference){
+                    if (newPreferences.dietAndAllergensList.contains(preference.getKey())) {
+                        newPreferences.dietAndAllergensList.remove(preference.getKey());
+                    } else {
+                        newPreferences.dietAndAllergensList.add(preference.getKey());
+                    }
                 }
         }
 
@@ -379,7 +416,8 @@ public class PreferencesFragment extends PreferenceFragment
 
                 errorMessage = result.toString();
                 if (errorMessage.contains("Already Owned")) {
-                    errorMessage = getString(R.string.error_purchasing) + ": " + getString(R.string.you_are_already_premium);
+                    // The user has already a Premium status
+                    mPurchasePremiumListener.onPremiumAccessPurchased();
                 } else {
                     errorMessage = getString(R.string.error_purchasing) + ": " + result;
                 }
@@ -390,7 +428,7 @@ public class PreferencesFragment extends PreferenceFragment
             } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
                 // give user access to premium content
 
-                mListener.onPremiumAccessPurchased();
+                mPurchasePremiumListener.onPremiumAccessPurchased();
             }
         };
 
@@ -406,7 +444,7 @@ public class PreferencesFragment extends PreferenceFragment
 
 //-------------------------------------------------------------------------------------------------
 
-    public void onDeleteAllListClicked() {
+    public void onDeleteAllRecipesListClicked() {
 
         AppHelper.vibrate(getActivity());
 
@@ -435,17 +473,13 @@ public class PreferencesFragment extends PreferenceFragment
         Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
         button_yes.setOnClickListener(v -> {
 
-            GreatRecipesDbManager.getInstance().clearAllLists(BusConsts.ACTION_DELETE);
-
+            ((PreferencesActivity) getActivity()).isToClearAllRecipesListsOnSave = true;
             dialog.dismiss();
         });
 
         Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
         btnCancel.setOnClickListener(v -> {
-
-            String toastMessage = getString(R.string.the_operation_was_aborted);
-            Toast.makeText(getActivity(), toastMessage, Toast.LENGTH_LONG).show();
-
+            ((PreferencesActivity) getActivity()).isToClearAllRecipesListsOnSave = false;
             dialog.dismiss();
         });
 
@@ -456,7 +490,7 @@ public class PreferencesFragment extends PreferenceFragment
 
     private void showGoogleErrorDialog(String errorMessage) {
 
-        AnalyticsHelper.sendEvent(this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "Google Error Dialog Was Showing", errorMessage);
+        sendEvent(this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "Google Error Dialog Was Showing", errorMessage);
 
         final Dialog googleErrorDialog = new Dialog(getActivity());
 
@@ -498,17 +532,5 @@ public class PreferencesFragment extends PreferenceFragment
         googleErrorDialog.show();
     }
 
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
-    public void onEvent(OnUpdateUserRecipesEvent event) {
-        if (event.isSuccess) {
-            if (event.action == BusConsts.ACTION_DELETE) {
-                AppHelper.showSnackBar(view, R.string.all_the_recipe_were_deleted, ContextCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
-            }
-        } else {
-            AppHelper.onApiErrorReceived(event.t, view);
-        }
-    }
 
 }

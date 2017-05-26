@@ -31,7 +31,7 @@
     <string name="gluten_free">ללא גלוטן</string>
     <string name="hours">שעות</string>
     <string name="internet_error">תקלת אינטרנט</string>
-    <string name="login">כניסה</string>
+    <string name="logout">יציאה</string>
     <string name="main_dish">מנה עיקרית</string>
     <string name="meal_planner">אשף תכנון ארוחה</string>
     <string name="minutes">דקות</string>
@@ -91,13 +91,15 @@
     <string name="enter_key_to_search">הכנס טקסט לחיפוש</string>
     <string name="online_search">חיפוש ברשת</string>
     <string name="change_user_name">שנה שם משתמש</string>
+    <string name="change_password">החלף סיסמא</string>
     <string name="delete_all_the_recipes_lists">מחק את כל רשימות המתכונים</string>
     <string name="filters_preferences">העדפות מסננים</string>
     <string name="general_preferences">העדפות כלליות</string>
     <string name="main_menu_display">תצוגת תפריט ראשי</string>
     <string name="max_online_search_results">מספר תוצאות חיפוש מקסימלי</string>
     <string name="online_search_preferences">העדפות חיפוש ברשת</string>
-    <string name="please_enter_user_name">הכנס שם משתמש בבקשה</string>
+    <string name="enter_new_user_name">הכנס שם משתמש חדש</string>
+    <string name="enter_new_password">הכנס סיסמא חדשה</string>
     <string name="recipes_lists_preferences">העדפות רשימות מתכונים</string>
     <string name="set_main_menu_display">בחר תצוגת תפריט ראשי</string>
     <string name="the_operation_is_irreversible">הפעולה בלתי ניתנת לביטול</string>
@@ -200,7 +202,6 @@
     <string name="problem_starting_purchase_progress">תקלה בתהליך הרכישה בשרתי גוגל</string>
     <string name="problem_getting_premium_status">תקלה בקבלת סטטוס פרימיום שלך משרתי גוגל</string>
     <string name="purchase_has_failed">הרכישה נכשלה</string>
-    <string name="you_are_already_premium">אתה כבר משתמש פרימיום</string>
     <string name="error_purchasing">תקלה ברכישה</string>
     <string name="Billing_unavailable_for_device">שירות החיוב של גוגל אינו זמין למכשיר זה</string>
     <string name="loading_info">טוען נתונים</string>
@@ -213,12 +214,19 @@
     <string name="open_account_for_free">לפתיחת חשבון בחינם</string>
     <string name="click_here">לחץ כאן</string>
     <string name="want_to_test_the_app_before">רוצה לנסות את האפליקציה קודם?</string>
-    <string name="continue_">המשך</string>
+    <string name="proceed">המשך</string>
     <string name="sign_in">הכנס</string>
     <string name="register">הרשמה</string>
     <string name="invalid_email">כתובת מייל לא חוקית</string>
     <string name="invalid_password">סיסמא לא חוקית</string>
     <string name="invalid_username">שם משתמש לא חוקי</string>
     <string name="passwords_are_not_identical">הסיסמאות אינן תואמות</string>
+    <string name="please_try_again">אנא נסה שנית</string>
+    <string name="updating_data">מעדכן נתונים</string>
+    <string name="username_should_contain_6_to_20_chars">שם המשתמש אמור להכיל 6 עד 20 תווים</string>
+    <string name="password_should_contain_6_to_10_chars">הסיסמא אמורה להכיל 6 עד 10 תווים</string>
+    <string name="email_already_exists">כתובת המייל כבר קיימת במאגר</string>
+    <string name="forgot_your_password">שכחת סיסמא?</string>
+    <string name="the_password_will_be_sent_to_your_email">הסיסמא תשלח לדואר האלקטרוני שלך</string>
 
 </resources>

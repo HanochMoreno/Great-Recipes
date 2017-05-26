@@ -1,12 +1,12 @@
 package com.hanoch.greatrecipes.bus;
 
 
-public class OnRegisterEvent {
+public class OnEmailVerificationEvent {
 
     public boolean isSuccess;
     public Throwable t;
 
-    public OnRegisterEvent(boolean isSuccess, Throwable t) {
+    public OnEmailVerificationEvent(boolean isSuccess, Throwable t) {
         this.isSuccess = isSuccess;
         this.t = t;
     }

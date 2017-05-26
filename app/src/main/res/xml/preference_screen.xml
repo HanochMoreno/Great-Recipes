@@ -5,10 +5,15 @@
 
         <EditTextPreference
             android:icon="@mipmap/ic_prefs_username"
-            android:defaultValue="New User"
-            android:dialogTitle="@string/please_enter_user_name"
-            android:key="userName"
+            android:dialogTitle="@string/enter_new_user_name"
+            android:key="username"
             android:title="@string/change_user_name" />
+
+        <EditTextPreference
+            android:icon="@mipmap/ic_prefs_password"
+            android:dialogTitle="@string/enter_new_password"
+            android:key="password"
+            android:title="@string/change_password" />
 
         <ListPreference
             android:icon="@mipmap/ic_prefs_main_menu"
@@ -61,62 +66,62 @@
 
         <CheckBoxPreference
             android:icon="@mipmap/ic_filter_vegan"
-            android:key="Vegan"
+            android:key="390^Vegan"
             android:title="@string/vegan" />
 
         <CheckBoxPreference
             android:icon="@mipmap/ic_filter_vegetarian"
-            android:key="Vegetarian"
+            android:key="387^Lacto-ovo vegetarian"
             android:title="@string/vegetarian" />
 
         <CheckBoxPreference
             android:icon="@mipmap/ic_filter_paleo"
-            android:key="Paleo"
+            android:key="403^Paleo"
             android:title="@string/paleo" />
 
         <CheckBoxPreference
             android:icon="@mipmap/ic_filter_dairy_free"
-            android:key="Dairy-free"
+            android:key="396^Dairy-Free"
             android:title="@string/dairy_free" />
 
         <CheckBoxPreference
             android:icon="@mipmap/ic_filter_egg_free"
-            android:key="Egg-free"
+            android:key="397^Egg-Free"
             android:title="@string/egg_free" />
 
         <CheckBoxPreference
             android:icon="@mipmap/ic_filter_gluten_free"
-            android:key="Gluten-free"
+            android:key="393^Gluten-Free"
             android:title="@string/gluten_free" />
 
         <CheckBoxPreference
             android:icon="@mipmap/ic_filter_peanut_free"
-            android:key="Peanut-free"
+            android:key="394^Peanut-Free"
             android:title="@string/peanut_free" />
 
         <CheckBoxPreference
             android:icon="@mipmap/ic_filter_seafood_free"
-            android:key="Seafood-free"
+            android:key="398^Seafood-Free"
             android:title="@string/seafood_free" />
 
         <CheckBoxPreference
             android:icon="@mipmap/ic_filter_sesame_free"
-            android:key="Sesame-free"
+            android:key="399^Sesame-Free"
             android:title="@string/sesame_free" />
 
         <CheckBoxPreference
             android:icon="@mipmap/ic_filter_soy_free"
-            android:key="Soy-free"
+            android:key="400^Soy-Free"
             android:title="@string/soy_free" />
 
         <CheckBoxPreference
             android:icon="@mipmap/ic_filter_tree_nut_free"
-            android:key="Tree-nut-free"
+            android:key="395^Tree Nut-Free"
             android:title="@string/treenut_free" />
 
         <CheckBoxPreference
             android:icon="@mipmap/ic_filter_wheat_free"
-            android:key="Wheat-free"
+            android:key="392^Wheat-Free"
             android:title="@string/wheat_free" />
 
     </PreferenceCategory>

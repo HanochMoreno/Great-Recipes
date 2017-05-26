@@ -8,7 +8,7 @@ public interface ListFragmentListener {
 
     void onListItemChecked(MyListFragment listFragment, String id, boolean isChecked);
 
-    void onAddNewRecipeClick(MyListFragment listFragment, int listTypeIndex);
+    void onAddNewRecipeClick(MyListFragment listFragment);
 
 }
 

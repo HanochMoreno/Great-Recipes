@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.os.AsyncTask;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
 import android.support.design.widget.Snackbar;
@@ -12,9 +13,12 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.hanoch.greatrecipes.model.Mail;
+import com.hanoch.greatrecipes.view.adapters.RecipesListAdapter2;
 
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -288,6 +292,52 @@ public abstract class AppHelper {
         snack.show();
     }
 
+//-------------------------------------------------------------------------------------------------
+
+    public static void showSnackBar(View view, String message, int color) {
+
+        Snackbar snack = Snackbar.make(view, message, Snackbar.LENGTH_LONG);
+        ViewGroup group = (ViewGroup) snack.getView();
+        group.setBackgroundColor(color);
+        snack.show();
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public static boolean sendMail(String email, String extra, int action) {
+        Mail mail = new Mail(AppConsts.HANOCH_MAIL_ADDRESS, AppConsts.HANOCH_MAIL_PASSWORD);
+
+        String subject;
+        String body;
+        if (action == AppConsts.Actions.ACTION_REGISTER) {
+            subject = "Please verify your email to Great Recipes";
+            body = "Please verify your eMail address to Great Recipes by clicking the link below:\n" +
+                    AppConsts.ApiAccess.GREAT_RECIPES_BASE_URL +
+                    "/email-verification?userEmailVerificationId=" + extra;
+
+        } else { // action == ACTION_FORGOT_PASSWORD
+            subject = "Your password in Great Recipes has been restored";
+            body = "Your password:  " + extra;
+        }
+
+        String[] toArr = {email};
+        mail.setTo(toArr);
+        mail.setFrom("dontreply@greatrecipes.com");
+        mail.setSubject(subject);
+        mail.setBody(body);
+
+        try {
+//            mail.addAttachment("/sdcard/filelocation");
+
+            return (mail.send());
+
+        } catch (Exception e) {
+            Log.e("MailApp", "Could not send email", e);
+            return false;
+        }
+    }
+//-------------------------------------------------------------------------------------------------
+
     public static void onApiErrorReceived(Throwable t, View mainView) {
         Log.e("subscriber", "onError: message: " + t.getMessage() + ", cause: " + t.getCause());
         if (t instanceof UnknownHostException || t instanceof ConnectException) {
@@ -296,4 +346,6 @@ public abstract class AppHelper {
             showSnackBar(mainView, R.string.unexpected_error, Color.RED);
         }
     }
+
+
 }

@@ -11,6 +11,6 @@ public class ListOnlineFragment2 extends MyListFragment {
     }
 
     public void refreshAdapter() {
-        adapter.refreshList(new ArrayList<>(appStateManager.user.yummlyRecipes.values()));
+        adapter.refreshList(new ArrayList<>(appStateManager.user.recipes.yummlyRecipes.values()));
     }
 }

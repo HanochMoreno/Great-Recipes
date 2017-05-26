@@ -112,11 +112,11 @@ public class ListFavouriteFragment2 extends MyListFragment {
 
     public void refreshAdapter() {
         recipesList = new ArrayList<>();
-        for (String favouriteId : appStateManager.user.favouriteRecipesIds) {
-            if (appStateManager.user.userRecipes.containsKey(favouriteId)) {
-                recipesList.add(appStateManager.user.userRecipes.get(favouriteId));
-            } else if (appStateManager.user.yummlyRecipes.containsKey(favouriteId)) {
-                recipesList.add(appStateManager.user.yummlyRecipes.get(favouriteId));
+        for (String favouriteId : appStateManager.user.recipes.favouriteRecipesIds) {
+            if (appStateManager.user.recipes.userRecipes.containsKey(favouriteId)) {
+                recipesList.add(appStateManager.user.recipes.userRecipes.get(favouriteId));
+            } else if (appStateManager.user.recipes.yummlyRecipes.containsKey(favouriteId)) {
+                recipesList.add(appStateManager.user.recipes.yummlyRecipes.get(favouriteId));
             }
         }
         adapter.refreshList(recipesList);

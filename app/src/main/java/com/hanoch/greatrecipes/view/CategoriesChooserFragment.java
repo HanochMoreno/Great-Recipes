@@ -1,10 +1,8 @@
 package com.hanoch.greatrecipes.view;
 
-import android.content.SharedPreferences;
 import android.graphics.ColorMatrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.CardView;
 import android.view.LayoutInflater;
@@ -17,6 +15,7 @@ import android.widget.TextView;
 
 import com.hanoch.greatrecipes.AnimationHelper;
 import com.hanoch.greatrecipes.AppConsts;
+import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
 
 import java.util.ArrayList;
@@ -109,10 +108,9 @@ public class CategoriesChooserFragment extends Fragment
         fillCategoryCard(cardView_soups, R.string.soups, R.drawable.cat_soups, AppConsts.Category.SOUPS);
         cardView_soups.setOnClickListener(this);
 
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getContext());
-        boolean premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
+        boolean isPremium = AppStateManager.getInstance().user.isPremium;
 
-        if (!premium) {
+        if (!isPremium) {
             setFreeTrialCategory(cardView_appetizers);
             setFreeTrialCategory(cardView_beverages);
             setFreeTrialCategory(cardView_breakfast);
@@ -256,4 +254,3 @@ public class CategoriesChooserFragment extends Fragment
     }
 
 }
-

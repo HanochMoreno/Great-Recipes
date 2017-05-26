@@ -210,14 +210,14 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
             mRecipeId = args.getString(ARG_RECIPE_ID);
             User user = appStateManager.user;
 
-            if (mRecipeId == null || !user.userRecipes.containsKey(mRecipeId)) {
+            if (mRecipeId == null || !user.recipes.userRecipes.containsKey(mRecipeId)) {
                 // Adding a new recipe to 'My Own Recipes' list
 
                 userRecipe = new UserRecipe();
             } else {
                 // Editing an existing recipe from 'My Own Recipes' list
 
-                userRecipe = new UserRecipe(user.userRecipes.get(mRecipeId));
+                userRecipe = new UserRecipe(user.recipes.userRecipes.get(mRecipeId));
 
                 editText_recipeTitle.setText(userRecipe.recipeTitle);
                 editText_recipeInstructions.setText(userRecipe.instructions);
@@ -516,7 +516,7 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         final String recipeId = getArguments().getString(ARG_RECIPE_ID);
 
         userRecipe._id = recipeId;
-        userRecipe.author = user.username;
+        userRecipe.author = user.preferences.username;
         userRecipe.userId = user._id;
         userRecipe.recipeTitle = title;
         userRecipe.instructions = instructions;

@@ -17,7 +17,7 @@
     <string name="search_recipe_online">Search recipes online</string>
     <string name="add_your_own_recipe">Add your own recipe</string>
     <string name="settings">Settings</string>
-    <string name="login">Log in</string>
+    <string name="logout">Log out</string>
     <string name="my_recipes_lists">My recipes lists</string>
     <string name="online">Online</string>
     <string name="my_own">My Own</string>
@@ -97,7 +97,8 @@
     <string name="click_here_to_start_planning_meal">Click here to start planning your meal</string>
     <string name="enter_key_to_search">Enter a key to search</string>
     <string name="online_search">Online Search</string>
-    <string name="please_enter_user_name">Please enter user name</string>
+    <string name="enter_new_user_name">Enter new username</string>
+    <string name="enter_new_password">Enter new password</string>
     <string name="set_main_menu_display">Set main menu display</string>
     <string name="general_preferences">General Preferences</string>
     <string name="recipes_lists_preferences">Recipes Lists Preferences</string>
@@ -108,6 +109,7 @@
     <string name="filters_preferences">Filters Preferences</string>
     <string name="main_menu_display">Main menu display</string>
     <string name="change_user_name">Change user name</string>
+    <string name="change_password">Change password</string>
     <string name="preferences">Preferences</string>
     <string name="colorful">Colorful</string>
     <string name="simple">Simple</string>
@@ -204,7 +206,6 @@
     <string name="problem_starting_purchase_progress">There was a problem starting the purchase progress in google servers</string>
     <string name="problem_getting_premium_status">There was a problem getting your \'Premium\' status from google servers</string>
     <string name="purchase_has_failed">Purchase has failed</string>
-    <string name="you_are_already_premium">You are already a Premium user</string>
     <string name="error_purchasing">"Error purchasing"</string>
     <string name="Billing_unavailable_for_device">Billing service is not available for this device</string>
     <string name="loading_info">Loading info</string>
@@ -216,12 +217,19 @@
     <string name="open_account_for_free">To open an account for free</string>
     <string name="click_here">click here</string>
     <string name="want_to_test_the_app_before">Want to test the app before?</string>
-    <string name="continue_">Continue</string>
+    <string name="proceed">Proceed</string>
     <string name="sign_in">Sign in</string>
     <string name="register">Register</string>
     <string name="invalid_email">Invalid e-Mail</string>
     <string name="invalid_username">Invalid username</string>
     <string name="invalid_password">Invalid password</string>
     <string name="passwords_are_not_identical">Passwords are not identical</string>
+    <string name="please_try_again">Please try again</string>
+    <string name="updating_data">Updating data</string>
+    <string name="username_should_contain_6_to_20_chars">Username should contain 6 to 20 chars</string>
+    <string name="password_should_contain_6_to_10_chars">Password should contain 6 to 10 chars</string>
+    <string name="email_already_exists">This eMail already exists in the database</string>
+    <string name="forgot_your_password">Forgot your password?</string>
+    <string name="the_password_will_be_sent_to_your_email">Your password will be sent to your eMail</string>
 
 </resources>

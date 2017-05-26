@@ -28,11 +28,13 @@ import android.widget.TextView;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
-import com.hanoch.greatrecipes.BuildConfig;
+import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
+import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.google.IabHelperNonStatic;
 import com.hanoch.greatrecipes.model.MyIllegalStateException;
+import com.hanoch.greatrecipes.model.Preferences;
 
 
 public class PreferencesGeneralFragment extends PreferenceFragment implements
@@ -42,6 +44,7 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
     private static final String TAG = "PrefsGeneralFragment";
 
     private EditTextPreference userName;
+    private EditTextPreference password;
     private ListPreference mainMenuDisplay;
 
     private IabHelperNonStatic mIabHelper;
@@ -51,6 +54,9 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
     private boolean iabHelperWasAlreadySetUpSuccessfully;
     private ProgressDialog progressDialog;
     private String errorMessage;
+    private AppStateManager appStateManager;
+    private GreatRecipesDbManager dbManager;
+    private Preferences newPreferences;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -58,17 +64,12 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
+        dbManager = GreatRecipesDbManager.getInstance();
+        appStateManager = AppStateManager.getInstance();
         addPreferencesFromResource(R.xml.prefs_general);
     }
 
-    @Override
-    public void onResume() {
-        super.onResume();
-
-        AnalyticsHelper.setScreenName(this);
-    }
-
-    //-------------------------------------------------------------------------------------------------
+//-------------------------------------------------------------------------------------------------
 
     @Override
     public void onViewCreated(View view, Bundle savedInstanceState) {
@@ -78,26 +79,27 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
 
         SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
 
-        if (BuildConfig.DEBUG) {
-            sp.edit().putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false).apply();
-        }
-
-        boolean premium = sp.getBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, false);
+        boolean isPremium = appStateManager.user.isPremium;
 
         prefUpgradeToPremium = findPreference(AppConsts.SharedPrefs.PREMIUM_ACCESS);
         prefUpgradeToPremium.setOnPreferenceClickListener(this);
 
-        if (premium) {
+        if (isPremium) {
 
             PreferenceCategory categoryGeneral = (PreferenceCategory) findPreference("categoryGeneral");
             categoryGeneral.removePreference(prefUpgradeToPremium);
         }
 
-        String userNamePref = sp.getString(AppConsts.SharedPrefs.USER_NAME, AppConsts.SharedPrefs.NEW_USER);
+        String userNamePref = sp.getString(AppConsts.SharedPrefs.USER_NAME, null);
+        String passwordPref = sp.getString(AppConsts.SharedPrefs.PASSWORD, null);
 
         userName = (EditTextPreference) findPreference(AppConsts.SharedPrefs.USER_NAME);
         userName.setOnPreferenceChangeListener(this);
         userName.setSummary(userNamePref);
+
+        password = (EditTextPreference) findPreference(AppConsts.SharedPrefs.PASSWORD);
+        password.setOnPreferenceChangeListener(this);
+        password.setSummary(passwordPref);
 
         String mainMenuDisplayPref = sp.getString(AppConsts.SharedPrefs.MAIN_MENU_DISPLAY, AppConsts.SharedPrefs.COLORFUL);
 
@@ -114,6 +116,16 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
 
         Preference prefContactUs = findPreference(AppConsts.SharedPrefs.CONTACT_US);
         prefContactUs.setOnPreferenceClickListener(this);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Override
+    public void onResume() {
+        super.onResume();
+
+        newPreferences = ((PreferencesActivityForLargeTablet) getActivity()).newPreferences;
+        AnalyticsHelper.setScreenName(this);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -141,15 +153,21 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
 
             case AppConsts.SharedPrefs.USER_NAME:
                 userName.setSummary(newVal);
-                AnalyticsHelper.sendEvent(PreferencesGeneralFragment.this, AppConsts.Analytics.CATEGORY_LOGIN, "Username was changed successfully", newVal);
+                newPreferences.username = newVal;
+                return true;
+
+            case AppConsts.SharedPrefs.PASSWORD:
+                password.setSummary(newVal);
+                newPreferences.password = newVal;
                 return true;
 
             case AppConsts.SharedPrefs.MAIN_MENU_DISPLAY:
                 if (newVal.equals(AppConsts.SharedPrefs.COLORFUL)) {
                     mainMenuDisplay.setSummary(getActivity().getString(R.string.colorful));
-
+                    newPreferences.colorfulMenu = true;
                 } else {
                     mainMenuDisplay.setSummary(getActivity().getString(R.string.simple));
+                    newPreferences.colorfulMenu = false;
                 }
 
                 return true;
@@ -170,21 +188,6 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
             case AppConsts.SharedPrefs.PREMIUM_ACCESS:
 
                 preference.setEnabled(false);
-
-                if (BuildConfig.DEBUG) {
-                    SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                    SharedPreferences.Editor editor = sp.edit();
-                    editor.putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, true);
-                    editor.commit();
-
-                    PreferenceCategory categoryGeneral = (PreferenceCategory) findPreference("categoryGeneral");
-                    categoryGeneral.removePreference(preference);
-
-                    View rootView = getActivity().findViewById(android.R.id.content);
-                    AppHelper.showSnackBar(rootView, R.string.purchase_complete_successfully, ActivityCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
-
-                    return true;
-                }
 
                 if (mIabHelper != null && iabHelperWasAlreadySetUpSuccessfully) {
 
@@ -216,7 +219,7 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
 
                             } else {
                                 // Oh noes, there was a problem.
-                                if (result.toString().contains("unavailable on device")) {
+                                if (result.toString().contains("unavailable on device") || result.toString().contains("Billing Unavailable")) {
                                     errorMessage = getString(R.string.problem_starting_purchase_progress) + ":\n" + getString(R.string.Billing_unavailable_for_device);
                                 } else {
 
@@ -255,41 +258,38 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
 
 //-------------------------------------------------------------------------------------------------
 
-    private void purchasePremiumAccess(){
+    private void purchasePremiumAccess() {
 
         final IabHelperNonStatic.OnIabPurchaseFinishedListener mPurchaseFinishedListener
                 = (result, purchase) -> {
-                    if (result.isFailure()) {
+            if (result.isFailure()) {
 
-                        if (prefUpgradeToPremium != null) {
-                            prefUpgradeToPremium.setEnabled(true);
-                        }
+                if (prefUpgradeToPremium != null) {
+                    prefUpgradeToPremium.setEnabled(true);
+                }
 
-                        errorMessage = result.toString();
-                        if (errorMessage.contains("Already Owned")) {
-                            errorMessage = getString(R.string.error_purchasing) + ": " + getString(R.string.you_are_already_premium);
-                        } else {
-                            errorMessage = getString(R.string.error_purchasing) + ": " + result;
-                        }
+                errorMessage = result.toString();
+                if (errorMessage.contains("Already Owned")) {
+                    // The user has already a Premium status
+                    dbManager.updatePremiumStatus();
+                } else {
+                    errorMessage = getString(R.string.error_purchasing) + ": " + result;
+                }
 
-                        showGoogleErrorDialog(errorMessage);
-                        Log.d(TAG, errorMessage);
+                showGoogleErrorDialog(errorMessage);
+                Log.d(TAG, errorMessage);
 
-                    } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
-                        // give user access to premium content
+            } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
+                // give user access to premium content
 
-                        AnalyticsHelper.sendEvent(PreferencesGeneralFragment.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "User purchased premium access");
+                AnalyticsHelper.sendEvent(PreferencesGeneralFragment.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "User purchased premium access");
 
-                        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(getActivity());
-                        SharedPreferences.Editor editor = sp.edit();
+                dbManager.updatePremiumStatus();
 
-                        editor.putBoolean(AppConsts.SharedPrefs.PREMIUM_ACCESS, true);
-                        editor.commit();
-
-                        View rootView = getActivity().findViewById(android.R.id.content);
-                        AppHelper.showSnackBar(rootView, R.string.purchase_complete_successfully, ActivityCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
-                    }
-                };
+                View rootView = getActivity().findViewById(android.R.id.content);
+                AppHelper.showSnackBar(rootView, R.string.purchase_complete_successfully, ActivityCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
+            }
+        };
 
         try {
             mIabHelper.launchPurchaseFlow(getActivity(), AppConsts.SKU_PREMIUM, AppConsts.REQ_CODE_PURCHASE, mPurchaseFinishedListener);
@@ -309,10 +309,8 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
 
         final Dialog googleErrorDialog = new Dialog(getActivity());
 
-        // hide to default title for Dialog
         googleErrorDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-        // inflate the layout dialog_layout.xml and set it as contentView
         LayoutInflater inflater = (LayoutInflater) getActivity().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
         View view = inflater.inflate(R.layout.dialog_warning, null, false);
         googleErrorDialog.setCanceledOnTouchOutside(false);
