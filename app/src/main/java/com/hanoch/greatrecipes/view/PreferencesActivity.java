@@ -26,7 +26,7 @@ import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnUpdateUserPreferencesEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
-import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
+import com.hanoch.greatrecipes.api.ApisManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.Preferences;
 import com.squareup.otto.Subscribe;
@@ -43,7 +43,7 @@ public class PreferencesActivity extends AppCompatActivity
     private MyBus bus;
     private ProgressDialog progressDialog;
     private AppStateManager appStateManager;
-    private GreatRecipesDbManager dbManager;
+    private ApisManager apisManager;
     public Preferences newPreferences;
     public boolean isToClearAllRecipesListsOnSave;
     //endregion
@@ -55,7 +55,7 @@ public class PreferencesActivity extends AppCompatActivity
         super.onCreate(savedInstanceState);
 
         // Activity for phones and small tablets only
-        dbManager = GreatRecipesDbManager.getInstance();
+        apisManager = ApisManager.getInstance();
         appStateManager = AppStateManager.getInstance();
         bus = MyBus.getInstance();
         bus.register(this);
@@ -165,7 +165,7 @@ public class PreferencesActivity extends AppCompatActivity
 
             case R.id.action_save:
                 progressDialog.show();
-                dbManager.updateUserPreferences(newPreferences);
+                apisManager.updateUserPreferences(newPreferences);
                 break;
 
             case R.id.action_cancel:
@@ -191,7 +191,7 @@ public class PreferencesActivity extends AppCompatActivity
         Log.d(TAG, "Purchased was completed successfully");
 
         progressDialog.show();
-        dbManager.updatePremiumStatus();
+        apisManager.updatePremiumStatus();
 
         AnalyticsHelper.sendEvent(this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "User purchased premium access");
         progressDialog.dismiss();
@@ -226,7 +226,7 @@ public class PreferencesActivity extends AppCompatActivity
             editor.apply();
 
             if (isToClearAllRecipesListsOnSave) {
-                dbManager.updateUserRecipes(null, null, BusConsts.ACTION_DELETE_ALL_LISTS);
+                apisManager.updateUserRecipes(null, null, BusConsts.ACTION_DELETE_ALL_LISTS);
             } else {
                 progressDialog.dismiss();
 

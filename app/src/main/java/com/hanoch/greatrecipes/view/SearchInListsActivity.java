@@ -41,7 +41,7 @@ import com.hanoch.greatrecipes.bus.OnToggleRecipeFavouriteEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.control.ListFragmentListener;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
-import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
+import com.hanoch.greatrecipes.api.ApisManager;
 import com.squareup.otto.Subscribe;
 
 import java.util.ArrayList;
@@ -83,7 +83,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
     private CharSequence searchQuery;
     private boolean afterRestoreState;
 
-    private GreatRecipesDbManager dbManager;
+    private ApisManager apisManager;
     private AppStateManager appStateManager;
     private ProgressDialog progressDialog;
     private RecipeReviewFragment2 recipeReviewFragment;
@@ -96,7 +96,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_template);
 
-        dbManager = GreatRecipesDbManager.getInstance();
+        apisManager = ApisManager.getInstance();
         appStateManager = AppStateManager.getInstance();
 
         progressDialog = new ProgressDialog(this);
@@ -281,7 +281,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
             toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING);
         } else {
 
-            if (user.isUserRecipe(recipeId) && user.isUserRecipeCreatedByThisUser(recipeId)) {
+            if (user.isUserRecipeCreatedByThisUser(recipeId)) {
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
             }
 
@@ -705,7 +705,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 progressDialog.show();
 
                 UserRecipe userRecipeToSave = editRecipeFragment.onSaveUserRecipeClicked();
-                dbManager.updateUserRecipe(userRecipeToSave);
+                apisManager.updateUserRecipe(userRecipeToSave);
 
                 break;
 
@@ -732,7 +732,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 // Tablet only, while reviewing a recipe
 
                 progressDialog.show();
-                dbManager.toggleRecipeFavourite(mRecipeId);
+                apisManager.toggleRecipeFavourite(mRecipeId);
 
                 break;
 
@@ -807,7 +807,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
                 }
             }
 
-            dbManager.updateUserRecipes(userRecipesIds, yummlyRecipesIds, BusConsts.ACTION_DELETE);
+            apisManager.updateUserRecipes(userRecipesIds, yummlyRecipesIds, BusConsts.ACTION_DELETE);
 
             dialog.dismiss();
         });
@@ -1098,7 +1098,7 @@ public class SearchInListsActivity extends AppCompatActivity implements
         boolean isFavourite = appStateManager.isRecipeFavourite(mRecipeId);
         recipeReviewFragment.setFavouriteImage(isFavourite);
 
-        if (appStateManager.user.isUserRecipe(mRecipeId)) {
+        if (appStateManager.user.isUserRecipeCreatedByThisUser(mRecipeId)) {
             toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
         }
 

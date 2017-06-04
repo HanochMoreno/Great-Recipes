@@ -167,6 +167,7 @@
     <string name="adding_recipe_to_favourites">Adding a recipe to favourites</string>
     <string name="upgrade">Upgrade</string>
     <string name="you_exceeded_the_downloaded_recipes_limit">You exceeded the downloaded recipes limit for trial version</string>
+    <string name="you_exceeded_the_online_recipes_searches_limit">You exceeded the online recipes searches limit for trial version</string>
     <string name="you_exceeded_the_recipes_creation_limit">You exceeded the recipes creation limit for trial version</string>
     <string name="go">Go</string>
     <string name="limitation_search_results">Max. 5 online search results will be presented</string>
@@ -231,5 +232,24 @@
     <string name="email_already_exists">This eMail already exists in the database</string>
     <string name="forgot_your_password">Forgot your password?</string>
     <string name="the_password_will_be_sent_to_your_email">Your password will be sent to your eMail</string>
+    <string name="verify_email_text">An eMail with a verification link has been sent to your eMail address.\nPlease click the link to complete registration</string>
+    <string name="restore_password_text">An email with the password has been sent to yor eMail address.</string>
+    <string name="verify_your_email">Verify your eMail address</string>
+    <string name="restore_password">Restore password</string>
+    <string name="mail_sending_error">Mail sending error.</string>
+    <string name="has_failed">has failed</string>
+    <string name="wrong_email_or_password">Wrong eMail or password</string>
+    <string name="share_recipe">Share Recipe</string>
+    <string name="recipient_email_address">Recipient eMail address</string>
+    <string name="login">LOGIN</string>
+    <string name="enter_email_and_password">Enter eMail and password</string>
+    <string name="back">Back</string>
+    <string name="retry">Retry</string>
+    <string name="leave">Leave</string>
+    <string name="error_getting_app_data">There was a problem getting app data.\nPlease try again</string>
+    <string name="error_getting_login_info">There was a problem getting login info.\nPlease try again</string>
+    <string name="downloading_app_data">Downloading app data…</string>
+    <string name="downloading_login_info">Downloading login info…</string>
+    <string name="init_app">Init app…</string>
 
 </resources>

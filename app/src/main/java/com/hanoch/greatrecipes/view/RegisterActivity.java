@@ -1,34 +1,39 @@
 package com.hanoch.greatrecipes.view;
 
+import android.app.Dialog;
 import android.app.ProgressDialog;
+import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
 import android.net.Uri;
-import android.os.AsyncTask;
 import android.os.PersistableBundle;
 import android.preference.PreferenceManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.text.Editable;
 import android.text.TextWatcher;
+import android.view.LayoutInflater;
 import android.view.View;
+import android.view.Window;
 import android.widget.EditText;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.BuildConfig;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnEmailVerificationEvent;
 import com.hanoch.greatrecipes.bus.OnForgotPasswordEvent;
 import com.hanoch.greatrecipes.bus.OnLoginEvent;
-import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
+import com.hanoch.greatrecipes.api.ApisManager;
+import com.hanoch.greatrecipes.bus.OnMailWasSentEvent;
+import com.hanoch.greatrecipes.bus.OnUpdateDeviceEvent;
+import com.hanoch.greatrecipes.google.AnalyticsHelper;
+import com.hanoch.greatrecipes.model.Preferences;
 import com.hanoch.greatrecipes.model.UserEmailVerification;
 import com.squareup.otto.Subscribe;
 
@@ -51,7 +56,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     private View tv_testAppClickHere;
     private View btn_proceed;
     private int action;
-    private GreatRecipesDbManager dbManager;
+    private ApisManager apisManager;
 
     private String email;
     private String username;
@@ -63,6 +68,8 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     private View til_retypePassword;
     private ProgressDialog progressDialog;
     private AppStateManager appStateManager;
+    private Dialog mailWasSentDialog;
+    private View mainView;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -76,7 +83,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
         setContentView(R.layout.activity_register);
 
-        dbManager = GreatRecipesDbManager.getInstance();
+        apisManager = ApisManager.getInstance();
         appStateManager = AppStateManager.getInstance();
         bus = MyBus.getInstance();
         bus.register(this);
@@ -126,7 +133,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         tv_alreadyHaveAnAccountOrRegister = (TextView) findViewById(R.id.tv_alreadyHaveAnAccountOrRegister);
 
         tv_mailWithPasswordWillBeSent = findViewById(R.id.tv_mailWithPasswordWillBeSent);
-        tv_forgotYourPasswordClickHere = findViewById(R.id.tv_forgotYourPasswordClickHere);
+        tv_forgotYourPasswordClickHere = findViewById(R.id.tv_forgotPasswordClickHere);
         tv_haveAccountOrRegisterClickHere = findViewById(R.id.tv_haveAccountOrRegisterClickHere);
         tv_testAppClickHere = findViewById(R.id.tv_testAppClickHere);
 
@@ -155,6 +162,15 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //-------------------------------------------------------------------------------------------------
 
     @Override
+    protected void onResume() {
+        super.onResume();
+
+        mainView = findViewById(android.R.id.content);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Override
     protected void onDestroy() {
         super.onDestroy();
 
@@ -166,6 +182,14 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     @Override
     public void onSaveInstanceState(Bundle outState, PersistableBundle outPersistentState) {
         super.onSaveInstanceState(outState, outPersistentState);
+
+        if (mailWasSentDialog != null && mailWasSentDialog.isShowing()) {
+            outState.putBoolean("mailWasSentDialogIsShowing", true);
+
+            EditText editText_userInput = (EditText) mailWasSentDialog.findViewById(R.id.editText_userInput);
+            String currentUserInput = editText_userInput.getText().toString();
+            outState.putString("currentUserInput", currentUserInput);
+        }
 
         outState.putInt("action", action);
 
@@ -180,7 +204,11 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
-
+//        boolean loginDialogIsShowing = savedInstanceState.getBoolean("loginDialogIsShowing");
+//        if (loginDialogIsShowing) {
+//            String currentUserInput = savedInstanceState.getString("currentUserInput");
+//            showLoginDialog(currentUserInput);
+//        }
         action = savedInstanceState.getInt("action");
 
         email = savedInstanceState.getString("email");
@@ -195,7 +223,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     public void onClick(View view) {
         switch (view.getId()) {
 
-            case R.id.tv_forgotYourPasswordClickHere:
+            case R.id.tv_forgotPasswordClickHere:
                 showForgotPasswordScreen();
                 break;
 
@@ -220,6 +248,9 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //-------------------------------------------------------------------------------------------------
 
     private void showForgotPasswordScreen() {
+        if (BuildConfig.DEBUG) {
+            et_email.setText("Hanoch001@gmail.com");
+        }
         tv_mailWithPasswordWillBeSent.setVisibility(View.VISIBLE);
         tv_forgotYourPassword.setVisibility(View.GONE);
         tv_forgotYourPasswordClickHere.setVisibility(View.GONE);
@@ -271,23 +302,27 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //-------------------------------------------------------------------------------------------------
 
     private void onProceedButtonClicked() {
-        if (areFieldsValidated()) {
-            progressDialog.show();
+        progressDialog.show();
 
-            switch (action) {
+        switch (action) {
 
-                case AppConsts.Actions.ACTION_FORGOT_PASSWORD:
-                    dbManager.forgotPassword(email);
-                    break;
+            case AppConsts.Actions.ACTION_FORGOT_PASSWORD:
+                if (isEmailValidated(email)) {
+                    apisManager.forgotPassword(email);
+                }
+                break;
 
-                case AppConsts.Actions.ACTION_REGISTER:
-                    dbManager.verifyEmail(email, username, password);
-                    break;
+            case AppConsts.Actions.ACTION_REGISTER:
+                if (areFieldsValidated()) {
+                    apisManager.verifyEmail(email, username, password);
+                }
+                break;
 
-                case AppConsts.Actions.ACTION_LOGIN:
-                    dbManager.login(email, password);
-                    break;
-            }
+            case AppConsts.Actions.ACTION_LOGIN:
+                if (areFieldsValidated()) {
+                    apisManager.login(this, email, password);
+                }
+                break;
         }
     }
 
@@ -295,15 +330,10 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
     private boolean areFieldsValidated() {
 
-        View mainView = findViewById(android.R.id.content);
-
         email = et_email.getText().toString();
         password = et_password.getText().toString();
 
-        Pattern emailPattern = Pattern.compile(AppConsts.Regex.EMAIL_PATTERN);
-        Matcher emailMatcher = emailPattern.matcher(email);
-        if (!emailMatcher.matches()) {
-            AppHelper.showSnackBar(mainView, R.string.invalid_email, Color.RED);
+        if (!isEmailValidated(email)) {
             return false;
         }
 
@@ -357,6 +387,20 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
 //-------------------------------------------------------------------------------------------------
 
+    private boolean isEmailValidated(String eMail) {
+
+        Pattern emailPattern = Pattern.compile(AppConsts.Regex.EMAIL_PATTERN);
+        Matcher emailMatcher = emailPattern.matcher(eMail);
+        if (!emailMatcher.matches()) {
+            AppHelper.showSnackBar(mainView, R.string.invalid_email, Color.RED);
+            return false;
+        }
+
+        return true;
+    }
+
+//-------------------------------------------------------------------------------------------------
+
     @Subscribe
     public void onEvent(OnEmailVerificationEvent event) {
         // The user registration details (eMail,username & password) have been saved in the
@@ -365,21 +409,17 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         // Now should send a "verify email" link to the user email
         if (event.isSuccess) {
             UserEmailVerification verification = appStateManager.userEmailVerification;
-
-            SendMailTask sendMailTask = new SendMailTask(verification.email, verification._id, AppConsts.Actions.ACTION_REGISTER);
-            sendMailTask.execute();
-
+            AppHelper.performMailSending(verification.email, verification._id, AppConsts.Actions.ACTION_REGISTER);
         } else {
             progressDialog.dismiss();
-            View mainView = findViewById(android.R.id.content);
 
             if (event.t instanceof HttpException) {
                 int errorCode = ((HttpException) event.t).code();
                 if (errorCode == 440) {
                     AppHelper.showSnackBar(mainView, R.string.email_already_exists, Color.RED);
                     return;
-                } else if (BuildConfig.DEBUG &&  errorCode == 450) {
-                    AppHelper.showSnackBar(mainView, "DEBUG: user registered successfully", Color.green(100));
+                } else if (BuildConfig.DEBUG && errorCode == 450) {
+                    AppHelper.showSnackBar(mainView, "DEBUG: user registered successfully", Color.GREEN);
                     showLoginScreen();
                     return;
                 }
@@ -392,8 +432,45 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
+    public void onEvent(OnMailWasSentEvent event) {
+        progressDialog.dismiss();
+        showMailWasSentDialog(event.isSuccess, event.action);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
     public void onEvent(OnLoginEvent event) {
-        onLoginResponse(event.isSuccess, event.t);
+
+        if (event.isSuccess) {
+
+            Preferences preferences = appStateManager.user.preferences;
+
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = sp.edit();
+
+            editor.putString(AppConsts.SharedPrefs.EMAIL, preferences.email);
+            editor.putString(AppConsts.SharedPrefs.USER_NAME, preferences.username);
+            editor.putString(AppConsts.SharedPrefs.PASSWORD, preferences.password);
+            editor.apply();
+        } else {
+            if (event.t instanceof HttpException && ((HttpException) event.t).code() == 430) {
+                AppHelper.showSnackBar(mainView, R.string.wrong_email_or_password, Color.RED);
+            } else {
+                AppHelper.onApiErrorReceived(event.t, mainView);
+            }
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
+    public void onEvent(OnUpdateDeviceEvent event) {
+        // After logging in.
+
+        Intent intent = new Intent(this, MainActivity.class);
+        startActivity(intent);
+        finish();
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -402,79 +479,69 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     public void onEvent(OnForgotPasswordEvent event) {
         if (event.isSuccess) {
 
-            showLoginScreen();
-            SendMailTask sendMailTask = new SendMailTask(email, event.password, AppConsts.Actions.ACTION_FORGOT_PASSWORD);
-            sendMailTask.execute();
+            int action = AppConsts.Actions.ACTION_FORGOT_PASSWORD;
+            AppHelper.performMailSending(event.email, event.password, action);
 
         } else {
             progressDialog.dismiss();
 
-            View mainView = findViewById(android.R.id.content);
             AppHelper.onApiErrorReceived(event.t, mainView);
         }
     }
 
 //-------------------------------------------------------------------------------------------------
 
-    private void onLoginResponse(boolean isSuccess, Throwable t) {
-        progressDialog.dismiss();
+    private void showMailWasSentDialog(boolean isSuccessful, int action) {
 
-        if (isSuccess) {
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-            SharedPreferences.Editor editor = sp.edit();
+        mailWasSentDialog = new Dialog(this);
+        mailWasSentDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
 
-            User user = appStateManager.user;
+        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        final View view = inflater.inflate(R.layout.dialog_sent_email, null, false);
+        mailWasSentDialog.setContentView(view);
 
-            editor.putString(AppConsts.SharedPrefs.EMAIL, user.preferences.email);
-            editor.putString(AppConsts.SharedPrefs.USER_NAME, user.preferences.username);
-            editor.putString(AppConsts.SharedPrefs.PASSWORD, user.preferences.password);
-            editor.apply();
+        final TextView tv_dialogTitle = (TextView) mailWasSentDialog.findViewById(R.id.tv_dialogTitle);
+        final TextView tv_body = (TextView) mailWasSentDialog.findViewById(R.id.tv_dialogBodyText);
 
-            Intent intent = new Intent(this, MainActivity.class);
-            startActivity(intent);
-            finish();
+        String title;
+        if (action == AppConsts.Actions.ACTION_REGISTER) {
+            title = getString(R.string.verify_your_email);
+            tv_body.setText(R.string.verify_email_text);
         } else {
-            View mainView = findViewById(android.R.id.content);
-            AppHelper.onApiErrorReceived(t, mainView);
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private class SendMailTask extends AsyncTask<Void, Boolean, Boolean> {
-        private String email;
-
-        /**
-         * userEmailVerificationId (ACTION_REGISTER) or password (ACTION_FORGOT_PASSWORD)
-         */
-        private String extra;
-
-        /**
-         * ACTION_REGISTER or ACTION_FORGOT_PASSWORD
-         */
-        private int action;
-
-        SendMailTask(String email, String extra, int action) {
-            this.email = email;
-            this.extra = extra;
-            this.action = action;
+            title = getString(R.string.restore_password);
+            tv_body.setText(R.string.restore_password_text);
         }
 
-        @Override
-        protected Boolean doInBackground(Void... voids) {
-            return AppHelper.sendMail(email, extra, action);
+        tv_dialogTitle.setText(title);
+
+        if (isSuccessful) {
+            showLoginScreen();
+        } else {
+            title += getString(R.string.has_failed) + ".\n" + getString(R.string.mail_sending_error);
+            tv_body.setText(title);
         }
 
-        @Override
-        protected void onPostExecute(Boolean isSuccess) {
-            progressDialog.dismiss();
-
-            if (isSuccess) {
-                Toast.makeText(RegisterActivity.this, "Email was sent successfully.", Toast.LENGTH_LONG).show();
+        View button_ok = mailWasSentDialog.findViewById(R.id.button_ok);
+        button_ok.setOnClickListener(v -> {
+            String category;
+            String text;
+            if (action == AppConsts.Actions.ACTION_REGISTER) {
+                category = AppConsts.Analytics.CATEGORY_REGISTER;
+                text = "Verification mail";
             } else {
-                Toast.makeText(RegisterActivity.this, "Email was not sent.", Toast.LENGTH_LONG).show();
+                category = AppConsts.Analytics.CATEGORY_FORGOT_PASSWORD;
+                text = "Restore password mail";
             }
-        }
+            if (isSuccessful) {
+                text += " has been sent";
+            } else {
+                text += " sending has FAILED";
+            }
+            AnalyticsHelper.sendEvent(RegisterActivity.this, category, text, email);
+            mailWasSentDialog.dismiss();
+        });
+
+        mailWasSentDialog.show();
     }
 
 }

@@ -65,6 +65,7 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
      * REVIEW_YUMMLY_RECIPE
      * REVIEW_USER_RECIPE
      * REVIEW_SHARED_USER_RECIPE
+     * REVIEW_SHARED_YUMMLY_RECIPE
      * REVIEW_YUMMLY_ONLINE
      * REVIEW_SERVING
      */
@@ -168,6 +169,14 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
                 recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
                         appStateManager.yummlySearchResult.imageByteArrayAsString);
 
+            } else if (action == AppConsts.Actions.REVIEW_SHARED_USER_RECIPE) {
+                recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
+                        appStateManager.sharedUserRecipe.imageByteArrayAsString);
+
+            } else if (action == AppConsts.Actions.REVIEW_SHARED_YUMMLY_RECIPE) {
+                recipeImage = ImageStorage.convertByteArrayAsStringAsToBitmap(
+                        appStateManager.sharedYummlyRecipe.imageByteArrayAsString);
+
             } else if (action == AppConsts.Actions.REVIEW_SERVING) {
                 Serving serving = appStateManager.user.servings.get(extra);
                 if (serving.isUserRecipe) {
@@ -202,6 +211,10 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 
         if (action == AppConsts.Actions.REVIEW_YUMMLY_ONLINE) {
             setYummlyRecipeDetailsView(appStateManager.yummlySearchResult);
+        } else if (action == AppConsts.Actions.REVIEW_SHARED_USER_RECIPE) {
+            setUserRecipeDetailsView(appStateManager.sharedUserRecipe);
+        } else if (action == AppConsts.Actions.REVIEW_SHARED_YUMMLY_RECIPE) {
+            setYummlyRecipeDetailsView(appStateManager.sharedYummlyRecipe);
         } else if (action == AppConsts.Actions.REVIEW_SERVING) {
             Serving serving = appStateManager.user.servings.get(extra);
             if (serving.isUserRecipe) {
@@ -255,7 +268,9 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
         fillList(layout_ingredientsList, userRecipe.ingredientsList);
         fillList(layout_categoriesList, AppHelper.getTranslatedCategoriesList(getContext(), userRecipe.categoriesList));
 
-        setFavouriteImage(userRecipe._id);
+        if (action != AppConsts.Actions.REVIEW_SHARED_USER_RECIPE) {
+            setFavouriteImage(userRecipe._id);
+        }
 
         if (userRecipe.instructions.isEmpty()) {
             editText_instructions.setText(getString(R.string.no_info));
@@ -314,7 +329,9 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
         fillList(layout_ingredientsList, yummlyRecipe.ingredientsList);
         fillList(layout_categoriesList, AppHelper.getTranslatedCategoriesList(getContext(), yummlyRecipe.categoriesList));
 
-        setFavouriteImage(yummlyRecipe._id);
+        if (action != AppConsts.Actions.REVIEW_SHARED_YUMMLY_RECIPE) {
+            setFavouriteImage(yummlyRecipe._id);
+        }
 
         floatingButton_getInstructions.setVisibility(View.VISIBLE);
         AnimationHelper.animateViewFadingIn(getContext(), floatingButton_getInstructions, 1500, 0);
@@ -327,7 +344,7 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
 //-------------------------------------------------------------------------------------------------
 
     public void setFavouriteImage(String recipeId) {
-        setFavouriteImage(AppStateManager.getInstance().isRecipeFavourite(recipeId));
+        setFavouriteImage(appStateManager.isRecipeFavourite(recipeId));
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -403,12 +420,13 @@ public class RecipeReviewFragment2 extends Fragment implements View.OnClickListe
             case R.id.floatingButton_getInstructions:
                 YummlyRecipe yummlyRecipe;
                 if (action == AppConsts.Actions.REVIEW_YUMMLY_ONLINE) {
-                    yummlyRecipe = appStateManager.user.recipes.yummlyRecipes.get(extra);
+                    yummlyRecipe = appStateManager.yummlySearchResult;
+                } else if (action == AppConsts.Actions.REVIEW_SHARED_YUMMLY_RECIPE) {
+                    yummlyRecipe = appStateManager.sharedYummlyRecipe;
                 } else if (action == AppConsts.Actions.REVIEW_SERVING) {
                     yummlyRecipe = appStateManager.user.servings.get(extra).yummlyRecipe;
-                } else {
-//                    action == AppConsts.Actions.REVIEW_YUMMLY_RECIPE
-                    yummlyRecipe = appStateManager.yummlySearchResult;
+                } else { // action == AppConsts.Actions.REVIEW_YUMMLY_RECIPE
+                    yummlyRecipe = appStateManager.user.recipes.yummlyRecipes.get(extra);
                 }
                 mListener.onGetInstructionsClick(yummlyRecipe.url);
 

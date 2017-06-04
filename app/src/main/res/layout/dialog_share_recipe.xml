@@ -1,0 +1,76 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="@color/colorDialogBackground"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center"
+        android:layout_marginBottom="5dp"
+        android:gravity="center"
+        android:orientation="vertical">
+
+        <TextView
+            android:id="@+id/tv_dialogTitle"
+            android:layout_width="match_parent"
+            android:layout_height="48dp"
+            android:background="@color/colorPrimary"
+            android:gravity="center"
+            android:paddingBottom="10dp"
+            android:paddingLeft="15dp"
+            android:paddingRight="15dp"
+            android:paddingTop="10dp"
+            android:text="@string/share_recipe"
+            android:textAppearance="?android:attr/textAppearance"
+            android:textColor="@color/colorAccent"
+            android:textSize="20sp"
+            android:textStyle="bold" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="2dp"
+            android:background="#109ef0" />
+
+    </LinearLayout>
+
+    <TextView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="1dp"
+        android:gravity="center"
+        android:padding="8dp"
+        android:text="@string/recipient_email_address"
+        android:textAppearance="?android:attr/textAppearance"
+        android:textColor="@color/colorPrimary"/>
+
+    <EditText
+        android:id="@+id/et_recipientEmail"
+        android:digits="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@_-.0123456789"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="1dp"
+        android:gravity="center"
+        android:hint="@string/recipient_email_address"
+        android:inputType="textEmailAddress"
+        android:padding="12dp"
+        android:textAppearance="?android:attr/textAppearance"
+        android:textColor="@color/colorTextPrimary"
+        android:textSize="20sp"
+        tools:text="Hanoch001@gmail.com" />
+
+    <Button
+        android:id="@+id/button_proceed"
+        android:layout_width="match_parent"
+        android:layout_height="48dp"
+        android:layout_margin="1dp"
+        android:background="@color/colorButton"
+        android:gravity="center"
+        android:text="@string/proceed"
+        android:textAppearance="?android:attr/textAppearanceButton"
+        android:textColor="@android:color/white" />
+
+</LinearLayout>

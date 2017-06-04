@@ -28,7 +28,8 @@ import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.google.IabHelperNonStatic;
+import com.hanoch.greatrecipes.api.great_recipes_api.AppData;
+import com.hanoch.greatrecipes.google.IabHelper;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.FreeTrialCheckBoxPreference;
 import com.hanoch.greatrecipes.model.FreeTrialPreference;
@@ -54,7 +55,7 @@ public class PreferencesFragment extends PreferenceFragment
     private PreferencesFragmentListener mPurchasePremiumListener;
     private View view;
 
-    private IabHelperNonStatic mIabHelper;
+    private IabHelper mIabHelper;
     private String errorMessage;
     private boolean iabHelperWasAlreadySetUpSuccessfully;
     private ProgressDialog progressDialog;
@@ -342,7 +343,7 @@ public class PreferencesFragment extends PreferenceFragment
                     progressDialog.setMessage(getString(R.string.please_wait));
                     progressDialog.show();
 
-                    mIabHelper = new IabHelperNonStatic(getActivity());
+                    mIabHelper = new IabHelper(getActivity());
 
                     try {
                         mIabHelper.startSetup(result -> {
@@ -405,7 +406,9 @@ public class PreferencesFragment extends PreferenceFragment
 
     private void purchasePremiumAccess() {
 
-        final IabHelperNonStatic.OnIabPurchaseFinishedListener mPurchaseFinishedListener
+        AppData appData = AppStateManager.getInstance().appData;
+
+        final IabHelper.OnIabPurchaseFinishedListener mPurchaseFinishedListener
                 = (result, purchase) -> {
 
             if (result.isFailure()) {
@@ -425,7 +428,7 @@ public class PreferencesFragment extends PreferenceFragment
                 showGoogleErrorDialog(errorMessage);
                 Log.e(TAG, errorMessage);
 
-            } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
+            } else if (purchase.getSku().equals(appData.skuPremium)) {
                 // give user access to premium content
 
                 mPurchasePremiumListener.onPremiumAccessPurchased();
@@ -433,7 +436,8 @@ public class PreferencesFragment extends PreferenceFragment
         };
 
         try {
-            mIabHelper.launchPurchaseFlow(getActivity(), AppConsts.SKU_PREMIUM, AppConsts.REQ_CODE_PURCHASE, mPurchaseFinishedListener);
+            mIabHelper.launchPurchaseFlow(getActivity(), appData.skuPremium,
+                    AppConsts.REQ_CODE_PURCHASE, mPurchaseFinishedListener);
 
         } catch (MyIllegalStateException e) {
             errorMessage = getString(R.string.problem_starting_purchase_progress);

@@ -22,7 +22,7 @@ import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.OnUpdateUserPreferencesEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
-import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
+import com.hanoch.greatrecipes.api.ApisManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.Preferences;
 import com.squareup.otto.Subscribe;
@@ -36,7 +36,7 @@ public class PreferencesActivityForLargeTablet extends AppCompatPreferenceActivi
     private static List<String> fragmentsNames = new ArrayList<>();
     public Preferences newPreferences;
     public boolean isToClearAllRecipesListsOnSave;
-    private GreatRecipesDbManager dbManager;
+    private ApisManager apisManager;
     private ProgressDialog progressDialog;
     private AppStateManager appStateManager;
 
@@ -47,7 +47,7 @@ public class PreferencesActivityForLargeTablet extends AppCompatPreferenceActivi
         super.onCreate(savedInstanceState);
         // Activity for Large Tablets only
 
-        dbManager = GreatRecipesDbManager.getInstance();
+        apisManager = ApisManager.getInstance();
         appStateManager = AppStateManager.getInstance();
 
         progressDialog = new ProgressDialog(this);
@@ -142,7 +142,7 @@ public class PreferencesActivityForLargeTablet extends AppCompatPreferenceActivi
 
             case R.id.action_save:
                 progressDialog.show();
-                dbManager.updateUserPreferences(newPreferences);
+                apisManager.updateUserPreferences(newPreferences);
                 break;
 
             case R.id.action_cancel:
@@ -187,7 +187,7 @@ public class PreferencesActivityForLargeTablet extends AppCompatPreferenceActivi
 
             editor.apply();
             if (isToClearAllRecipesListsOnSave) {
-                dbManager.updateUserRecipes(null, null, BusConsts.ACTION_DELETE_ALL_LISTS);
+                apisManager.updateUserRecipes(null, null, BusConsts.ACTION_DELETE_ALL_LISTS);
             } else {
                 progressDialog.dismiss();
 

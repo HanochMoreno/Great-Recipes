@@ -59,11 +59,8 @@ public class SearchResultsAdapter extends CursorAdapter {
 
         String imageName = AppConsts.Images.RESULT_IMAGE_PREFIX + resultYummlyId;
         Bitmap bitmap = ImageStorage.getImageBitmapByName(context, imageName);
-        if (bitmap != null) {
-            imageView_resultImage.setImageBitmap(bitmap);
-            textView_noImageAvailable.setVisibility(View.INVISIBLE);
 
-        } else {
+        if (bitmap == null) {
 
             Target target = new Target() {
                 @Override
@@ -83,6 +80,10 @@ public class SearchResultsAdapter extends CursorAdapter {
             };
 
             Picasso.with(context).load(resultImageUrl).into(target);
+
+        } else {
+            imageView_resultImage.setImageBitmap(bitmap);
+            textView_noImageAvailable.setVisibility(View.INVISIBLE);
         }
     }
 

@@ -1,6 +1,7 @@
 package com.hanoch.greatrecipes.api.great_recipes_api;
 
 
+import com.hanoch.greatrecipes.model.Device;
 import com.hanoch.greatrecipes.model.RecipesResponse;
 import com.hanoch.greatrecipes.model.Serving;
 import com.hanoch.greatrecipes.model.Preferences;
@@ -12,6 +13,7 @@ public class UserResponse {
     public String _id;
 
     public Preferences preferences;
+    public ArrayList<Device> devices;
     public RecipesResponse recipes;
 
     public ArrayList<Serving> servings;

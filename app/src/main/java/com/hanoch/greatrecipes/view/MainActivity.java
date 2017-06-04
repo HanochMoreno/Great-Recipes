@@ -3,14 +3,22 @@ package com.hanoch.greatrecipes.view;
 import android.app.ActionBar;
 import android.app.Activity;
 import android.app.Dialog;
+import android.app.Notification;
+import android.app.NotificationManager;
+import android.app.PendingIntent;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
-import android.os.AsyncTask;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Color;
+import android.media.RingtoneManager;
+import android.net.Uri;
 import android.preference.PreferenceManager;
+import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -26,27 +34,34 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.BuildConfig;
 import com.hanoch.greatrecipes.R;
+import com.hanoch.greatrecipes.api.YummlyRecipe;
+import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
+import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
-import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
-import com.hanoch.greatrecipes.google.IabHelperNonStatic;
+import com.hanoch.greatrecipes.api.ApisManager;
+import com.hanoch.greatrecipes.bus.OnUpdateDeviceEvent;
+import com.hanoch.greatrecipes.bus.OnUserRecipeDownloadedEvent;
+import com.hanoch.greatrecipes.bus.OnYummlyRecipeDownloadedEvent;
+import com.hanoch.greatrecipes.google.IabHelper;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
+import com.hanoch.greatrecipes.model.Device;
 import com.hanoch.greatrecipes.model.MyIllegalStateException;
+import com.squareup.otto.Subscribe;
 
 import java.util.ArrayList;
+
 
 public class MainActivity extends AppCompatActivity implements View.OnClickListener {
 
     private static final String TAG = "MainActivity";
     private static final int REQ_CODE_PREFERENCES = 1;
 
-    //    private Dialog loginDialog;
     private Dialog googleErrorDialog;
     private Dialog premiumDialog;
     private ProgressDialog progressDialog;
@@ -55,9 +70,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     private String errorMessage;
 
     // compute your public key and store it in base64EncodedPublicKey
-    private IabHelperNonStatic mIabHelper;
+    private IabHelper mIabHelper;
     private boolean iabHelperWasAlreadySetUpSuccessfully;
-    private GreatRecipesDbManager dbManager;
+
+    private ApisManager apisManager;
     private AppStateManager appStateManager;
     private MyBus bus;
 
@@ -67,7 +83,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        dbManager = GreatRecipesDbManager.getInstance();
+        apisManager = ApisManager.getInstance();
         appStateManager = AppStateManager.getInstance();
         bus = MyBus.getInstance();
         bus.register(this);
@@ -78,23 +94,21 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         progressDialog.setMessage(getString(R.string.please_wait));
 
         if (getResources().getBoolean(R.bool.isTablet)) {
-            if (getResources().getBoolean(R.bool.isSmallTablet))
+            if (getResources().getBoolean(R.bool.isSmallTablet)) {
                 setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_LANDSCAPE);
+            }
 
         } else {
             setRequestedOrientation(ActivityInfo.SCREEN_ORIENTATION_PORTRAIT);
         }
 
-        if (!appStateManager.user.isPremium) {
-            if (savedInstanceState != null) {
-                alreadyGotGoogleAnswer = savedInstanceState.getBoolean("alreadyGotGoogleAnswer");
-            }
+        if (savedInstanceState != null) {
+            alreadyGotGoogleAnswer = savedInstanceState.getBoolean("alreadyGotGoogleAnswer");
+        }
 
-            if (alreadyGotGoogleAnswer) {
-                initDisplay();
-                return;
-            }
-
+        if (appStateManager.user.isPremium || alreadyGotGoogleAnswer) {
+            initDisplay();
+        } else {
             getUserPremiumStatusFromGoogle();
         }
     }
@@ -102,7 +116,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //-------------------------------------------------------------------------------------------------
 
     private void getUserPremiumStatusFromGoogle() {
-        final IabHelperNonStatic.QueryInventoryFinishedListener mGotInventoryListener
+        final IabHelper.QueryInventoryFinishedListener mGotInventoryListener
                 = (result, inventory) -> {
 
             if (progressDialog != null && progressDialog.isShowing()) {
@@ -121,7 +135,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             } else {
                 Log.d(TAG, "onQueryPremiumStatusFinished: successfully got user inventory");
                 // does the user have the premium upgrade?
-                boolean mIsPremium = inventory.hasPurchase(AppConsts.SKU_PREMIUM);
+                boolean mIsPremium = inventory.hasPurchase(appStateManager.appData.skuPremium);
                 onQueryPremiumStatusFinished(true, mIsPremium);
             }
         };
@@ -129,7 +143,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         progressDialog.setTitle(getString(R.string.connecting_google_servers));
         progressDialog.show();
 
-        mIabHelper = new IabHelperNonStatic(this);
+        mIabHelper = new IabHelper(this);
 
         try {
             mIabHelper.startSetup(result -> {
@@ -238,10 +252,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         if (isSuccessful) {
 
             if (isPremium) {
-                progressDialog.show();
                 progressDialog.setTitle(getString(R.string.connecting_google_servers));
-                dbManager.updatePremiumStatus();
-            } else if (!BuildConfig.DEBUG) {
+                progressDialog.show();
+                apisManager.updatePremiumStatus();
+            } else /*if (!BuildConfig.DEBUG)*/ {
                 showPremiumDialog();
             }
 
@@ -383,12 +397,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             showGoogleErrorDialog(googleErrorDialogTitle, errorMessage);
         }
 
-//        boolean loginDialogIsShowing = savedInstanceState.getBoolean("loginDialogIsShowing");
-//        if (loginDialogIsShowing) {
-//            String currentUserInput = savedInstanceState.getString("currentUserInput");
-//            showLoginDialog(currentUserInput);
-//        }
-
         boolean premiumDialogIsShowing = savedInstanceState.getBoolean("premiumDialogIsShowing");
         if (premiumDialogIsShowing) {
             showPremiumDialog();
@@ -417,14 +425,6 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
             outState.putString("googleErrorDialogTitle", googleErrorDialogTitle);
         }
 
-//        if (loginDialog != null && loginDialog.isShowing()) {
-//            outState.putBoolean("loginDialogIsShowing", true);
-//
-//            EditText editText_userInput = (EditText) loginDialog.findViewById(R.id.editText_userInput);
-//            String currentUserInput = editText_userInput.getText().toString();
-//            outState.putString("currentUserInput", currentUserInput);
-//
-//        } else
         if (premiumDialog != null && premiumDialog.isShowing()) {
             outState.putBoolean("premiumDialogIsShowing", true);
         }
@@ -437,6 +437,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         super.onDestroy();
 
         bus.unregister(this);
+        appStateManager.user = null;
 
         if (mIabHelper != null) {
             try {
@@ -491,6 +492,10 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.layout_logout:
+                progressDialog.setTitle(getString(R.string.updating_data));
+                progressDialog.show();
+                Device device = new Device(this, "");
+                ApisManager.getInstance().updateUserDevices(device, BusConsts.ACTION_DELETE);
 
                 SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
                 SharedPreferences.Editor editor = sp.edit();
@@ -498,9 +503,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 editor.clear();
                 editor.apply();
 
-                intent = new Intent(this, RegisterActivity.class);
-                startActivity(intent);
-                finish();
+                appStateManager.user = null;
                 break;
         }
     }
@@ -565,7 +568,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 progressDialog.setTitle(getString(R.string.connecting_google_servers));
                 progressDialog.show();
 
-                mIabHelper = new IabHelperNonStatic(MainActivity.this);
+                mIabHelper = new IabHelper(MainActivity.this);
 
                 try {
                     mIabHelper.startSetup(result -> {
@@ -619,14 +622,14 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
     private void purchasePremiumAccess() {
 
-        final IabHelperNonStatic.OnIabPurchaseFinishedListener mPurchaseFinishedListener
+        final IabHelper.OnIabPurchaseFinishedListener mPurchaseFinishedListener
                 = (result, purchase) -> {
 
             if (result.isFailure()) {
                 errorMessage = result.toString();
                 if (errorMessage.contains("Already Owned")) {
                     // The user has already a Premium status
-                    dbManager.updatePremiumStatus();
+                    apisManager.updatePremiumStatus();
                 } else {
                     errorMessage = getString(R.string.error_purchasing) + ": " + result;
                 }
@@ -634,7 +637,7 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 showGoogleErrorDialog(getString(R.string.purchase_has_failed), errorMessage);
                 Log.d(TAG, errorMessage);
 
-            } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
+            } else if (purchase.getSku().equals(appStateManager.appData.skuPremium)) {
                 // give user access to premium content
                 progressDialog.dismiss();
 
@@ -642,12 +645,12 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 View mainView = findViewById(android.R.id.content);
                 AppHelper.showSnackBar(mainView, R.string.purchase_complete_successfully, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
 
-                dbManager.updatePremiumStatus();
+                apisManager.updatePremiumStatus();
             }
         };
 
         try {
-            mIabHelper.launchPurchaseFlow(MainActivity.this, AppConsts.SKU_PREMIUM, AppConsts.REQ_CODE_PURCHASE, mPurchaseFinishedListener);
+            mIabHelper.launchPurchaseFlow(MainActivity.this, appStateManager.appData.skuPremium, AppConsts.REQ_CODE_PURCHASE, mPurchaseFinishedListener);
 
         } catch (MyIllegalStateException e) {
             errorMessage = getString(R.string.problem_starting_purchase_progress);
@@ -658,82 +661,74 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 
 //-------------------------------------------------------------------------------------------------
 
-//    private void showLoginDialog(String currentUserInput) {
-//
-//        loginDialog = new Dialog(this);
-//
-//        loginDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-//
-//        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-//        final View view = inflater.inflate(R.layout.dialog_login, null, false);
-//        loginDialog.setCanceledOnTouchOutside(false);
-//        loginDialog.setContentView(view);
-//
-//        final EditText editText_userInput = (EditText) loginDialog.findViewById(R.id.editText_userInput);
-//        editText_userInput.setText(currentUserInput);
-//
-//        // Relocating the selection after the last char of the editText
-//        int pos = editText_userInput.getText().length();
-//        editText_userInput.setSelection(pos);
-//
-//        TextView textView_dialogTitleNote = (TextView) loginDialog.findViewById(R.id.textView_titleNote);
-//        textView_dialogTitleNote.setText(getString(R.string.the_username_used_as_author) + " " + (getString(R.string.when_creating_own_recipe)));
-//
-//        Button button_save = (Button) loginDialog.findViewById(R.id.button_save);
-//        button_save.setOnClickListener(v -> {
-//
-//            // Get the input text
-//            String userName = editText_userInput.getText().toString();
-//
-//            if (usernameTooShort(userName)) {
-//                // Less than 6 letters
-//                AppHelper.showSnackBar(view, R.string.at_least_6_characters_are_required, Color.RED);
-//                return;
-//            }
-//
-//            if (usernameTooLong(userName)) {
-//                // More than 20 letters
-//                AppHelper.showSnackBar(view, R.string.max_20_chars_are_allowed, Color.RED);
-//                return;
-//            }
-//
-//            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(MainActivity.this);
-//            SharedPreferences.Editor editor = sp.edit();
-//            editor.putString(AppConsts.SharedPrefs.USER_NAME, userName);
-//            editor.commit();
-//
-//            AnalyticsHelper.sendEvent(MainActivity.this, AppConsts.Analytics.CATEGORY_LOGIN, "Login successfully", userName);
-//
-//            loginDialog.dismiss();
-//        });
-//
-//        Button btnCancel = (Button) loginDialog.findViewById(R.id.button_cancel);
-//        btnCancel.setOnClickListener(v -> loginDialog.dismiss());
-//        loginDialog.show();
-//    }
-//
-////-------------------------------------------------------------------------------------------------
-//
-//    private boolean usernameTooShort(String username) {
-//        // checks if the username has less than 6 letters excluding spaces.
-//        int trimmedLength = username.trim().length();
-//        if (trimmedLength >= 6) {
-//            return false;
-//        } else {
-//            return true;
-//        }
-//    }
-//
-////-------------------------------------------------------------------------------------------------
-//
-//    private boolean usernameTooLong(String username) {
-//        // checks if the username has less than 6 letters excluding spaces.
-//        int trimmedLength = username.trim().length();
-//        if (trimmedLength > 20) {
-//            return true;
-//        } else {
-//            return false;
-//        }
-//    }
+    @Subscribe
+    public void onEvent(OnUserRecipeDownloadedEvent event) {
+        // After downloading a SHARED user-recipe from Great Recipe API.
 
+        if (event.isSuccess) {
+            UserRecipe searchResult = appStateManager.sharedUserRecipe;
+            int action = AppConsts.Actions.REVIEW_SHARED_USER_RECIPE;
+            createNotification(searchResult._id, action);
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
+    public void onEvent(OnYummlyRecipeDownloadedEvent event) {
+        // After downloading a SHARED Yummly-recipe from Great Recipe API.
+
+        if (event.action != AppConsts.Actions.DOWNLOAD_SHARED_YUMMLY_RECIPE) {
+            return;
+        }
+
+        if (event.isSuccess) {
+            YummlyRecipe searchResult = appStateManager.sharedYummlyRecipe;
+            int action = AppConsts.Actions.REVIEW_SHARED_YUMMLY_RECIPE;
+
+            createNotification(searchResult._id, action);
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
+    public void onEvent(OnUpdateDeviceEvent event) {
+        // After logging out.
+
+        Intent intent = new Intent(this, RegisterActivity.class);
+        startActivity(intent);
+        finish();
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    private void createNotification(String recipeId, int action) {
+
+        Intent resultIntent = new Intent(this, RecipeDetailsActivity.class);
+
+        resultIntent.setAction(String.valueOf(action));
+        resultIntent.putExtra(AppConsts.Extras.RECIPE_ID, recipeId);
+
+        PendingIntent contentIntent =
+                PendingIntent.getActivity(this, 0, resultIntent, Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
+
+        Bitmap icon = BitmapFactory.decodeResource(getResources(), R.drawable.app_logo);
+        Uri alarmSound = RingtoneManager.getDefaultUri(RingtoneManager.TYPE_NOTIFICATION);
+
+        NotificationCompat.Builder mBuilder = new NotificationCompat.Builder(this)
+                .setAutoCancel(true)
+                .setSmallIcon(R.drawable.ic_logo_notification)
+                .setContentTitle("My notification")
+                .setContentText("Hello World!")
+                .setContentIntent(contentIntent)
+                .setColor(Color.WHITE)
+                .setSound(alarmSound)
+                .setLargeIcon(icon);
+
+        NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
+        Notification notification = mBuilder.build();
+
+        nm.notify(123, notification);
+    }
 }

@@ -42,7 +42,7 @@ import com.hanoch.greatrecipes.bus.OnToggleRecipeFavouriteEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.control.ListFragmentListener;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
-import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
+import com.hanoch.greatrecipes.api.ApisManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnTabChangedEvent;
@@ -106,7 +106,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
     private MyBus bus;
     private Dialog rateUsDialog;
 
-    private GreatRecipesDbManager dbManager;
+    private ApisManager apisManager;
     private AppStateManager appStateManager;
 
     private ProgressDialog progressDialog;
@@ -121,7 +121,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
         bus = MyBus.getInstance(); // Singleton bus instance
         bus.register(this);
 
-        dbManager = GreatRecipesDbManager.getInstance();
+        apisManager = ApisManager.getInstance();
         appStateManager = AppStateManager.getInstance();
 
         progressDialog = new ProgressDialog(this);
@@ -428,7 +428,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
 
                 ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
 
-                if (appStateManager.user.isUserRecipe(mRecipeId)) {
+                if (appStateManager.user.isUserRecipeCreatedByThisUser(mRecipeId)) {
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
                 }
 
@@ -918,7 +918,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 progressDialog.show();
 
                 UserRecipe userRecipeToSave = editRecipeFragment.onSaveUserRecipeClicked();
-                dbManager.updateUserRecipe(userRecipeToSave);
+                apisManager.updateUserRecipe(userRecipeToSave);
 
                 break;
 
@@ -928,7 +928,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 progressDialog.show();
 
                 UserRecipe userRecipeToAdd = editRecipeFragment.onSaveUserRecipeClicked();
-                dbManager.addUserRecipe(userRecipeToAdd);
+                apisManager.addUserRecipe(userRecipeToAdd);
 
                 break;
 
@@ -958,7 +958,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 // Tablet only, while reviewing a recipe
 
                 progressDialog.show();
-                dbManager.toggleRecipeFavourite(mRecipeId);
+                apisManager.toggleRecipeFavourite(mRecipeId);
                 break;
 
             case R.id.action_ok:
@@ -1035,7 +1035,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
                 }
             }
 
-            dbManager.updateUserRecipes(userRecipesIds, yummlyRecipesIds, BusConsts.ACTION_DELETE);
+            apisManager.updateUserRecipes(userRecipesIds, yummlyRecipesIds, BusConsts.ACTION_DELETE);
 
             dialog.dismiss();
         });
@@ -1406,7 +1406,7 @@ public class RecipesListsActivity extends AppCompatActivity implements
             boolean isFavourite = appStateManager.isRecipeFavourite(mRecipeId);
             recipeReviewFragment.setFavouriteImage(isFavourite);
 
-            if (appStateManager.user.isUserRecipe(mRecipeId)) {
+            if (appStateManager.user.isUserRecipeCreatedByThisUser(mRecipeId)) {
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
             }
 

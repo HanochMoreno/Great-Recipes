@@ -1,13 +1,12 @@
-package com.hanoch.greatrecipes.database;
+package com.hanoch.greatrecipes.api;
 
 
 import android.content.Context;
 
-import com.google.gson.Gson;
+import com.google.firebase.iid.FirebaseInstanceId;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppStateManager;
-import com.hanoch.greatrecipes.BuildConfig;
-import com.hanoch.greatrecipes.api.YummlyRecipe;
+import com.hanoch.greatrecipes.api.great_recipes_api.AppData;
 import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserResponse;
@@ -15,10 +14,13 @@ import com.hanoch.greatrecipes.api.yummly_api.YummlySearchResultsResponse;
 import com.hanoch.greatrecipes.api.yummly_api.YummlyRecipeResponse2;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
-import com.hanoch.greatrecipes.bus.OnDownloadUserRecipeCompletedEvent;
+import com.hanoch.greatrecipes.bus.OnAppDataEvent;
+import com.hanoch.greatrecipes.bus.OnUpdateDeviceEvent;
+import com.hanoch.greatrecipes.bus.OnUserRecipeDownloadedEvent;
 import com.hanoch.greatrecipes.bus.OnEmailVerificationEvent;
 import com.hanoch.greatrecipes.bus.OnForgotPasswordEvent;
 import com.hanoch.greatrecipes.bus.OnGotYummlySearchResultsEvent;
+import com.hanoch.greatrecipes.bus.OnShareRecipeEvent;
 import com.hanoch.greatrecipes.bus.OnToggleRecipeFavouriteEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserDietAndAllergensEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserPreferencesEvent;
@@ -27,8 +29,10 @@ import com.hanoch.greatrecipes.bus.OnYummlyRecipeDownloadedEvent;
 import com.hanoch.greatrecipes.bus.OnLoginEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateServingsListEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
+import com.hanoch.greatrecipes.database.SqLiteDbManager;
 import com.hanoch.greatrecipes.model.AllergenAndDiet;
 import com.hanoch.greatrecipes.model.ApiProvider;
+import com.hanoch.greatrecipes.model.Device;
 import com.hanoch.greatrecipes.model.Recipes;
 import com.hanoch.greatrecipes.model.RecipesResponse;
 import com.hanoch.greatrecipes.model.Serving;
@@ -46,23 +50,52 @@ import rx.android.schedulers.AndroidSchedulers;
 import rx.schedulers.Schedulers;
 
 
-public class GreatRecipesDbManager {
-    private static GreatRecipesDbManager instance;
+public class ApisManager {
+    private static ApisManager instance;
     private MyBus bus;
     private AppStateManager appStateManager;
 
-    private GreatRecipesDbManager() {
+    private ApisManager() {
         this.bus = MyBus.getInstance();
         this.appStateManager = AppStateManager.getInstance();
     }
 
 //-------------------------------------------------------------------------------------------------
 
-    public static GreatRecipesDbManager getInstance() {
+    public static ApisManager getInstance() {
         if (instance == null) {
-            instance = new GreatRecipesDbManager();
+            instance = new ApisManager();
         }
         return instance;
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public void getAppData() {
+
+        Subscriber<AppData> subscriber = new Subscriber<AppData>() {
+            @Override
+            public void onCompleted() {
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                bus.post(new OnAppDataEvent(false, t));
+            }
+
+            @Override
+            public void onNext(AppData appData) {
+                appStateManager.appData = appData;
+                bus.post(new OnAppDataEvent(true, null));
+            }
+        };
+
+        Single<AppData> getAppData = ApiProvider.getGreatRecipesApi().getAppData("1234");
+
+        getAppData
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -113,16 +146,19 @@ public class GreatRecipesDbManager {
 
             @Override
             public void onError(Throwable t) {
-                bus.post(new OnForgotPasswordEvent(false, null, t));
+                bus.post(new OnForgotPasswordEvent(false, null, null, t));
             }
 
             @Override
             public void onNext(String password) {
-                bus.post(new OnForgotPasswordEvent(true, password, null));
+                bus.post(new OnForgotPasswordEvent(true, email, password, null));
             }
         };
 
-        Single<String> login = ApiProvider.getGreatRecipesApi().forgotPassword(email.toLowerCase());
+        HashMap<String, String> body = new HashMap<>();
+        body.put("email", email);
+
+        Single<String> login = ApiProvider.getGreatRecipesApi().forgotPassword(body);
 
         login
                 .subscribeOn(Schedulers.io())
@@ -135,7 +171,7 @@ public class GreatRecipesDbManager {
     /**
      * login a user
      */
-    public void login(String email, String password) {
+    public void login(Context context, String email, String password) {
 
         Subscriber<UserResponse> subscriber = new Subscriber<UserResponse>() {
             @Override
@@ -150,7 +186,14 @@ public class GreatRecipesDbManager {
             @Override
             public void onNext(UserResponse userResponse) {
                 appStateManager.user = new User(userResponse);
+
                 bus.post(new OnLoginEvent(true, null));
+
+                String firebaseToken = FirebaseInstanceId.getInstance().getToken();
+                if (firebaseToken != null) {
+                    Device device = new Device(context, firebaseToken);
+                    updateUserDevices(device, BusConsts.ACTION_ADD_NEW);
+                }
             }
         };
 
@@ -310,8 +353,8 @@ public class GreatRecipesDbManager {
         query.put("q", keyToSearch);
         query.put("start", "0");
         query.put("maxResult", String.valueOf(user.preferences.maxOnlineSearchResults));
-        query.put("_app_id", AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL);
-        query.put("_app_key", AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL);
+        query.put("_app_id", appStateManager.appData.yummlyAppId);
+        query.put("_app_key", appStateManager.appData.yummlyAppKey);
 
         List<String> dietList = new ArrayList<>();
         List<String> allergensList = new ArrayList<>();
@@ -378,7 +421,7 @@ public class GreatRecipesDbManager {
 
             @Override
             public void onError(Throwable t) {
-                bus.post(new OnYummlyRecipeDownloadedEvent(false, t));
+                bus.post(new OnYummlyRecipeDownloadedEvent(false, t, AppConsts.Actions.DOWNLOAD_NEW_YUMMLY_RECIPE));
             }
 
             @Override
@@ -401,6 +444,8 @@ public class GreatRecipesDbManager {
 
     private void addYummlyRecipeToGreatRecipeApi(HashMap<String, Object> body) {
 
+        int action = AppConsts.Actions.DOWNLOAD_NEW_YUMMLY_RECIPE;
+
         Subscriber<YummlyRecipe> subscriber = new Subscriber<YummlyRecipe>() {
             @Override
             public void onCompleted() {
@@ -408,13 +453,13 @@ public class GreatRecipesDbManager {
 
             @Override
             public void onError(Throwable t) {
-                bus.post(new OnYummlyRecipeDownloadedEvent(false, t));
+                bus.post(new OnYummlyRecipeDownloadedEvent(false, t, action));
             }
 
             @Override
             public void onNext(YummlyRecipe recipe) {
                 appStateManager.yummlySearchResult = recipe;
-                bus.post(new OnYummlyRecipeDownloadedEvent(true, null));
+                bus.post(new OnYummlyRecipeDownloadedEvent(true, null, action));
             }
         };
 
@@ -427,8 +472,12 @@ public class GreatRecipesDbManager {
 
 //-------------------------------------------------------------------------------------------------
 
-    public void getYummlyRecipeFromGreatRecipesApi(Context context, String resultYummlyId) {
-        appStateManager.yummlySearchResult = null;
+    public void getYummlyRecipeFromGreatRecipesApi(Context context, String resultYummlyId, int action) {
+        if (action == AppConsts.Actions.REVIEW_YUMMLY_ONLINE) {
+            appStateManager.yummlySearchResult = null;
+        } else if (action == AppConsts.Actions.DOWNLOAD_SHARED_YUMMLY_RECIPE) {
+            appStateManager.sharedYummlyRecipe = null;
+        }
 
         Subscriber<YummlyRecipe> subscriber = new Subscriber<YummlyRecipe>() {
             @Override
@@ -437,19 +486,23 @@ public class GreatRecipesDbManager {
 
             @Override
             public void onError(Throwable t) {
-                if (t.getMessage().contains("does not exist in the DB")) {
+                if (action == AppConsts.Actions.DOWNLOAD_NEW_YUMMLY_RECIPE && t.getMessage().contains("does not exist in the DB")) {
                     // Recipe not found in the GreatRecipes DB
                     downloadRecipeFromYummlyApi(context, resultYummlyId);
                 } else {
-                    bus.post(new OnYummlyRecipeDownloadedEvent(false, t));
+                    bus.post(new OnYummlyRecipeDownloadedEvent(false, t, action));
                 }
             }
 
             @Override
             public void onNext(YummlyRecipe recipe) {
                 // Recipe was found in the GreatRecipes DB
-                appStateManager.yummlySearchResult = recipe;
-                bus.post(new OnYummlyRecipeDownloadedEvent(true, null));
+                if (action == AppConsts.Actions.DOWNLOAD_NEW_YUMMLY_RECIPE) {
+                    appStateManager.yummlySearchResult = recipe;
+                } else {
+                    appStateManager.sharedYummlyRecipe = recipe;
+                }
+                bus.post(new OnYummlyRecipeDownloadedEvent(true, null, action));
             }
         };
 
@@ -465,6 +518,7 @@ public class GreatRecipesDbManager {
 //-------------------------------------------------------------------------------------------------
 
     public void getUserRecipeFromGreatRecipesApi(String recipeId) {
+        appStateManager.sharedUserRecipe = null;
 
         Subscriber<UserRecipe> subscriber = new Subscriber<UserRecipe>() {
             @Override
@@ -473,12 +527,13 @@ public class GreatRecipesDbManager {
 
             @Override
             public void onError(Throwable t) {
-                bus.post(new OnDownloadUserRecipeCompletedEvent(false, null, t));
+                bus.post(new OnUserRecipeDownloadedEvent(false, t));
             }
 
             @Override
             public void onNext(UserRecipe recipe) {
-                bus.post(new OnDownloadUserRecipeCompletedEvent(true, recipe, null));
+                appStateManager.sharedUserRecipe = recipe;
+                bus.post(new OnUserRecipeDownloadedEvent(true, null));
             }
         };
 
@@ -727,6 +782,10 @@ public class GreatRecipesDbManager {
                         appStateManager.user.onlineDownloadsCount = (int) response;
                         break;
 
+                    case "onlineSearchesCount":
+                        appStateManager.user.onlineSearchesCount = (int) response;
+                        break;
+
                     case "favouriteRecipesIds":
                         appStateManager.user.recipes.favouriteRecipesIds = (ArrayList<String>) response;
                         break;
@@ -754,6 +813,97 @@ public class GreatRecipesDbManager {
 //-------------------------------------------------------------------------------------------------
 
     /**
+     * Push notification: share Recipe
+     */
+    public void shareRecipe(String recipientEmail, String recipeId) {
+
+        Subscriber<Boolean> subscriber = new Subscriber<Boolean>() {
+            @Override
+            public void onCompleted() {
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                bus.post(new OnShareRecipeEvent(false, t));
+            }
+
+            @Override
+            public void onNext(Boolean isSuccess) {
+                if (isSuccess) {
+                    bus.post(new OnShareRecipeEvent(true, null));
+                }
+            }
+        };
+        boolean isUserRecipe = appStateManager.user.isUserRecipe(recipeId);
+        String recipeTitle;
+        if (isUserRecipe) {
+            recipeTitle = appStateManager.user.recipes.userRecipes.get(recipeId).recipeTitle;
+        } else {
+            recipeTitle = appStateManager.user.recipes.yummlyRecipes.get(recipeId).recipeTitle;
+        }
+
+        HashMap<String, Object> body = new HashMap<>();
+        body.put("_id", appStateManager.user._id);
+        body.put("recipientEmail", recipientEmail);
+        body.put("recipeId", recipeId);
+        body.put("recipeTitle", recipeTitle);
+        body.put("isUserRecipe", isUserRecipe);
+
+        Single<Boolean> shareRecipe = ApiProvider.getGreatRecipesApi().shareRecipe(body);
+
+        shareRecipe
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+
+//-------------------------------------------------------------------------------------------------
+
+    /**
+     * Add or remove device of a user
+     */
+    public void updateUserDevices(Device device, int action) {
+
+        Subscriber<ArrayList<Device>> subscriber = new Subscriber<ArrayList<Device>>() {
+            @Override
+            public void onCompleted() {
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                bus.post(new OnUpdateDeviceEvent(false, t));
+            }
+
+            @Override
+            public void onNext(ArrayList<Device> devices) {
+                if (appStateManager.user != null) {
+                    appStateManager.user.devices = new HashMap<>();
+                    for (Device device : devices) {
+                        appStateManager.user.devices.put(device.androidId, device);
+                    }
+                }
+                bus.post(new OnUpdateDeviceEvent(true, null));
+            }
+        };
+
+        HashMap<String, Object> body = new HashMap<>();
+        body.put("_id", appStateManager.user._id);
+        body.put("action", action);
+        body.put("androidId", device.androidId);
+        body.put("firebaseToken", device.firebaseToken);
+
+        Single<ArrayList<Device>> updateUserPremiumStatus = ApiProvider.getGreatRecipesApi().updateUserDevices(body);
+
+        updateUserPremiumStatus
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    /**
      * Updates the premium status to 'true' after purchased by the user
      */
     public void updatePremiumStatus() {
@@ -771,6 +921,16 @@ public class GreatRecipesDbManager {
     public void updateOnlineDownloadsCount(int onlineDownloadsCount) {
 
         updateUserProperty(null, "onlineDownloadsCount", onlineDownloadsCount);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    /**
+     * Updates the online searches counter made by the user
+     */
+    public void updateOnlineSearchesCount(int onlineSearchesCount) {
+
+        updateUserProperty(null, "onlineSearchesCount", onlineSearchesCount);
     }
 
 //-------------------------------------------------------------------------------------------------

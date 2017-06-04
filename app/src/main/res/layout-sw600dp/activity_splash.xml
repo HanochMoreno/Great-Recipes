@@ -3,8 +3,7 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:background="@color/colorSplashBackground"
-    android:orientation="horizontal"
-    tools:context=".SplashActivity">
+    android:orientation="horizontal">
 
     <LinearLayout
         android:layout_width="0dp"
@@ -40,6 +39,15 @@
             android:layout_weight="@integer/weight_splash_text_part_progress_bar"
             android:paddingLeft="@dimen/padding_splash_progress_bar_sides"
             android:paddingRight="@dimen/padding_splash_progress_bar_sides" />
+
+        <TextView
+            android:id="@+id/tv_progressBarText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="@color/colorPrimary"
+            android:gravity="center"
+            tools:text="@string/downloading_app_data"/>
+
     </LinearLayout>
 
     <ImageView

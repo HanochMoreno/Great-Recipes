@@ -51,4 +51,10 @@
         android:icon="@drawable/ic_toolbar_action_add_to_list"
         app:showAsAction="always" />
 
+    <item
+        android:id="@+id/action_share"
+        android:title="Share Recipe"
+        android:icon="@drawable/ic_toolbar_action_share2"
+        app:showAsAction="always" />
+
 </menu>

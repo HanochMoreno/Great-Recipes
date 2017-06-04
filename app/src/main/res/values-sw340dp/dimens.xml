@@ -26,7 +26,7 @@
     <dimen name="min_width_dialog">300dp</dimen>
     <dimen name="height_dialog_favourites_add_to_fav_icon">30dp</dimen>
     <dimen name="height_login_edit_text">28dp</dimen>
-    <dimen name="width_login_edit_text">300dp</dimen>
+    <dimen name="width_login_edit_text">270dp</dimen>
     <dimen name="size_login_image">48dp</dimen>
 
     <!-- Padding -->

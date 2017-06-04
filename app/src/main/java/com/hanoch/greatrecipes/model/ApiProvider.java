@@ -4,8 +4,8 @@ import com.hanoch.greatrecipes.api.great_recipes_api.GreatRecipesApi;
 import com.hanoch.greatrecipes.api.yummly_api.YummlyApi;
 
 public abstract class ApiProvider {
-    private static YummlyApi yummlyApi;
     private static GreatRecipesApi greatRecipesApi;
+    private static YummlyApi yummlyApi;
 
     public static GreatRecipesApi getGreatRecipesApi() {
         if (greatRecipesApi == null) {
@@ -20,4 +20,5 @@ public abstract class ApiProvider {
         }
         return yummlyApi;
     }
+
 }

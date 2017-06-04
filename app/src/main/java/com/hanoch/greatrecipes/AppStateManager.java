@@ -3,6 +3,8 @@ package com.hanoch.greatrecipes;
 
 import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.api.great_recipes_api.User;
+import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
+import com.hanoch.greatrecipes.api.great_recipes_api.AppData;
 import com.hanoch.greatrecipes.model.UserEmailVerification;
 
 public class AppStateManager {
@@ -10,6 +12,9 @@ public class AppStateManager {
     public User user;
     public UserEmailVerification userEmailVerification;
     public YummlyRecipe yummlySearchResult;
+    public YummlyRecipe sharedYummlyRecipe;
+    public UserRecipe sharedUserRecipe;
+    public AppData appData;
 
     private AppStateManager(){}
 

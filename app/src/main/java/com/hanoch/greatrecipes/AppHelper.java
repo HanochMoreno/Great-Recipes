@@ -7,18 +7,20 @@ import android.graphics.Color;
 import android.os.AsyncTask;
 import android.os.Vibrator;
 import android.preference.PreferenceManager;
+import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
 import android.view.View;
 import android.view.ViewGroup;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
-import android.widget.Toast;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.hanoch.greatrecipes.api.great_recipes_api.AppData;
+import com.hanoch.greatrecipes.bus.MyBus;
+import com.hanoch.greatrecipes.bus.OnMailWasSentEvent;
 import com.hanoch.greatrecipes.model.Mail;
-import com.hanoch.greatrecipes.view.adapters.RecipesListAdapter2;
 
 import java.net.ConnectException;
 import java.net.UnknownHostException;
@@ -304,8 +306,34 @@ public abstract class AppHelper {
 
 //-------------------------------------------------------------------------------------------------
 
-    public static boolean sendMail(String email, String extra, int action) {
-        Mail mail = new Mail(AppConsts.HANOCH_MAIL_ADDRESS, AppConsts.HANOCH_MAIL_PASSWORD);
+    public static void onApiErrorReceived(Throwable t, View mainView) {
+        Log.e("subscriber", "onError: message: " + t.getMessage() + ", cause: " + t.getCause());
+        if (t instanceof UnknownHostException || t instanceof ConnectException) {
+            showSnackBar(mainView, R.string.internet_error, Color.RED);
+        } else {
+            showSnackBar(mainView, R.string.unexpected_error, Color.RED);
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public static String getDeviceAndroidId(Context context) {
+        return Settings.Secure.getString(context.getContentResolver(),
+                Settings.Secure.ANDROID_ID);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public static void performMailSending(String email, String extra, int action) {
+        SendMailTask sendMailTask = new SendMailTask(email, extra, action);
+        sendMailTask.execute();
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    private static boolean sendMail(String email, String extra, int action) {
+        AppData appData = AppStateManager.getInstance().appData;
+        Mail mail = new Mail(appData.hanochMailAddress, appData.hanochMailPassword);
 
         String subject;
         String body;
@@ -336,16 +364,36 @@ public abstract class AppHelper {
             return false;
         }
     }
+
 //-------------------------------------------------------------------------------------------------
 
-    public static void onApiErrorReceived(Throwable t, View mainView) {
-        Log.e("subscriber", "onError: message: " + t.getMessage() + ", cause: " + t.getCause());
-        if (t instanceof UnknownHostException || t instanceof ConnectException) {
-            showSnackBar(mainView, R.string.internet_error, Color.RED);
-        } else {
-            showSnackBar(mainView, R.string.unexpected_error, Color.RED);
+    private static class SendMailTask extends AsyncTask<Void, Boolean, Boolean> {
+        private String email;
+
+        /**
+         * userEmailVerificationId (ACTION_REGISTER) or password (ACTION_FORGOT_PASSWORD)
+         */
+        private String extra;
+
+        /**
+         * ACTION_REGISTER or ACTION_FORGOT_PASSWORD
+         */
+        private int action;
+
+        SendMailTask(String email, String extra, int action) {
+            this.email = email;
+            this.extra = extra;
+            this.action = action;
+        }
+
+        @Override
+        protected Boolean doInBackground(Void... voids) {
+            return sendMail(email, extra, action);
+        }
+
+        @Override
+        protected void onPostExecute(Boolean isSuccess) {
+            MyBus.getInstance().post(new OnMailWasSentEvent(isSuccess, action, email));
         }
     }
-
-
 }

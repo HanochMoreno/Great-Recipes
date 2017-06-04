@@ -170,6 +170,7 @@
     <string name="limitation_search_results">לאחר ביצוע חיפוש ברשת, יוצגו לכל היותר חמש תוצאות חיפוש</string>
     <string name="limitation_servings_types">באשף תכנון הארוחה, סוגי המנות היחידים הזמינים הינם "מתאבן" ו"מנה ראשונה"</string>
     <string name="you_exceeded_the_downloaded_recipes_limit">חרגת מכמות המתכונים המירבית להורדה בגירסת הניסיון</string>
+    <string name="you_exceeded_the_online_recipes_searches_limit">חרגת מכמות החיפושים ברשת המירבית בגירסת הניסיון</string>
     <string name="you_exceeded_the_recipes_creation_limit">חרגת מכמות המתכונים המירבית ליצירה בגירסת הניסיון</string>
     <string name="get_premium_access">שדרג לגרסת פרימיום</string>
     <string name="trial_version_limitation">הגבלות גרסת הניסיון</string>
@@ -228,5 +229,24 @@
     <string name="email_already_exists">כתובת המייל כבר קיימת במאגר</string>
     <string name="forgot_your_password">שכחת סיסמא?</string>
     <string name="the_password_will_be_sent_to_your_email">הסיסמא תשלח לדואר האלקטרוני שלך</string>
+    <string name="verify_email_text">מייל נשלח לתיבת הדואר האלקטרוני שלך עם קישור לאימות כתובת המייל. אנא לחץ על הקישור להשלמת ההרשמה</string>
+    <string name="restore_password_text">מייל עם הסיסמא נשלח לכתובת הדואר האלקטרוני שלך.</string>
+    <string name="verify_your_email">אימות כתובת המייל</string>
+    <string name="restore_password">שחזור סיסמא</string>
+    <string name="mail_sending_error">שגיאה בשליחת מייל</string>
+    <string name="has_failed">נכשל</string>
+    <string name="wrong_email_or_password">כתובת מייל או סיסמא שגויה</string>
+    <string name="share_recipe">שתף מתכון</string>
+    <string name="recipient_email_address">כתובת מייל הנמען</string>
+    <string name="login">כניסה</string>
+    <string name="enter_email_and_password">הכנס כתובת מייל וסיסמא</string>
+    <string name="back">חזור</string>
+    <string name="retry">נסה שנית</string>
+    <string name="leave">צא</string>
+    <string name="error_getting_app_data">תקלה בקבלת נתוני האפליקציה.\nאנא נסה שנית</string>
+    <string name="error_getting_login_info">תקלה בקבלת נתוני ההרשמה.\nאנא נסה שנית</string>
+    <string name="downloading_app_data">מוריד נתוני אפליקציה…</string>
+    <string name="downloading_login_info">מוריד נתוני הרשמה…</string>
+    <string name="init_app">מאתחל אפליקציה…</string>
 
 </resources>

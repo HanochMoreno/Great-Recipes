@@ -8,16 +8,7 @@ import com.hanoch.greatrecipes.model.AllergenAndDiet;
 
 public class AppConsts {
 
-//    public static final int NEW_RECIPE = -1;
-//    public static final String NEW_RECIPE = "NEW_RECIPE";
-    public static final float NO_RATING = 0;
-//    public static final int NO_SELECTION = -1;
     public static final int REQ_CODE_PURCHASE = 1000;
-
-    public static final String SIGNATURE_BASE_64_LICENSE_KEY = "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAoB80Hzf+3qCy8wVXsCtqPh7BjTtFIfolF28MYCOYqLDb2nsiET+V599lG8KDw/JhgQd6SfvknoVWEnV4uuMXdBpeJh+hKW4bJgAQhtpg6P27pg9C+g08tP1/R9nq+vnNONoY3T+wTmhTn0mqeAijqbghke6Rx5hJv6RPgt60KYFnxmwAffk6xg9HRn9rLNP3v1okhfOqNzQjXyrs+h5Mr2S5WaU52tewGZ1W4258ts2B8bxca0adJNl4R86lxS3GliFnS9NA/tb7BEo3SAJzFoQ9GSnWCABXwNkX/1UtH1BTTkps1imjQRBT921qjWMBM2caHZGAXZB8FmejwtVcFwIDAQAB";
-    public static final String SKU_PREMIUM = "great_recipes_premium_access";
-    public static final String HANOCH_MAIL_ADDRESS = "hanoch001@gmail.com";
-    public static final String HANOCH_MAIL_PASSWORD = "hanmor57";
 
 //-------------------------------------------------------------------------------------------------
 
@@ -38,7 +29,6 @@ public class AppConsts {
             new AllergenAndDiet(false, 13, AppConsts.Filters.TREE_NUT_FREE, "395^Tree Nut-Free"),
             new AllergenAndDiet(false, 14, AppConsts.Filters.WHEAT_FREE, "392^Wheat-Free"),
     };
-    public static final String NEW_RECIPE = "NEW_RECIPE";
 
 //-------------------------------------------------------------------------------------------------
 
@@ -71,11 +61,17 @@ public class AppConsts {
         public static final int REVIEW_YUMMLY_RECIPE = 6;
         public static final int REVIEW_USER_RECIPE = 7;
         public static final int REVIEW_SHARED_USER_RECIPE = 8;
-        public static final int REVIEW_YUMMLY_ONLINE = 9;
-        public static final int REVIEW_SERVING = 10;
+        public static final int REVIEW_SHARED_YUMMLY_RECIPE = 9;
+        public static final int REVIEW_YUMMLY_ONLINE = 10;
+        public static final int REVIEW_SERVING = 11;
 
-        public static final int ADD_SERVING_FROM_LISTS = 11;
-        public static final int ADD_SERVING_FROM_YUMMLY = 12;
+        public static final int ADD_SERVING_FROM_LISTS = 12;
+        public static final int ADD_SERVING_FROM_YUMMLY = 13;
+
+        public static final int DOWNLOAD_SHARED_YUMMLY_RECIPE = 14;
+        public static final int DOWNLOAD_NEW_YUMMLY_RECIPE = 15;
+
+        public static final int REVIEW_SHARED_RECIPE = 20;
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -99,11 +95,6 @@ public class AppConsts {
     public class Extras {
 
         public static final String RECIPE_ID = "RECIPE_ID";
-        public static final String EXTRA_YUMMLY_ID = "EXTRA_YUMMLY_ID";
-
-//        public static final String EXTRA_SERVING = "EXTRA_SERVING";
-        public static final String ADD_SERVING = "ADD_SERVING_FROM_YUMMLY";
-        public static final String REVIEW_SERVING = "REVIEW_SERVING";
         public static final String EXTRA_IS_USER_RECIPE = "EXTRA_IS_USER_RECIPE";
     }
 
@@ -116,7 +107,7 @@ public class AppConsts {
         public static final int DELETE = R.id.action_delete;
         public static final int ADD_TO_FAVOURITES = R.id.action_addToFavourites;
         public static final int REMOVE_FROM_FAVOURITES = R.id.action_removeFromFavourites;
-        //public static final int SHARE = R.id.action_share;
+        public static final int SHARE = R.id.action_share;
         public static final int ADD_SERVING = R.id.action_addServing;
         public static final int SEARCH = R.id.action_search;
         public static final int OK = R.id.action_ok;
@@ -143,14 +134,6 @@ public class AppConsts {
         public static final int MY_OWN_RECIPES = 1;
         public static final int ONLINE_RECIPES = 2;
         public static final int FAVOURITES_RECIPES = 3;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    public class RecipeOrigin {
-
-        public static final int FROM_ONLINE_SEARCH = 0;
-        public static final int ADDED_MANUALLY = 1;
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -189,20 +172,20 @@ public class AppConsts {
 
 //-------------------------------------------------------------------------------------------------
 
-    public static class Filters {
+    private static class Filters {
 
-        public static final String VEGAN = "Vegan";
-        public static final String VEGETARIAN = "Vegetarian";
-        public static final String PALEO = "Paleo";
-        public static final String DAIRY_FREE = "Dairy-free";
-        public static final String EGG_FREE = "Egg-free";
-        public static final String GLUTEN_FREE = "Gluten-free";
-        public static final String PEANUT_FREE = "Peanut-free";
-        public static final String SEAFOOD_FREE = "Seafood-free";
-        public static final String SESAME_FREE = "Sesame-free";
-        public static final String SOY_FREE = "Soy-free";
-        public static final String TREE_NUT_FREE = "Tree-nut-free";
-        public static final String WHEAT_FREE = "Wheat-free";
+        private static final String VEGAN = "Vegan";
+        private static final String VEGETARIAN = "Vegetarian";
+        private static final String PALEO = "Paleo";
+        private static final String DAIRY_FREE = "Dairy-free";
+        private static final String EGG_FREE = "Egg-free";
+        private static final String GLUTEN_FREE = "Gluten-free";
+        private static final String PEANUT_FREE = "Peanut-free";
+        private static final String SEAFOOD_FREE = "Seafood-free";
+        private static final String SESAME_FREE = "Sesame-free";
+        private static final String SOY_FREE = "Soy-free";
+        private static final String TREE_NUT_FREE = "Tree-nut-free";
+        private static final String WHEAT_FREE = "Wheat-free";
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -231,23 +214,18 @@ public class AppConsts {
 
         public static final String COLORFUL = "Colorful";
         public static final String SIMPLE = "Simple";
-        public static final String NEW_USER = "New User";
         public static final String PREMIUM_ACCESS = "premiumAccess";
         public static final String CONTACT_US = "contactUs";
         public static final String VIBRATION = "vibration";
 
-//        public static final String NOT_PREMIUM = "notPremium";
-//        public static final String PREMIUM = "premium";
-
         public static final String SHOW_FAVOURITES_DIALOG = "showFavouritesDialogAgain";
         public static final String FAVOURITES_DIALOG_WAS_SHOWN = "favouritesDialogWasShown";
-
-//        public static final String DOWNLOADED_COUNTER = "downloadedCounter";
-//        public static final String CREATED_COUNTER = "createdCounter";
 
         public static final int RATE_US_DIALOG_COUNTER_REPEAT = 6;
         public static final int RATE_US_DIALOG_NEVER_SHOW_AGAIN = -1;
         public static final String RATE_US_DIALOG_COUNTER = "rateUsDialogCounter";
+
+        public static final String FIREBASE_TOKEN = "FIREBASE_TOKEN";
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -281,6 +259,8 @@ public class AppConsts {
         public static final String CATEGORY_PREMIUM_HANDLING = "Premium Handling";
         public static final String CATEGORY_LOGIN = "Login";
         public static final String CATEGORY_REGISTER = "Register";
+        public static final String CATEGORY_SHARE_RECIPE = "CATEGORY_SHARE_RECIPE";
+        public static final String CATEGORY_FORGOT_PASSWORD = "Forgot Password";
         public static final String CATEGORY_RATE_US = "Rate Us";
         public static final String CATEGORY_PREFERENCES = "Preferences";
     }

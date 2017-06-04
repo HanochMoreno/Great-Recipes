@@ -101,6 +101,7 @@
         android:background="@drawable/selector_edit_text"
         android:paddingBottom="@dimen/padding_bottom_and_top_login_edit_text"
         android:paddingLeft="@dimen/padding_left_and_right_login_edit_text"
+        android:paddingRight="@dimen/padding_left_and_right_login_edit_text"
         android:paddingTop="@dimen/padding_bottom_and_top_login_edit_text">
 
         <EditText
@@ -159,7 +160,7 @@
         android:text="@string/forgot_your_password" />
 
     <TextView
-        android:id="@+id/tv_forgotYourPasswordClickHere"
+        android:id="@+id/tv_forgotPasswordClickHere"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:layout_above="@+id/tv_alreadyHaveAnAccountOrRegister"

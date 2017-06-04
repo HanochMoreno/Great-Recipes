@@ -30,7 +30,7 @@ import android.text.TextUtils;
 import android.util.Log;
 
 import com.android.vending.billing.IInAppBillingService;
-import com.hanoch.greatrecipes.AppConsts;
+import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.model.MyIllegalStateException;
 
 import org.json.JSONException;
@@ -69,14 +69,12 @@ import java.util.List;
  * has not yet completed will result in an exception being thrown.
  *
  */
-public class IabHelperSingleton {
+public class IabHelper {
 
     private static final String TAG = "IabHelper";
 
-    private static IabHelperSingleton iabHelperSingleton;
-
     // Is debug logging enabled?
-    boolean mDebugLog = false;
+    boolean mDebugLog = true;
     String mDebugTag = "IabHelper";
 
     // Is setup done?
@@ -93,7 +91,7 @@ public class IabHelperSingleton {
 
     // Is an asynchronous operation in progress?
     // (only one at a time can be in progress)
-    boolean mAsyncInProgress = false;
+    private boolean mAsyncInProgress = false;
 
     // (for logging/debugging)
     // if mAsyncInProgress == true, what asynchronous operation is in progress?
@@ -171,28 +169,15 @@ public class IabHelperSingleton {
      *     is NOT your "developer public key".
      */
 
-    public static IabHelperSingleton getInstance(Context context) {
-
-        if (iabHelperSingleton == null) {
-            iabHelperSingleton = new IabHelperSingleton(context);
-        }
-
-        return iabHelperSingleton;
-    }
-
 //-------------------------------------------------------------------------------------------------
 
-    private IabHelperSingleton(Context context) {
-        mSignatureBase64 = AppConsts.SIGNATURE_BASE_64_LICENSE_KEY;
-        this.mContext = context;
+    public IabHelper(Context ctx) {
+        mContext = ctx;
+        mSignatureBase64 = AppStateManager.getInstance().appData.googleLicenceKey;
         Log.d(TAG, "IabHelper was just created by " + mContext.getClass().getSimpleName());
-    }
 
-    /*public IabHelper(Context ctx, String base64PublicKey) {
-        mContext = ctx.getApplicationContext();
-        mSignatureBase64 = base64PublicKey;
         logDebug("IAB helper created.");
-    }*/
+    }
 
     /**
      * Enables or disable debug logging through LogCat.
@@ -343,7 +328,6 @@ public class IabHelperSingleton {
         mServiceConn = null;
         mService = null;
         mPurchaseListener = null;
-        iabHelperSingleton = null;
     }
 
     private void checkNotDisposed() throws MyIllegalStateException {
@@ -884,7 +868,7 @@ public class IabHelperSingleton {
     }
 
     void flagStartAsync(String operation) throws MyIllegalStateException {
-        if (mAsyncInProgress) throw new IllegalStateException("Can't start async operation (" +
+        if (mAsyncInProgress) throw new MyIllegalStateException("Can't start async operation (" +
                 operation + ") because another async operation(" + mAsyncOperation + ") is in progress.");
         mAsyncOperation = operation;
         mAsyncInProgress = true;

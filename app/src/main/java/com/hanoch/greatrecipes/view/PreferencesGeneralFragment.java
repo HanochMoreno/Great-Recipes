@@ -30,9 +30,9 @@ import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
+import com.hanoch.greatrecipes.api.ApisManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
-import com.hanoch.greatrecipes.google.IabHelperNonStatic;
+import com.hanoch.greatrecipes.google.IabHelper;
 import com.hanoch.greatrecipes.model.MyIllegalStateException;
 import com.hanoch.greatrecipes.model.Preferences;
 
@@ -47,7 +47,7 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
     private EditTextPreference password;
     private ListPreference mainMenuDisplay;
 
-    private IabHelperNonStatic mIabHelper;
+    private IabHelper mIabHelper;
 
     private View view;
     private Preference prefUpgradeToPremium;
@@ -55,7 +55,7 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
     private ProgressDialog progressDialog;
     private String errorMessage;
     private AppStateManager appStateManager;
-    private GreatRecipesDbManager dbManager;
+    private ApisManager apisManager;
     private Preferences newPreferences;
 
 //-------------------------------------------------------------------------------------------------
@@ -64,7 +64,7 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        dbManager = GreatRecipesDbManager.getInstance();
+        apisManager = ApisManager.getInstance();
         appStateManager = AppStateManager.getInstance();
         addPreferencesFromResource(R.xml.prefs_general);
     }
@@ -202,7 +202,7 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
                     progressDialog.setMessage(getString(R.string.please_wait));
                     progressDialog.show();
 
-                    mIabHelper = new IabHelperNonStatic(getActivity());
+                    mIabHelper = new IabHelper(getActivity());
 
                     try {
                         mIabHelper.startSetup(result -> {
@@ -260,7 +260,7 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
 
     private void purchasePremiumAccess() {
 
-        final IabHelperNonStatic.OnIabPurchaseFinishedListener mPurchaseFinishedListener
+        final IabHelper.OnIabPurchaseFinishedListener mPurchaseFinishedListener
                 = (result, purchase) -> {
             if (result.isFailure()) {
 
@@ -271,7 +271,7 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
                 errorMessage = result.toString();
                 if (errorMessage.contains("Already Owned")) {
                     // The user has already a Premium status
-                    dbManager.updatePremiumStatus();
+                    apisManager.updatePremiumStatus();
                 } else {
                     errorMessage = getString(R.string.error_purchasing) + ": " + result;
                 }
@@ -279,12 +279,12 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
                 showGoogleErrorDialog(errorMessage);
                 Log.d(TAG, errorMessage);
 
-            } else if (purchase.getSku().equals(AppConsts.SKU_PREMIUM)) {
+            } else if (purchase.getSku().equals(appStateManager.appData.skuPremium)) {
                 // give user access to premium content
 
                 AnalyticsHelper.sendEvent(PreferencesGeneralFragment.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "User purchased premium access");
 
-                dbManager.updatePremiumStatus();
+                apisManager.updatePremiumStatus();
 
                 View rootView = getActivity().findViewById(android.R.id.content);
                 AppHelper.showSnackBar(rootView, R.string.purchase_complete_successfully, ActivityCompat.getColor(getActivity(), R.color.colorSnackbarGreen));
@@ -292,7 +292,7 @@ public class PreferencesGeneralFragment extends PreferenceFragment implements
         };
 
         try {
-            mIabHelper.launchPurchaseFlow(getActivity(), AppConsts.SKU_PREMIUM, AppConsts.REQ_CODE_PURCHASE, mPurchaseFinishedListener);
+            mIabHelper.launchPurchaseFlow(getActivity(), appStateManager.appData.skuPremium, AppConsts.REQ_CODE_PURCHASE, mPurchaseFinishedListener);
 
         } catch (MyIllegalStateException e) {
             errorMessage = getString(R.string.problem_starting_purchase_progress);

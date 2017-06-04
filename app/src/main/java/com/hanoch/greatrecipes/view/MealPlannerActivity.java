@@ -6,10 +6,8 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.os.Bundle;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -42,7 +40,7 @@ import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnUpdateServingsListEvent;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
-import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
+import com.hanoch.greatrecipes.api.ApisManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.Serving;
 import com.hanoch.greatrecipes.model.ServingType;
@@ -85,7 +83,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
     private int toolbarColor;
     private String toolbarTitle;
 
-    private GreatRecipesDbManager dbManager;
+    private ApisManager apisManager;
     private AppStateManager appStateManager;
     private ProgressDialog progressDialog;
     private MyBus bus;
@@ -95,7 +93,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_template);
 
-        dbManager = GreatRecipesDbManager.getInstance();
+        apisManager = ApisManager.getInstance();
         appStateManager = AppStateManager.getInstance();
         bus = MyBus.getInstance();
         bus.register(this);
@@ -367,9 +365,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
             servingTypesList.add(new ServingType(AppConsts.Serving.DESSERT, R.drawable.cat_desserts));
         }
 
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
         final boolean isPremium = appStateManager.user.isPremium;
-        final int downloadedRecipesCount = (isPremium ? 0 : appStateManager.user.onlineDownloadsCount);
 
         ServingTypesAdapter adapter = new ServingTypesAdapter(this, servingTypesList, isPremium);
         gridView_servingTypesList.setAdapter(adapter);
@@ -417,13 +413,30 @@ public class MealPlannerActivity extends AppCompatActivity implements
                 openListsActivity();
 
             } else {
-                if (!BuildConfig.DEBUG && !isPremium && downloadedRecipesCount >= 3) {
-                    AnalyticsHelper.sendEvent(thisActivity, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
-                    AppHelper.showSnackBar(view, R.string.you_exceeded_the_downloaded_recipes_limit, ContextCompat.getColor(thisActivity, R.color.colorSnackbarFreeTrial));
-                    return;
-                } else {
-                    openOnlineSearchActivity();
+                int downloadedRecipesCount = (isPremium ? 0 : appStateManager.user.onlineDownloadsCount);
+                int onlineSearchesCount = (isPremium ? 0 : appStateManager.user.onlineSearchesCount);
+
+                if (!BuildConfig.DEBUG && !isPremium) {
+                    String category = AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING;
+                    int color = ContextCompat.getColor(thisActivity, R.color.colorSnackbarFreeTrial);
+                    String action = "You exceeded snackbar was shown";
+                    String label = null;
+                    int stringResId = 0;
+                    if (onlineSearchesCount >= 3) {
+                        label = "Online Searches";
+                        stringResId = R.string.you_exceeded_the_online_recipes_searches_limit;
+                    } else if (downloadedRecipesCount >= 3) {
+                        label = "Online Recipes Downloads";
+                        stringResId = R.string.you_exceeded_the_downloaded_recipes_limit;
+                    }
+                    if (stringResId != 0) {
+                        AnalyticsHelper.sendEvent(thisActivity, category, action, label);
+                        AppHelper.showSnackBar(view, stringResId, color);
+                        return;
+                    }
                 }
+
+                openOnlineSearchActivity();
             }
 
             dialog.dismiss();
@@ -641,7 +654,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
 
             ArrayList<Serving> servingsList = new ArrayList<>();
             servingsList.add(serving);
-            dbManager.updateUserServings(servingsList, BusConsts.ACTION_ADD_NEW);
+            apisManager.updateUserServings(servingsList, BusConsts.ACTION_ADD_NEW);
         }
     }
 
@@ -757,7 +770,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
                 }
             }
 
-            dbManager.updateUserServings(servingsList, BusConsts.ACTION_DELETE);
+            apisManager.updateUserServings(servingsList, BusConsts.ACTION_DELETE);
 
             dialog.dismiss();
         });

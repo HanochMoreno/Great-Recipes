@@ -40,11 +40,12 @@ import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
 //import com.hanoch.greatrecipes.bus.OnUpdateOnlineDownloadedCountEvent;
+import com.hanoch.greatrecipes.bus.OnGotYummlySearchResultsEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserDietAndAllergensEvent;
 import com.hanoch.greatrecipes.bus.OnYummlyRecipeDownloadedEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
-import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
+import com.hanoch.greatrecipes.api.ApisManager;
 import com.hanoch.greatrecipes.database.SqLiteDbManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.ObjectDrawerItem;
@@ -95,9 +96,10 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
     private boolean afterRestoreState;
     private ProgressDialog progressDialog;
-    private GreatRecipesDbManager dbManager;
+    private ApisManager apisManager;
     private MyBus bus;
     private AppStateManager appStateManager;
+    private View mainView;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -110,7 +112,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         bus = MyBus.getInstance();
         bus.register(this);
 
-        dbManager = GreatRecipesDbManager.getInstance();
+        apisManager = ApisManager.getInstance();
 
         progressDialog = new ProgressDialog(this);
         progressDialog.setTitle(getString(R.string.loading_info));
@@ -232,6 +234,9 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             ft.add(containerResId, onlineSearchResultsFragment, AppConsts.Fragments.ONLINE_SEARCH_RESULTS);
             ft.commit();
         }
+
+        mainView = findViewById(android.R.id.content);
+
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -265,25 +270,42 @@ public class OnlineSearchActivity extends AppCompatActivity implements
     @Override
     protected void onNewIntent(Intent intent) {
 
-        if (Intent.ACTION_SEARCH.equals(intent.getAction())) {
+        if (intent.getAction().equals(Intent.ACTION_SEARCH)) {
 
-            if (!afterRestoreState) { // The user made a search
+            if (afterRestoreState) {
+                afterRestoreState = false;
+
+            } else { // The user made a search
 
                 if (mDrawerLayout.isDrawerOpen(mDrawerList)) {
                     mDrawerLayout.closeDrawer(mDrawerList);
                 }
 
-                String query = intent.getStringExtra(SearchManager.QUERY);
-
-                OnlineSearchResultsFragment onlineSearchResultsFragment = (OnlineSearchResultsFragment) getSupportFragmentManager().findFragmentByTag(AppConsts.Fragments.ONLINE_SEARCH_RESULTS);
-                onlineSearchResultsFragment.performOnlineSearch(query);
-
                 if (searchView != null) {
                     searchView.clearFocus();
                 }
 
-            } else {
-                afterRestoreState = false;
+                if (isPremium || BuildConfig.DEBUG) {
+                    String query = intent.getStringExtra(SearchManager.QUERY);
+                    performOnlineSearch(query);
+                } else {
+                    if (appStateManager.user.onlineSearchesCount >= 3) {
+                        // The free-trial limitation for searching recipes is exceeded
+
+                        String category = AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING;
+                        String action = "You exceeded snackbar was shown";
+                        String label = "Online Searches";
+                        AnalyticsHelper.sendEvent(this, category, action, label);
+
+                        int strResId = R.string.you_exceeded_the_downloaded_recipes_limit;
+                        int color = ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial);
+                        AppHelper.showSnackBar(mainView, strResId, color);
+
+                    } else {
+                        appStateManager.user.onlineSearchesCount++;
+                        apisManager.updateOnlineSearchesCount(appStateManager.user.onlineSearchesCount);
+                    }
+                }
             }
         }
     }
@@ -433,8 +455,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                         EditText editText = (EditText) searchView.findViewById(R.id.search_src_text);
                         editText.setSelection(errorCharPosition);
 
-                        View rootView = OnlineSearchActivity.this.findViewById(android.R.id.content);
-                        AppHelper.showSnackBar(rootView, R.string.english_letters_only, Color.RED);
+                        AppHelper.showSnackBar(mainView, R.string.english_letters_only, Color.RED);
                     }
 
                     return true;
@@ -536,13 +557,12 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
                         AnalyticsHelper.sendEvent(OnlineSearchActivity.this, AppConsts.Analytics.CATEGORY_PREMIUM_HANDLING, "You exceeded snackbar was shown", "Online");
 
-                        View view = this.findViewById(android.R.id.content);
-                        AppHelper.showSnackBar(view, R.string.you_exceeded_the_downloaded_recipes_limit, ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial));
+                        AppHelper.showSnackBar(mainView, R.string.you_exceeded_the_downloaded_recipes_limit, ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial));
                         break;
 
                     } else {
                         downloadedRecipesCount++;
-                        dbManager.updateOnlineDownloadsCount(downloadedRecipesCount);
+                        apisManager.updateOnlineDownloadsCount(downloadedRecipesCount);
                     }
                 }
 
@@ -551,7 +571,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 ArrayList<String> yummlyRecipesIds = new ArrayList<>();
                 yummlyRecipesIds.add(appStateManager.yummlySearchResult._id);
 
-                dbManager.updateUserRecipes(null, yummlyRecipesIds, BusConsts.ACTION_ADD_NEW);
+                apisManager.updateUserRecipes(null, yummlyRecipesIds, BusConsts.ACTION_ADD_NEW);
                 break;
 
             case R.id.action_closeWebview:
@@ -567,7 +587,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                 OnlineSearchResultsFragment onlineSearchResultsFragment = (OnlineSearchResultsFragment) fm.findFragmentByTag(AppConsts.Fragments.ONLINE_SEARCH_RESULTS);
                 onlineSearchResultsFragment.refreshAdapter();
 
-                dbManager.getYummlyRecipeFromGreatRecipesApi(this, mResultYummlyId);
+                apisManager.getYummlyRecipeFromGreatRecipesApi(this, mResultYummlyId, AppConsts.Actions.DOWNLOAD_NEW_YUMMLY_RECIPE);
                 break;
 
             default:
@@ -613,6 +633,31 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
 //-------------------------------------------------------------------------------------------------
 
+    public void performOnlineSearch(String keyToSearch) {
+
+        if (searchKeyTooShort(keyToSearch)) {
+            // checking if 'recipe's title search' field contains at least 2 chars
+            // will return 'true' also in case of input contains only spaces
+
+            AppHelper.showSnackBar(mainView, R.string.at_least_2_chars_required, Color.RED);
+            return;
+        }
+
+        progressDialog.show();
+        apisManager.performSearchRecipesFromYummlyApi(this, keyToSearch);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    private boolean searchKeyTooShort(String keyToSearch) {
+        // checks if an editText has less than 2 letters excluding spaces.
+        int trimmedLength = keyToSearch.trim().length();
+
+        return (trimmedLength < 2);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
     public ArrayList<Integer> getAndHideAllToolbarButtons() {
 
         ArrayList<Integer> buttons = new ArrayList<>();
@@ -650,14 +695,13 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
             if (!isPremium && (position != 4 && position != 11 && position != 12)) {
                 Activity mainActivity = OnlineSearchActivity.this;
-                View mainView = mainActivity.findViewById(android.R.id.content);
                 AppHelper.showSnackBar(mainView, R.string.this_item_is_not_available_in_free_trial, ActivityCompat.getColor(mainActivity, R.color.colorSnackbarFreeTrial));
 
                 mDrawerList.setItemChecked(position, false);
                 return;
             }
 
-            dbManager.updateUserDietOrAllergenPreference(position);
+            apisManager.updateUserDietOrAllergenPreference(position);
 
 //            if (drawerCheckedItemsPositionList.contains(position + "")) {
 //                mDrawerList.setItemChecked(position, false);
@@ -757,6 +801,10 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
     @Subscribe
     public void onEvent(OnYummlyRecipeDownloadedEvent event) {
+        if (event.action != AppConsts.Actions.DOWNLOAD_NEW_YUMMLY_RECIPE) {
+            return;
+        }
+
         progressDialog.dismiss();
 
         if (event.isSuccess) {
@@ -834,11 +882,36 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             toolbarButtonsList.add(AppConsts.ToolbarButtons.REFRESH);
             setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.PRIMARY, getString(R.string.unexpected_error));
 
-            View rootView = findViewById(android.R.id.content);
-            AppHelper.onApiErrorReceived(event.t, rootView);
+            AppHelper.onApiErrorReceived(event.t, mainView);
         }
     }
 
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
+    public void onEvent(OnGotYummlySearchResultsEvent event) {
+        progressDialog.dismiss();
+
+        if (event.isSuccess) {
+
+            if (event.results == null || event.results.isEmpty()) {
+                // No results
+                AppHelper.showSnackBar(mainView, R.string.no_results, Color.RED);
+                if (appStateManager.user.onlineSearchesCount != 0) {
+                    appStateManager.user.onlineSearchesCount--;
+                    apisManager.updateOnlineSearchesCount(appStateManager.user.onlineSearchesCount);
+                }
+                return;
+            }
+            OnlineSearchResultsFragment onlineSearchResultsFragment = (OnlineSearchResultsFragment) getSupportFragmentManager().findFragmentByTag(AppConsts.Fragments.ONLINE_SEARCH_RESULTS);
+            onlineSearchResultsFragment.OnGotYummlySearchResultsEvent();
+
+        } else {
+            appStateManager.user.onlineSearchesCount--;
+            apisManager.updateOnlineSearchesCount(appStateManager.user.onlineSearchesCount);
+            AppHelper.onApiErrorReceived(event.t, mainView);
+        }
+    }
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
@@ -852,21 +925,10 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
 //-------------------------------------------------------------------------------------------------
 
-//    @Subscribe
-//    public void onEvent(OnUpdateOnlineDownloadedCountEvent event) {
-//        // After toggling a diet or allergen pref
-//
-//        if (event.isSuccess) {
-//        }
-//    }
-
-//-------------------------------------------------------------------------------------------------
-
     @Subscribe
     public void onEvent(OnUpdateUserRecipesEvent event) {
         // After updating the user's yummlyRecipes in the database
         progressDialog.dismiss();
-        View rootView = findViewById(android.R.id.content);
 
         if (event.isSuccess) {
 
@@ -903,7 +965,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                             onBackPressed();
                         }
 
-                        AppHelper.showSnackBar(rootView, R.string.added_to_online_list, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
+                        AppHelper.showSnackBar(mainView, R.string.added_to_online_list, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
                         setToolbarAttr(null, AppConsts.ToolbarColor.PRIMARY, activityToolbarTitle);
                     }
 
@@ -911,7 +973,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
             }
 
         } else {
-            AppHelper.onApiErrorReceived(event.t, rootView);
+            AppHelper.onApiErrorReceived(event.t, mainView);
         }
     }
 
@@ -944,7 +1006,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
         mResultYummlyId = resultYummlyId;
 
         progressDialog.show();
-        dbManager.getYummlyRecipeFromGreatRecipesApi(this, resultYummlyId);
+        apisManager.getYummlyRecipeFromGreatRecipesApi(this, resultYummlyId, AppConsts.Actions.DOWNLOAD_NEW_YUMMLY_RECIPE);
     }
 
 //-------------------------------------------------------------------------------------------------

@@ -1,9 +1,7 @@
 package com.hanoch.greatrecipes.view;
 
-import android.app.ProgressDialog;
 import android.content.Context;
 import android.database.Cursor;
-import android.graphics.Color;
 import android.os.Bundle;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.LoaderManager;
@@ -18,14 +16,10 @@ import android.widget.ListView;
 
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.bus.MyBus;
-import com.hanoch.greatrecipes.bus.OnGotYummlySearchResultsEvent;
-import com.hanoch.greatrecipes.database.GreatRecipesDbManager;
 import com.hanoch.greatrecipes.database.RecipesContract;
 import com.hanoch.greatrecipes.database.SqLiteDbManager;
 import com.hanoch.greatrecipes.model.RecipeSearchResult;
 import com.hanoch.greatrecipes.view.adapters.SearchResultsAdapter;
-import com.squareup.otto.Subscribe;
 
 public class OnlineSearchResultsFragment extends Fragment implements
         AdapterView.OnItemClickListener,
@@ -37,11 +31,8 @@ public class OnlineSearchResultsFragment extends Fragment implements
 
     private View view;
 
-    private GreatRecipesDbManager dbManager;
     private SqLiteDbManager sqliteManager;
     private boolean isToScrollToTop;
-    private ProgressDialog progressDialog;
-    private MyBus bus;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -63,16 +54,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
     public void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
 
-        dbManager = GreatRecipesDbManager.getInstance();
         sqliteManager = new SqLiteDbManager(getContext());
-        bus = MyBus.getInstance();
-        bus.register(this);
-
-        progressDialog = new ProgressDialog(getActivity());
-        progressDialog.setTitle(getString(R.string.searching));
-        progressDialog.setMessage(getString(R.string.please_wait));
-        progressDialog.setCancelable(false);
-        progressDialog.setCanceledOnTouchOutside(false);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -144,16 +126,6 @@ public class OnlineSearchResultsFragment extends Fragment implements
 //-------------------------------------------------------------------------------------------------
 
     @Override
-    public void onDestroy() {
-        super.onDestroy();
-
-        bus.unregister(this);
-    }
-
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
     public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
 
         AppHelper.hideKeyboardFrom(getActivity(), getActivity().getCurrentFocus());
@@ -203,46 +175,7 @@ public class OnlineSearchResultsFragment extends Fragment implements
 
 //-------------------------------------------------------------------------------------------------
 
-    public void performOnlineSearch(String keyToSearch) {
-
-        if (searchKeyTooShort(keyToSearch)) {
-            // checking if 'recipe's title search' field contains at least 2 chars
-            // will return 'true' also in case of input contains only spaces
-
-            AppHelper.showSnackBar(view, R.string.at_least_2_chars_required, Color.RED);
-            return;
-        }
-
-        progressDialog.show();
-        dbManager.performSearchRecipesFromYummlyApi(getContext(), keyToSearch);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private boolean searchKeyTooShort(String keyToSearch) {
-        // checks if an editText has less than 2 letters excluding spaces.
-        int trimmedLength = keyToSearch.trim().length();
-
-        return (trimmedLength < 2);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
-    public void onEvent(OnGotYummlySearchResultsEvent event) {
-        progressDialog.dismiss();
-
-        if (event.isSuccess) {
-
-            if (event.results == null || event.results.isEmpty()) {
-                // No results
-                AppHelper.showSnackBar(view, R.string.no_results, Color.RED);
-                return;
-            }
-            isToScrollToTop = true;
-
-        } else {
-            AppHelper.onApiErrorReceived(event.t, view);
-        }
+    public void OnGotYummlySearchResultsEvent() {
+        isToScrollToTop = true;
     }
 }
