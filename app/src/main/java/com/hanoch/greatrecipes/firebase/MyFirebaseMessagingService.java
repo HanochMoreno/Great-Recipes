@@ -1,5 +1,7 @@
 package com.hanoch.greatrecipes.firebase;
 
+import android.content.Intent;
+import android.support.v4.content.LocalBroadcastManager;
 import android.util.Log;
 
 import com.google.firebase.messaging.FirebaseMessagingService;
@@ -14,7 +16,12 @@ import java.util.Map;
 public class MyFirebaseMessagingService extends FirebaseMessagingService {
 
     private final String TAG = "FBMessagingService";
+    private LocalBroadcastManager broadcaster;
 
+    @Override
+    public void onCreate() {
+        broadcaster = LocalBroadcastManager.getInstance(this);
+    }
     /**
      * This method is called ONLY when the app is in the foreground!!
      */
@@ -23,30 +30,12 @@ public class MyFirebaseMessagingService extends FirebaseMessagingService {
         // This method is called ONLY when the app is in the foreground!
 
         Map<String, String> data = remoteMessage.getData();
-        String recipeId = null;
-        boolean isUserRecipe = false;
         if (data != null && data.size() > 0) {
-            ArrayList<String> values = new ArrayList<>(data.values());
-            Log.d(TAG, "Message data payload: " + data);
-            recipeId = values.get(0); // recipeId or recipeYummlyId
-            isUserRecipe = Boolean.parseBoolean(values.get(1));
+            Intent intent = new Intent(AppConsts.NOTIFICATION_RECEIVER_FILTER);
+            intent.putExtra(AppConsts.Extras.RECIPE_ID, data.get(AppConsts.Extras.RECIPE_ID));
+            intent.putExtra(AppConsts.Extras.IS_USER_RECIPE, data.get(AppConsts.Extras.IS_USER_RECIPE));
+            broadcaster.sendBroadcast(intent);
         }
-
-//        if (remoteMessage.getNotification() != null) {
-//            Log.d(TAG, "Message Notification Body: " + remoteMessage.getNotification().getBody());
-//        }
-
-        if (recipeId != null) {
-            if (isUserRecipe) {
-                ApisManager.getInstance().getUserRecipeFromGreatRecipesApi(recipeId);
-            } else {
-                int action = AppConsts.Actions.DOWNLOAD_SHARED_YUMMLY_RECIPE;
-                ApisManager.getInstance().getYummlyRecipeFromGreatRecipesApi(this, recipeId, action);
-            }
-        }
-
-        // Also if you intend on generating your own notifications as a result of a received FCM
-        // message, here is where that should be initiated. See sendNotification method below.
     }
 
 }

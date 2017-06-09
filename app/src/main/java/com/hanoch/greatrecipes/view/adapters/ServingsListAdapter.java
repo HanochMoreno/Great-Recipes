@@ -171,36 +171,6 @@ public class ServingsListAdapter extends BaseAdapter {
 
 //-------------------------------------------------------------------------------------------------
 
-    public void getUserRecipeFromGreatRecipesApi(ViewHolder holder, Serving serving) {
-
-        Action1<UserRecipe> subscriber = (recipe -> onRecipeDataReceived(holder, serving, recipe));
-
-        Single<UserRecipe> getUserRecipe =
-                ApiProvider.getGreatRecipesApi().getUserRecipe(serving.recipeId);
-
-        getUserRecipe
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(subscriber);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    public void getYummlyRecipeFromGreatRecipesApi(ViewHolder holder, Serving serving) {
-
-        Action1<YummlyRecipe> subscriber = (recipe -> onRecipeDataReceived(holder, serving, recipe));
-
-        Single<YummlyRecipe> getYummlyRecipe =
-                ApiProvider.getGreatRecipesApi().getYummlyRecipe(serving.recipeId);
-
-        getYummlyRecipe
-                .subscribeOn(Schedulers.io())
-                .observeOn(AndroidSchedulers.mainThread())
-                .subscribe(subscriber);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
     private void onRecipeDataReceived(ViewHolder holder, Serving serving, GenericRecipe recipe){
         if (holder.servingId.equals(serving.servingId)) {
             holder.tv_recipeTitle.setText(recipe.recipeTitle);

@@ -1,6 +1,8 @@
 package com.hanoch.greatrecipes;
 
 import android.app.Activity;
+import android.app.Dialog;
+import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.SharedPreferences;
 import android.graphics.Color;
@@ -10,22 +12,30 @@ import android.preference.PreferenceManager;
 import android.provider.Settings;
 import android.support.design.widget.Snackbar;
 import android.util.Log;
+import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.InputMethodManager;
+import android.widget.EditText;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.hanoch.greatrecipes.api.ApisManager;
 import com.hanoch.greatrecipes.api.great_recipes_api.AppData;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnMailWasSentEvent;
+import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.Mail;
+import com.hanoch.greatrecipes.view.RecipeDetailsActivity;
 
 import java.net.ConnectException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 
 public abstract class AppHelper {
@@ -395,5 +405,54 @@ public abstract class AppHelper {
         protected void onPostExecute(Boolean isSuccess) {
             MyBus.getInstance().post(new OnMailWasSentEvent(isSuccess, action, email));
         }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public static void showShareRecipeDialog(Activity activity, ProgressDialog progressDialog, String mRecipeId) {
+
+        Dialog shareRecipeDialog = new Dialog(activity);
+        shareRecipeDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+
+        LayoutInflater inflater = (LayoutInflater) activity.getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        final View view = inflater.inflate(R.layout.dialog_share_recipe, null, false);
+        shareRecipeDialog.setContentView(view);
+
+        final EditText et_recipientEmail = (EditText) shareRecipeDialog.findViewById(R.id.et_recipientEmail);
+
+        if (BuildConfig.DEBUG) {
+            et_recipientEmail.setText("han031@hanoch.test");
+        }
+
+        View button_proceed = shareRecipeDialog.findViewById(R.id.button_proceed);
+        button_proceed.setOnClickListener(v -> {
+            String recipientEmail = et_recipientEmail.getText().toString().trim();
+            if (isEmailValidated(recipientEmail)) {
+
+                progressDialog.show();
+                ApisManager.getInstance().shareRecipe(recipientEmail, mRecipeId);
+
+                String category = AppConsts.Analytics.CATEGORY_REGISTER;
+                String text = "Share recipe";
+                String label = "from " + AppStateManager.getInstance().user.preferences.email + " to " + recipientEmail;
+                AnalyticsHelper.sendEvent(activity, category, text, label);
+
+                shareRecipeDialog.dismiss();
+            } else {
+                View mainView = activity.findViewById(android.R.id.content);
+                AppHelper.showSnackBar(mainView, R.string.invalid_email, Color.RED);
+            }
+        });
+
+        shareRecipeDialog.show();
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    private static boolean isEmailValidated(String eMail) {
+
+        Pattern emailPattern = Pattern.compile(AppConsts.Regex.EMAIL_PATTERN);
+        Matcher emailMatcher = emailPattern.matcher(eMail);
+        return emailMatcher.matches();
     }
 }

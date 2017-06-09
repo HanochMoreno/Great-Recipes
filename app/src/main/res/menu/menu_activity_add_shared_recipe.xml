@@ -1,24 +1,18 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context=".CreateMealActivity"
     tools:ignore="AlwaysShowAction">
-
-    <item
-        android:id="@+id/action_clearServingsList"
-        android:title="@string/clear_the_list"
-        app:showAsAction="never" />
-
-    <item
-        android:id="@+id/action_delete"
-        android:title="@string/delete"
-        android:icon="@drawable/ic_toolbar_action_delete"
-        app:showAsAction="always" />
 
     <item
         android:id="@+id/action_closeWebview"
         android:title="Close Webview"
         android:icon="@drawable/ic_toolbar_action_close_webview"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_addToList"
+        android:title="Add To List"
+        android:icon="@drawable/ic_toolbar_action_add_to_list"
         app:showAsAction="always" />
 
 </menu>

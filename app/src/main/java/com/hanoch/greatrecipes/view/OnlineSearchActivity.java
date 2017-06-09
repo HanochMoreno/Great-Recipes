@@ -297,7 +297,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
                         String label = "Online Searches";
                         AnalyticsHelper.sendEvent(this, category, action, label);
 
-                        int strResId = R.string.you_exceeded_the_downloaded_recipes_limit;
+                        int strResId = R.string.you_exceeded_the_online_recipes_searches_limit;
                         int color = ContextCompat.getColor(this, R.color.colorSnackbarFreeTrial);
                         AppHelper.showSnackBar(mainView, strResId, color);
 
@@ -538,7 +538,7 @@ public class OnlineSearchActivity extends AppCompatActivity implements
 
                 Bundle extras = new Bundle();
                 extras.putString(AppConsts.Extras.RECIPE_ID, appStateManager.yummlySearchResult._id);
-                extras.putBoolean(AppConsts.Extras.EXTRA_IS_USER_RECIPE, false);
+                extras.putBoolean(AppConsts.Extras.IS_USER_RECIPE, false);
                 resultIntent.putExtras(extras);
 
                 setResult(Activity.RESULT_OK, resultIntent);
@@ -928,6 +928,11 @@ public class OnlineSearchActivity extends AppCompatActivity implements
     @Subscribe
     public void onEvent(OnUpdateUserRecipesEvent event) {
         // After updating the user's yummlyRecipes in the database
+
+        if (event.action == BusConsts.ACTION_ADD_SHARED_RECIPE) {
+            return;
+        }
+
         progressDialog.dismiss();
 
         if (event.isSuccess) {

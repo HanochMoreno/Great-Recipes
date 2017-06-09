@@ -174,6 +174,11 @@ public class PreferencesListsFragment extends PreferenceFragment implements
 
     @Subscribe
     public void onEvent(OnUpdateUserRecipesEvent event) {
+
+        if (event.action == BusConsts.ACTION_ADD_SHARED_RECIPE) {
+            return;
+        }
+
         if (event.isSuccess) {
             if (event.action == BusConsts.ACTION_DELETE_ALL_LISTS) {
                 AppHelper.showSnackBar(view, R.string.all_the_recipe_were_deleted, ContextCompat.getColor(getActivity(), R.color.colorSnackbarGreen));

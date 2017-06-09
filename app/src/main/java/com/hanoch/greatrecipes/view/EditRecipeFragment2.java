@@ -96,9 +96,11 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 
 //-------------------------------------------------------------------------------------------------
 
-    public interface OnFragmentEditRecipeListener {
+    interface OnFragmentEditRecipeListener {
 
         void onAddCategoriesClick(ArrayList<String> categoriesList);
+
+        void onExitWithoutSavingClick(int action);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -498,20 +500,9 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         User user = appStateManager.user;
 
         // Get the user's inputs:
-        String title = editText_recipeTitle.getText().toString();
-        if (title.trim().isEmpty()) {
-            title = "";
-        }
-
-        String instructions = editText_recipeInstructions.getText().toString();
-        if (instructions.trim().isEmpty()) {
-            instructions = "";
-        }
-
-        String notes = editText_notes.getText().toString();
-        if (notes.trim().isEmpty()) {
-            notes = "";
-        }
+        String title = editText_recipeTitle.getText().toString().trim();
+        String instructions = editText_recipeInstructions.getText().toString().trim();
+        String notes = editText_notes.getText().toString().trim();
 
         final String recipeId = getArguments().getString(ARG_RECIPE_ID);
 
@@ -546,7 +537,11 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
             }
         }
 
-        return userRecipe;
+        if (hasChanges()) {
+            return userRecipe;
+        }
+
+        return null;
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -835,7 +830,6 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
 //-------------------------------------------------------------------------------------------------
 
     public void fillIngredientsList() {
-
         layout_ingredientsList.removeAllViews();
 
         if (userRecipe.ingredientsList == null || userRecipe.ingredientsList.isEmpty()) {
@@ -902,6 +896,55 @@ public class EditRecipeFragment2 extends Fragment implements View.OnClickListene
         }
     }
 
+//-------------------------------------------------------------------------------------------------
+
+    public void showExitWithoutSavingDialog(int action) {
+
+        if (hasChanges()) {
+            AppHelper.vibrate(getContext());
+
+            final Dialog dialog = new Dialog(getContext());
+
+            dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
+            LayoutInflater inflater = LayoutInflater.from(getContext());
+
+            final View view = inflater.inflate(R.layout.dialog_warning, null, false);
+
+            dialog.setCancelable(false);
+
+            dialog.setContentView(view);
+
+            TextView textView_dialogTitle = (TextView) dialog.findViewById(R.id.textView_dialogTitle);
+            TextView textView_dialogContent = (TextView) dialog.findViewById(R.id.textView_dialogContent);
+
+            textView_dialogTitle.setText(R.string.exit_without_saving);
+            textView_dialogContent.setText(R.string.are_you_sure);
+
+            Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
+            button_yes.setOnClickListener(v -> {
+                mListener.onExitWithoutSavingClick(action);
+                dialog.dismiss();
+            });
+
+            Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
+            btnCancel.setOnClickListener(v -> dialog.dismiss());
+
+            dialog.show();
+
+        } else {
+            mListener.onExitWithoutSavingClick(action);
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    private boolean hasChanges() {
+        if (mRecipeId == null) {
+            // Adding a new user recipe
+            return !userRecipe.isEmpty();
+        } else {
+            // Editing an existing user recipe
+            return !appStateManager.user.recipes.userRecipes.get(mRecipeId).equals(userRecipe);
+        }
+    }
 }
-
-

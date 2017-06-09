@@ -146,6 +146,7 @@
     <string name="the_recipe_was_deleted">המתכון נמחק</string>
     <string name="the_serving_was_deleted">המנה נמחקה</string>
     <string name="recipe_details">פרטי מתכון</string>
+    <string name="shared_recipe_details">פרטי מתכון ששותף</string>
     <string name="recipes_lists">רשימות מתכונים</string>
     <string name="at_least_1_character_is_required">נדרש לפחות תו אחד </string>
     <string name="at_least_6_characters_are_required">לפחות 6 תווים נדרשים</string>
@@ -164,14 +165,13 @@
     <string name="go">המשך</string>
     <string name="upgrade">שדרג</string>
     <string name="limitation_categories">ביצירת מתכון משלך, הקטגוריות היחידות הזמינות הן "לחמים" ו"קינוחים"</string>
-    <string name="limitation_created_recipes">ניתן ליצור לכל היותר שלושה מתכונים משלך</string>
+    <string name="limitation_online_searches">ניתן לבצע לכל היותר שלושה חיפושי מתכונים ברשת</string>
     <string name="limitation_downloaded_recipes">ניתן להוריד לכל היותר שלושה מתכונים מהרשת</string>
     <string name="limitation_search_filters">בזמן חיפוש מתכונים ברשת, מסנני החיפוש הזמינים היחידים הינם "פלאו", "ללא-שומשום" ו"ללא-סויה"</string>
     <string name="limitation_search_results">לאחר ביצוע חיפוש ברשת, יוצגו לכל היותר חמש תוצאות חיפוש</string>
     <string name="limitation_servings_types">באשף תכנון הארוחה, סוגי המנות היחידים הזמינים הינם "מתאבן" ו"מנה ראשונה"</string>
     <string name="you_exceeded_the_downloaded_recipes_limit">חרגת מכמות המתכונים המירבית להורדה בגירסת הניסיון</string>
     <string name="you_exceeded_the_online_recipes_searches_limit">חרגת מכמות החיפושים ברשת המירבית בגירסת הניסיון</string>
-    <string name="you_exceeded_the_recipes_creation_limit">חרגת מכמות המתכונים המירבית ליצירה בגירסת הניסיון</string>
     <string name="get_premium_access">שדרג לגרסת פרימיום</string>
     <string name="trial_version_limitation">הגבלות גרסת הניסיון</string>
     <string name="premium">פרימיום</string>
@@ -248,5 +248,7 @@
     <string name="downloading_app_data">מוריד נתוני אפליקציה…</string>
     <string name="downloading_login_info">מוריד נתוני הרשמה…</string>
     <string name="init_app">מאתחל אפליקציה…</string>
+    <string name="recipe_was_sent">המתכון נשלח בהצלחה</string>
+    <string name="recipe_title_is_empty">כותרת המתכון ריקה</string>
 
 </resources>

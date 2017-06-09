@@ -7,8 +7,10 @@ import android.app.Notification;
 import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.ProgressDialog;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.content.res.Configuration;
@@ -20,6 +22,7 @@ import android.net.Uri;
 import android.preference.PreferenceManager;
 import android.support.v4.app.NotificationCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v4.content.LocalBroadcastManager;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.support.v7.widget.Toolbar;
@@ -38,16 +41,11 @@ import android.widget.TextView;
 import com.hanoch.greatrecipes.AppConsts;
 import com.hanoch.greatrecipes.AppHelper;
 import com.hanoch.greatrecipes.AppStateManager;
-import com.hanoch.greatrecipes.BuildConfig;
 import com.hanoch.greatrecipes.R;
-import com.hanoch.greatrecipes.api.YummlyRecipe;
-import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.api.ApisManager;
 import com.hanoch.greatrecipes.bus.OnUpdateDeviceEvent;
-import com.hanoch.greatrecipes.bus.OnUserRecipeDownloadedEvent;
-import com.hanoch.greatrecipes.bus.OnYummlyRecipeDownloadedEvent;
 import com.hanoch.greatrecipes.google.IabHelper;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
 import com.hanoch.greatrecipes.model.Device;
@@ -377,6 +375,16 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //-------------------------------------------------------------------------------------------------
 
     @Override
+    protected void onStart() {
+        super.onStart();
+        LocalBroadcastManager.getInstance(this).registerReceiver((mNotificationReceiver),
+                new IntentFilter(AppConsts.NOTIFICATION_RECEIVER_FILTER)
+        );
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Override
     protected void onRestoreInstanceState(Bundle savedInstanceState) {
         super.onRestoreInstanceState(savedInstanceState);
 
@@ -492,18 +500,13 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
                 break;
 
             case R.id.layout_logout:
+
                 progressDialog.setTitle(getString(R.string.updating_data));
                 progressDialog.show();
+
                 Device device = new Device(this, "");
                 ApisManager.getInstance().updateUserDevices(device, BusConsts.ACTION_DELETE);
 
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-                SharedPreferences.Editor editor = sp.edit();
-
-                editor.clear();
-                editor.apply();
-
-                appStateManager.user = null;
                 break;
         }
     }
@@ -526,8 +529,8 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         ArrayList<String> limitationsList = new ArrayList<>();
         limitationsList.add(getString(R.string.limitation_search_filters));
         limitationsList.add(getString(R.string.limitation_search_results));
+        limitationsList.add(getString(R.string.limitation_online_searches));
         limitationsList.add(getString(R.string.limitation_downloaded_recipes));
-//        limitationsList.add(getString(R.string.limitation_created_recipes));
         limitationsList.add(getString(R.string.limitation_categories));
         limitationsList.add(getString(R.string.limitation_servings_types));
 
@@ -662,53 +665,41 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
-    public void onEvent(OnUserRecipeDownloadedEvent event) {
-        // After downloading a SHARED user-recipe from Great Recipe API.
-
-        if (event.isSuccess) {
-            UserRecipe searchResult = appStateManager.sharedUserRecipe;
-            int action = AppConsts.Actions.REVIEW_SHARED_USER_RECIPE;
-            createNotification(searchResult._id, action);
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
-    public void onEvent(OnYummlyRecipeDownloadedEvent event) {
-        // After downloading a SHARED Yummly-recipe from Great Recipe API.
-
-        if (event.action != AppConsts.Actions.DOWNLOAD_SHARED_YUMMLY_RECIPE) {
-            return;
-        }
-
-        if (event.isSuccess) {
-            YummlyRecipe searchResult = appStateManager.sharedYummlyRecipe;
-            int action = AppConsts.Actions.REVIEW_SHARED_YUMMLY_RECIPE;
-
-            createNotification(searchResult._id, action);
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
     public void onEvent(OnUpdateDeviceEvent event) {
         // After logging out.
 
-        Intent intent = new Intent(this, RegisterActivity.class);
-        startActivity(intent);
-        finish();
+        if (event.action == BusConsts.ACTION_DELETE) {
+            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
+            SharedPreferences.Editor editor = sp.edit();
+            editor.clear();
+            editor.apply();
+
+            appStateManager.user = null;
+
+            Intent intent = new Intent(this, RegisterActivity.class);
+            startActivity(intent);
+            finish();
+        }
     }
 
 //-------------------------------------------------------------------------------------------------
 
-    private void createNotification(String recipeId, int action) {
+    private void createNotification(String recipeId, String isUserRecipe) {
 
-        Intent resultIntent = new Intent(this, RecipeDetailsActivity.class);
+        Intent resultIntent = new Intent(this, AddSharedRecipeActivity.class);
+
+        int action = Boolean.parseBoolean(isUserRecipe)
+                ? AppConsts.Actions.REVIEW_SHARED_USER_RECIPE
+                : AppConsts.Actions.REVIEW_SHARED_YUMMLY_RECIPE;
 
         resultIntent.setAction(String.valueOf(action));
-        resultIntent.putExtra(AppConsts.Extras.RECIPE_ID, recipeId);
+
+        Bundle extras = new Bundle();
+        extras.putString(AppConsts.Extras.RECIPE_ID, recipeId);
+        extras.putString(AppConsts.Extras.IS_USER_RECIPE, isUserRecipe);
+        resultIntent.putExtras(extras);
+
+        resultIntent.setData(Uri.parse(recipeId + " | " + isUserRecipe));
 
         PendingIntent contentIntent =
                 PendingIntent.getActivity(this, 0, resultIntent, Intent.FLAG_ACTIVITY_EXCLUDE_FROM_RECENTS);
@@ -729,6 +720,22 @@ public class MainActivity extends AppCompatActivity implements View.OnClickListe
         NotificationManager nm = (NotificationManager) getSystemService(Context.NOTIFICATION_SERVICE);
         Notification notification = mBuilder.build();
 
-        nm.notify(123, notification);
+        nm.notify(12, notification);
     }
+
+//-------------------------------------------------------------------------------------------------
+
+    private BroadcastReceiver mNotificationReceiver = new BroadcastReceiver() {
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            Bundle extras = intent.getExtras();
+            String recipeId = extras.getString(AppConsts.Extras.RECIPE_ID);
+            String isUserRecipe = extras.getString(AppConsts.Extras.IS_USER_RECIPE);
+
+            if (recipeId != null) {
+                createNotification(recipeId, isUserRecipe);
+            }
+        }
+    };
+
 }

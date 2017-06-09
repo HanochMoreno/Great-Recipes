@@ -26,11 +26,6 @@ public class MyFirebaseInstanceIdService extends FirebaseInstanceIdService {
         // manage this apps subscriptions on the server side, send the
         // Instance ID token to your app server.
 
-        SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-        SharedPreferences.Editor editor = sp.edit();
-        editor.putString(AppConsts.SharedPrefs.FIREBASE_TOKEN, refreshedToken);
-        editor.apply();
-
         if (AppStateManager.getInstance().user != null) {
             Device device = new Device(this, refreshedToken);
             ApisManager.getInstance().updateUserDevices(device, BusConsts.ACTION_ADD_NEW);

@@ -28,6 +28,7 @@ import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnEmailVerificationEvent;
 import com.hanoch.greatrecipes.bus.OnForgotPasswordEvent;
+import com.hanoch.greatrecipes.bus.OnGetTokenEvent;
 import com.hanoch.greatrecipes.bus.OnLoginEvent;
 import com.hanoch.greatrecipes.api.ApisManager;
 import com.hanoch.greatrecipes.bus.OnMailWasSentEvent;
@@ -69,7 +70,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
     private ProgressDialog progressDialog;
     private AppStateManager appStateManager;
     private Dialog mailWasSentDialog;
-    private View mainView;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -124,7 +124,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
                 }
             });
 
-            et_email.setText("han001@hanoch.test");
+            et_email.setText("han031@hanoch.test");
             et_password.setText("123456");
             et_retypePassword.setText("123456");
         }
@@ -157,15 +157,6 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
         } else {
             showRegisterScreen();
         }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Override
-    protected void onResume() {
-        super.onResume();
-
-        mainView = findViewById(android.R.id.content);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -320,7 +311,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
             case AppConsts.Actions.ACTION_LOGIN:
                 if (areFieldsValidated()) {
-                    apisManager.login(this, email, password);
+                    apisManager.getUserToken(this, email, password);
                 }
                 break;
         }
@@ -329,6 +320,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //-------------------------------------------------------------------------------------------------
 
     private boolean areFieldsValidated() {
+        View mainView = findViewById(android.R.id.content);
 
         email = et_email.getText().toString();
         password = et_password.getText().toString();
@@ -388,6 +380,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //-------------------------------------------------------------------------------------------------
 
     private boolean isEmailValidated(String eMail) {
+        View mainView = findViewById(android.R.id.content);
 
         Pattern emailPattern = Pattern.compile(AppConsts.Regex.EMAIL_PATTERN);
         Matcher emailMatcher = emailPattern.matcher(eMail);
@@ -412,6 +405,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             AppHelper.performMailSending(verification.email, verification._id, AppConsts.Actions.ACTION_REGISTER);
         } else {
             progressDialog.dismiss();
+            View mainView = findViewById(android.R.id.content);
 
             if (event.t instanceof HttpException) {
                 int errorCode = ((HttpException) event.t).code();
@@ -440,6 +434,18 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
+    public void onEvent(OnGetTokenEvent event) {
+
+        if (!event.isSuccess) {
+            progressDialog.dismiss();
+            View mainView = findViewById(android.R.id.content);
+            AppHelper.onApiErrorReceived(event.t, mainView);
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
     public void onEvent(OnLoginEvent event) {
 
         if (event.isSuccess) {
@@ -454,6 +460,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
             editor.putString(AppConsts.SharedPrefs.PASSWORD, preferences.password);
             editor.apply();
         } else {
+            View mainView = findViewById(android.R.id.content);
             if (event.t instanceof HttpException && ((HttpException) event.t).code() == 430) {
                 AppHelper.showSnackBar(mainView, R.string.wrong_email_or_password, Color.RED);
             } else {
@@ -484,7 +491,7 @@ public class RegisterActivity extends AppCompatActivity implements View.OnClickL
 
         } else {
             progressDialog.dismiss();
-
+            View mainView = findViewById(android.R.id.content);
             AppHelper.onApiErrorReceived(event.t, mainView);
         }
     }

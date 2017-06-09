@@ -1,7 +1,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.hanoch.greatrecipes.view.RecipesListsActivity">
+    tools:context="com.hanoch.greatrecipes.view.RecipesListsActivity"
+    tools:ignore="AlwaysShowAction">
 
     <item
         android:id="@+id/action_save"
@@ -26,14 +27,6 @@
         android:icon="@drawable/ic_toolbar_action_delete"
         android:title="@string/delete"
         app:showAsAction="always" />
-    <!--
-        <item
-            android:id="@+id/action_share"
-            android:icon="@drawable/ic_toolbar_action_share"
-            android:title="Share"
-            app:showAsAction="always" />
-
-    -->
 
     <item
         android:id="@+id/action_addServing"
@@ -61,14 +54,20 @@
 
     <item
         android:id="@+id/action_closeWebview"
-        android:title="Close Webview"
         android:icon="@drawable/ic_toolbar_action_close_webview"
+        android:title="Close Webview"
         app:showAsAction="always" />
 
     <item
         android:id="@+id/action_addToList"
-        android:title="Add To List"
         android:icon="@drawable/ic_toolbar_action_add_to_list"
+        android:title="Add To List"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_share"
+        android:icon="@drawable/ic_toolbar_action_share2"
+        android:title="Share Recipe"
         app:showAsAction="always" />
 
 </menu>

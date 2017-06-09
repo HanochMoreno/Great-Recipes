@@ -25,6 +25,7 @@ import com.crashlytics.android.Crashlytics;
 import com.hanoch.greatrecipes.api.great_recipes_api.User;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnAppDataEvent;
+import com.hanoch.greatrecipes.bus.OnGetTokenEvent;
 import com.hanoch.greatrecipes.bus.OnLoginEvent;
 import com.hanoch.greatrecipes.api.ApisManager;
 import com.hanoch.greatrecipes.utilities.MyFonts;
@@ -201,13 +202,28 @@ public class SplashActivity extends AppCompatActivity {
                 isGotLoginResponse = true;
             } else {
                 isGotLoginResponse = false;
-                apisManager.login(this, email, password);
+                apisManager.getUserToken(this, email, password);
             }
         } else if (progressStatus == 100) {
             showErrorDialog(ERROR_GET_APP_DATA_FAILED);
         } else {
             isGotLoginResponse = true;
             errorToDisplay = ERROR_GET_APP_DATA_FAILED;
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
+    public void onEvent(OnGetTokenEvent event) {
+        isGotLoginResponse = true;
+
+        if (!event.isSuccess) {
+            if (progressStatus == 100) {
+                showErrorDialog(ERROR_LOGIN_FAILED);
+            } else {
+                errorToDisplay = ERROR_LOGIN_FAILED;
+            }
         }
     }
 

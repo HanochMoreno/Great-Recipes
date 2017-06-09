@@ -93,6 +93,12 @@
             android:name=".view.RecipeDetailsActivity"
             android:label="@string/recipe_details"
             android:screenOrientation="portrait">
+        </activity>
+
+        <activity
+            android:name=".view.AddSharedRecipeActivity"
+            android:label="@string/shared_recipe_details"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="20" />
                 <category android:name="android.intent.category.DEFAULT"/>

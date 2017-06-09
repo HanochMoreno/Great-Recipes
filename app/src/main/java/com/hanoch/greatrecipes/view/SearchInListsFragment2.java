@@ -103,22 +103,24 @@ public class SearchInListsFragment2 extends MyListFragment {
 
     @Override
     public void refreshAdapter() {
-        User user = AppStateManager.getInstance().user;
+        if (keyToSearch != null) {
+            User user = AppStateManager.getInstance().user;
 
-        ArrayList<GenericRecipe> searchResults = new ArrayList<>();
+            ArrayList<GenericRecipe> searchResults = new ArrayList<>();
 
-        for (UserRecipe recipe : user.recipes.userRecipes.values()) {
-            if (recipe.recipeTitle.contains(keyToSearch)) {
-                searchResults.add(recipe);
+            for (UserRecipe recipe : user.recipes.userRecipes.values()) {
+                if (recipe.recipeTitle.contains(keyToSearch)) {
+                    searchResults.add(recipe);
+                }
             }
-        }
 
-        for (YummlyRecipe recipe : user.recipes.yummlyRecipes.values()) {
-            if (recipe.recipeTitle.contains(keyToSearch)) {
-                searchResults.add(recipe);
+            for (YummlyRecipe recipe : user.recipes.yummlyRecipes.values()) {
+                if (recipe.recipeTitle.contains(keyToSearch)) {
+                    searchResults.add(recipe);
+                }
             }
-        }
 
-        adapter.refreshList(searchResults);
+            adapter.refreshList(searchResults);
+        }
     }
 }

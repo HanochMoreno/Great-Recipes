@@ -1,7 +1,6 @@
 package com.hanoch.greatrecipes.api.great_recipes_api;
 
 
-import com.hanoch.greatrecipes.api.YummlyRecipe;
 import com.hanoch.greatrecipes.model.Device;
 import com.hanoch.greatrecipes.model.Recipes;
 import com.hanoch.greatrecipes.model.Serving;
@@ -22,6 +21,8 @@ public class User {
     public boolean isPremium;
     public int onlineDownloadsCount;
     public int onlineSearchesCount;
+
+//-------------------------------------------------------------------------------------------------
 
     public User(UserResponse response) {
         this._id = response._id;
@@ -45,23 +46,7 @@ public class User {
         this.onlineSearchesCount = response.onlineSearchesCount;
     }
 
-    public UserRecipe getLastUserRecipe() {
-        ArrayList<UserRecipe> list = new ArrayList<>(recipes.userRecipes.values());
-        if (list.isEmpty()) {
-            return null;
-        } else {
-            return list.get(list.size() - 1);
-        }
-    }
-
-    public YummlyRecipe getLastYummlyRecipe() {
-        ArrayList<YummlyRecipe> list = new ArrayList<>(recipes.yummlyRecipes.values());
-        if (list.isEmpty()) {
-            return null;
-        } else {
-            return list.get(list.size() - 1);
-        }
-    }
+//-------------------------------------------------------------------------------------------------
 
     public Serving getLastServing() {
         ArrayList<Serving> list = new ArrayList<>(servings.values());
@@ -72,9 +57,13 @@ public class User {
         }
     }
 
+//-------------------------------------------------------------------------------------------------
+
     public boolean isUserRecipe(String recipeId) {
         return recipes.userRecipes.containsKey(recipeId);
     }
+
+//-------------------------------------------------------------------------------------------------
 
     public boolean isUserRecipeCreatedByThisUser(String recipeId) {
         return isUserRecipe(recipeId) && recipes.userRecipes.get(recipeId).userId.equals(_id);

@@ -1,7 +1,8 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="com.hanoch.greatrecipes.view.SearchInListsActivity">
+    tools:context="com.hanoch.greatrecipes.view.SearchInListsActivity"
+    tools:ignore="AlwaysShowAction">
 
     <item
         android:id="@+id/action_save"
@@ -19,31 +20,31 @@
     <item
         android:id="@+id/action_edit"
         android:icon="@drawable/ic_toolbar_action_edit"
-        android:title="Edit"
+        android:title="@string/edit"
         app:showAsAction="always" />
 
     <item
         android:id="@+id/action_delete"
         android:icon="@drawable/ic_toolbar_action_delete"
-        android:title="Delete"
+        android:title="@string/delete"
         app:showAsAction="always" />
 
     <item
         android:id="@+id/action_addServing"
         android:icon="@drawable/ic_toolbar_action_add_serving"
-        android:title="Delete"
+        android:title="@string/add_serving"
         app:showAsAction="always" />
 
     <item
         android:id="@+id/action_ok"
         android:icon="@drawable/ic_toolbar_action_ok"
-        android:title="Delete"
+        android:title="@string/ok"
         app:showAsAction="always" />
 
     <item
         android:id="@+id/action_addToFavourites"
         android:icon="@drawable/ic_toolbar_action_add_to_favourites"
-        android:title="Add To Favourites"
+        android:title="@string/add_to_favourites"
         app:showAsAction="always" />
 
     <item
@@ -56,6 +57,12 @@
         android:id="@+id/action_closeWebview"
         android:title="Close Webview"
         android:icon="@drawable/ic_toolbar_action_close_webview"
+        app:showAsAction="always" />
+
+    <item
+        android:id="@+id/action_share"
+        android:icon="@drawable/ic_toolbar_action_share2"
+        android:title="@string/share_recipe"
         app:showAsAction="always" />
 
 </menu>

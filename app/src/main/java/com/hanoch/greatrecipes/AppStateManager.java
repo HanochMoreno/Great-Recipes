@@ -10,8 +10,10 @@ import com.hanoch.greatrecipes.model.UserEmailVerification;
 public class AppStateManager {
     private static AppStateManager instance;
     public User user;
+    public String token;
     public UserEmailVerification userEmailVerification;
     public YummlyRecipe yummlySearchResult;
+    public UserRecipe lastAddedUserRecipe;
     public YummlyRecipe sharedYummlyRecipe;
     public UserRecipe sharedUserRecipe;
     public AppData appData;

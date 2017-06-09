@@ -644,7 +644,7 @@ public class MealPlannerActivity extends AppCompatActivity implements
             progressDialog.show();
             Bundle extras = data.getExtras();
             String recipeId = extras.getString(AppConsts.Extras.RECIPE_ID);
-            boolean isUserRecipe = extras.getBoolean(AppConsts.Extras.EXTRA_IS_USER_RECIPE);
+            boolean isUserRecipe = extras.getBoolean(AppConsts.Extras.IS_USER_RECIPE);
 
             Serving serving = new Serving();
             serving.recipeId = recipeId;

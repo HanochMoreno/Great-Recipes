@@ -150,6 +150,7 @@
     <string name="the_serving_was_deleted">The serving was deleted</string>
     <string name="servings_were_deleted">servings were deleted</string>
     <string name="recipe_details">Recipe Details</string>
+    <string name="shared_recipe_details">Shared Recipe Details</string>
     <string name="recipes_lists">Recipes Lists</string>
     <string name="deleting_all_servings">Deleting all servings</string>
     <string name="at_least_1_character_is_required">At least 1 character is required</string>
@@ -168,12 +169,11 @@
     <string name="upgrade">Upgrade</string>
     <string name="you_exceeded_the_downloaded_recipes_limit">You exceeded the downloaded recipes limit for trial version</string>
     <string name="you_exceeded_the_online_recipes_searches_limit">You exceeded the online recipes searches limit for trial version</string>
-    <string name="you_exceeded_the_recipes_creation_limit">You exceeded the recipes creation limit for trial version</string>
     <string name="go">Go</string>
     <string name="limitation_search_results">Max. 5 online search results will be presented</string>
     <string name="limitation_search_filters">When searching recipes online, only \"Paleo\", \"Sesame-Free\" and \"Soy-Free\" search-filters are enabled</string>
     <string name="limitation_downloaded_recipes">Max. 3 recipes can be downloaded to your list</string>
-    <string name="limitation_created_recipes">Max. 3 recipes of your own can be created</string>
+    <string name="limitation_online_searches">Max. 3 online recipe searches can be executed</string>
     <string name="limitation_categories">When creating your own recipes, the only available categories are \"Breads\" and \"Desserts\"</string>
     <string name="limitation_servings_types">In meal planner tool, the only available servings type are \"Appetizer\" and \"Side Dish\"</string>
     <string name="premium">Premium</string>
@@ -251,5 +251,7 @@
     <string name="downloading_app_data">Downloading app data…</string>
     <string name="downloading_login_info">Downloading login info…</string>
     <string name="init_app">Init app…</string>
+    <string name="recipe_was_sent">The recipe has been sent</string>
+    <string name="recipe_title_is_empty">Recipe title is empty</string>
 
 </resources>

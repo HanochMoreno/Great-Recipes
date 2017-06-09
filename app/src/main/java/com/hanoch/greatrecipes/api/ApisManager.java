@@ -2,6 +2,7 @@ package com.hanoch.greatrecipes.api;
 
 
 import android.content.Context;
+import android.util.Log;
 
 import com.google.firebase.iid.FirebaseInstanceId;
 import com.hanoch.greatrecipes.AppConsts;
@@ -15,6 +16,7 @@ import com.hanoch.greatrecipes.api.yummly_api.YummlyRecipeResponse2;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
 import com.hanoch.greatrecipes.bus.OnAppDataEvent;
+import com.hanoch.greatrecipes.bus.OnGetTokenEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateDeviceEvent;
 import com.hanoch.greatrecipes.bus.OnUserRecipeDownloadedEvent;
 import com.hanoch.greatrecipes.bus.OnEmailVerificationEvent;
@@ -52,6 +54,8 @@ import rx.schedulers.Schedulers;
 
 public class ApisManager {
     private static ApisManager instance;
+    private final String TAG = "ApisManager";
+
     private MyBus bus;
     private AppStateManager appStateManager;
 
@@ -67,6 +71,16 @@ public class ApisManager {
             instance = new ApisManager();
         }
         return instance;
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    private HashMap<String, String> getDefaultHeaders() {
+        HashMap<String, String> headers = new HashMap<>();
+//        headers.put("Accept", "application/json");
+        headers.put("Authorization", appStateManager.token);
+        Log.d(TAG, "getDefaultHeaders: \n" + headers.toString());
+        return headers;
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -90,7 +104,7 @@ public class ApisManager {
             }
         };
 
-        Single<AppData> getAppData = ApiProvider.getGreatRecipesApi().getAppData("1234");
+        Single<AppData> getAppData = ApiProvider.getGreatRecipesApi().getAppData();
 
         getAppData
                 .subscribeOn(Schedulers.io())
@@ -168,6 +182,42 @@ public class ApisManager {
 
 //-------------------------------------------------------------------------------------------------
 
+    public void getUserToken(Context context, String email, String password) {
+        appStateManager.token = null;
+
+        Subscriber<String> subscriber = new Subscriber<String>() {
+            @Override
+            public void onCompleted() {
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                bus.post(new OnGetTokenEvent(false, t));
+            }
+
+            @Override
+            public void onNext(String token) {
+                appStateManager.token = "JWT " + token;
+
+//                bus.post(new OnGetTokenEvent(true, null));
+                login(context, email, password);
+            }
+        };
+
+        HashMap<String, String> body = new HashMap<>();
+        body.put("email", email);
+        body.put("password", password);
+
+        Single<String> getToken = ApiProvider.getGreatRecipesApi().getToken(body);
+
+        getToken
+                .subscribeOn(Schedulers.io())
+                .observeOn(AndroidSchedulers.mainThread())
+                .subscribe(subscriber);
+    }
+
+//-------------------------------------------------------------------------------------------------
+
     /**
      * login a user
      */
@@ -186,7 +236,6 @@ public class ApisManager {
             @Override
             public void onNext(UserResponse userResponse) {
                 appStateManager.user = new User(userResponse);
-
                 bus.post(new OnLoginEvent(true, null));
 
                 String firebaseToken = FirebaseInstanceId.getInstance().getToken();
@@ -201,7 +250,7 @@ public class ApisManager {
         body.put("email", email);
         body.put("password", password);
 
-        Single<UserResponse> login = ApiProvider.getGreatRecipesApi().login(body);
+        Single<UserResponse> login = ApiProvider.getGreatRecipesApi().login(body, getDefaultHeaders());
 
         login
                 .subscribeOn(Schedulers.io())
@@ -258,7 +307,8 @@ public class ApisManager {
         body.put("_id", currentUser._id);
         body.put("servings", currentServings.values());
 
-        Single<ArrayList<Serving>> updateUserServing = ApiProvider.getGreatRecipesApi().updateUserServings(body);
+        Single<ArrayList<Serving>> updateUserServing =
+                ApiProvider.getGreatRecipesApi().updateUserServings(body, getDefaultHeaders());
 
         updateUserServing
                 .subscribeOn(Schedulers.io())
@@ -272,6 +322,7 @@ public class ApisManager {
      * Add a new user-recipe to database
      */
     public void addUserRecipe(UserRecipe recipe) {
+        appStateManager.lastAddedUserRecipe = null;
 
         Subscriber<UserRecipe> subscriber = new Subscriber<UserRecipe>() {
             @Override
@@ -285,16 +336,18 @@ public class ApisManager {
 
             @Override
             public void onNext(UserRecipe recipe) {
+                appStateManager.lastAddedUserRecipe = recipe;
+
                 ArrayList<String> userRecipesId = new ArrayList<>();
                 userRecipesId.add(recipe._id);
-
                 updateUserRecipes(userRecipesId, null, BusConsts.ACTION_ADD_NEW);
             }
         };
 
         HashMap<String, Object> body = recipe.generateBody();
 
-        Single<UserRecipe> addUserRecipe = ApiProvider.getGreatRecipesApi().addUserRecipe(body);
+        Single<UserRecipe> addUserRecipe =
+                ApiProvider.getGreatRecipesApi().addUserRecipe(body, getDefaultHeaders());
 
         addUserRecipe
                 .subscribeOn(Schedulers.io())
@@ -330,7 +383,8 @@ public class ApisManager {
 
         HashMap<String, Object> body = recipe.generateBody();
 
-        Single<UserRecipe> updateUserRecipe = ApiProvider.getGreatRecipesApi().updateUserRecipe(body);
+        Single<UserRecipe> updateUserRecipe =
+                ApiProvider.getGreatRecipesApi().updateUserRecipe(body, getDefaultHeaders());
 
         updateUserRecipe
                 .subscribeOn(Schedulers.io())
@@ -410,8 +464,8 @@ public class ApisManager {
     private void downloadRecipeFromYummlyApi(Context context, String resultYummlyId) {
 
         HashMap<String, String> query = new HashMap<>();
-        query.put("_app_id", AppConsts.ApiAccess.APP_ID_YUMMLY_MICHAL);
-        query.put("_app_key", AppConsts.ApiAccess.APP_KEY_YUMMLY_MICHAL);
+        query.put("_app_id", appStateManager.appData.yummlyAppId);
+        query.put("_app_key", appStateManager.appData.yummlyAppKey);
         query.put("requirePictures", "true");
 
         Subscriber<YummlyRecipeResponse2> subscriber = new Subscriber<YummlyRecipeResponse2>() {
@@ -463,7 +517,9 @@ public class ApisManager {
             }
         };
 
-        Single<YummlyRecipe> getYummlyRecipe = ApiProvider.getGreatRecipesApi().addYummlyRecipe(body);
+        Single<YummlyRecipe> getYummlyRecipe =
+                ApiProvider.getGreatRecipesApi().addYummlyRecipe(body, getDefaultHeaders());
+
         getYummlyRecipe
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
@@ -507,7 +563,7 @@ public class ApisManager {
         };
 
         Single<YummlyRecipe> getYummlyRecipe =
-                ApiProvider.getGreatRecipesApi().getYummlyRecipe(resultYummlyId);
+                ApiProvider.getGreatRecipesApi().getYummlyRecipe(resultYummlyId, getDefaultHeaders());
 
         getYummlyRecipe
                 .subscribeOn(Schedulers.io())
@@ -537,7 +593,8 @@ public class ApisManager {
             }
         };
 
-        Single<UserRecipe> getUserRecipe = ApiProvider.getGreatRecipesApi().getUserRecipe(recipeId);
+        Single<UserRecipe> getUserRecipe =
+                ApiProvider.getGreatRecipesApi().getUserRecipe(recipeId, getDefaultHeaders());
 
         getUserRecipe
                 .subscribeOn(Schedulers.io())
@@ -576,6 +633,7 @@ public class ApisManager {
         ArrayList<String> newFavouriteRecipesIds = null;
 
         switch (action) {
+            case BusConsts.ACTION_ADD_SHARED_RECIPE:
             case BusConsts.ACTION_ADD_NEW:
                 if (yummlyRecipesIds != null) {
                     newYummlyRecipesIds = new ArrayList<>(currentUser.recipes.yummlyRecipes.keySet());
@@ -649,7 +707,8 @@ public class ApisManager {
             body.put("favouriteRecipesIds", newFavouriteRecipesIds);
         }
 
-        Single<RecipesResponse> updateUserRecipes = ApiProvider.getGreatRecipesApi().updateUserRecipes(body);
+        Single<RecipesResponse> updateUserRecipes =
+                ApiProvider.getGreatRecipesApi().updateUserRecipes(body, getDefaultHeaders());
 
         updateUserRecipes
                 .subscribeOn(Schedulers.io())
@@ -699,7 +758,8 @@ public class ApisManager {
         body.put("_id", currentUser._id);
         body.put("dietAndAllergensList", dietAndAllergensList);
 
-        Single<Preferences> updateUserPreferences = ApiProvider.getGreatRecipesApi().updateUserPreferences(body);
+        Single<Preferences> updateUserPreferences =
+                ApiProvider.getGreatRecipesApi().updateUserPreferences(body, getDefaultHeaders());
 
         updateUserPreferences
                 .subscribeOn(Schedulers.io())
@@ -741,7 +801,7 @@ public class ApisManager {
         body.put("maxOnlineSearchResults", preferences.maxOnlineSearchResults);
 
         Single<Preferences> updateUserPreferences = ApiProvider
-                .getGreatRecipesApi().updateUserPreferences(body);
+                .getGreatRecipesApi().updateUserPreferences(body, getDefaultHeaders());
 
         updateUserPreferences
                 .subscribeOn(Schedulers.io())
@@ -802,7 +862,8 @@ public class ApisManager {
         body.put("_id", appStateManager.user._id);
         body.put(key, value);
 
-        Single<Object> updateUserPremiumStatus = ApiProvider.getGreatRecipesApi().updateUserProperty(body);
+        Single<Object> updateUserPremiumStatus =
+                ApiProvider.getGreatRecipesApi().updateUserProperty(body, getDefaultHeaders());
 
         updateUserPremiumStatus
                 .subscribeOn(Schedulers.io())
@@ -831,9 +892,12 @@ public class ApisManager {
             public void onNext(Boolean isSuccess) {
                 if (isSuccess) {
                     bus.post(new OnShareRecipeEvent(true, null));
+                } else {
+                    bus.post(new OnShareRecipeEvent(false, null));
                 }
             }
         };
+
         boolean isUserRecipe = appStateManager.user.isUserRecipe(recipeId);
         String recipeTitle;
         if (isUserRecipe) {
@@ -849,14 +913,14 @@ public class ApisManager {
         body.put("recipeTitle", recipeTitle);
         body.put("isUserRecipe", isUserRecipe);
 
-        Single<Boolean> shareRecipe = ApiProvider.getGreatRecipesApi().shareRecipe(body);
+        Single<Boolean> shareRecipe =
+                ApiProvider.getGreatRecipesApi().shareRecipe(body, getDefaultHeaders());
 
         shareRecipe
                 .subscribeOn(Schedulers.io())
                 .observeOn(AndroidSchedulers.mainThread())
                 .subscribe(subscriber);
     }
-
 
 //-------------------------------------------------------------------------------------------------
 
@@ -872,7 +936,7 @@ public class ApisManager {
 
             @Override
             public void onError(Throwable t) {
-                bus.post(new OnUpdateDeviceEvent(false, t));
+                bus.post(new OnUpdateDeviceEvent(false, t, action));
             }
 
             @Override
@@ -883,7 +947,7 @@ public class ApisManager {
                         appStateManager.user.devices.put(device.androidId, device);
                     }
                 }
-                bus.post(new OnUpdateDeviceEvent(true, null));
+                bus.post(new OnUpdateDeviceEvent(true, null, action));
             }
         };
 
@@ -893,7 +957,8 @@ public class ApisManager {
         body.put("androidId", device.androidId);
         body.put("firebaseToken", device.firebaseToken);
 
-        Single<ArrayList<Device>> updateUserPremiumStatus = ApiProvider.getGreatRecipesApi().updateUserDevices(body);
+        Single<ArrayList<Device>> updateUserPremiumStatus =
+                ApiProvider.getGreatRecipesApi().updateUserDevices(body, getDefaultHeaders());
 
         updateUserPremiumStatus
                 .subscribeOn(Schedulers.io())

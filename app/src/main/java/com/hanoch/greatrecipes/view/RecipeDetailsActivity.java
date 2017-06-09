@@ -6,10 +6,8 @@ import android.app.Dialog;
 import android.app.ProgressDialog;
 import android.content.Context;
 import android.content.Intent;
-import android.content.SharedPreferences;
 import android.content.pm.ActivityInfo;
 import android.graphics.Color;
-import android.preference.PreferenceManager;
 import android.support.v4.app.Fragment;
 import android.support.v4.app.FragmentManager;
 import android.support.v4.app.FragmentTransaction;
@@ -35,18 +33,12 @@ import com.hanoch.greatrecipes.R;
 import com.hanoch.greatrecipes.api.great_recipes_api.UserRecipe;
 import com.hanoch.greatrecipes.bus.BusConsts;
 import com.hanoch.greatrecipes.bus.MyBus;
-import com.hanoch.greatrecipes.bus.OnAppDataEvent;
-import com.hanoch.greatrecipes.bus.OnForgotPasswordEvent;
-import com.hanoch.greatrecipes.bus.OnLoginEvent;
-import com.hanoch.greatrecipes.bus.OnMailWasSentEvent;
+import com.hanoch.greatrecipes.bus.OnShareRecipeEvent;
 import com.hanoch.greatrecipes.bus.OnToggleRecipeFavouriteEvent;
 import com.hanoch.greatrecipes.bus.OnUpdateUserRecipesEvent;
-import com.hanoch.greatrecipes.bus.OnUserRecipeDownloadedEvent;
-import com.hanoch.greatrecipes.bus.OnYummlyRecipeDownloadedEvent;
 import com.hanoch.greatrecipes.control.ToolbarMenuSetting;
 import com.hanoch.greatrecipes.api.ApisManager;
 import com.hanoch.greatrecipes.google.AnalyticsHelper;
-import com.hanoch.greatrecipes.model.Preferences;
 import com.squareup.otto.Subscribe;
 
 import java.util.ArrayList;
@@ -94,7 +86,6 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
     private ProgressDialog progressDialog;
     private AppStateManager appStateManager;
     private View mainView;
-    private Dialog loginDialog;
 
 //-------------------------------------------------------------------------------------------------
 
@@ -129,21 +120,11 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
         Intent prevIntent = getIntent();
         action = Integer.parseInt(prevIntent.getAction());
 
-        if (action == AppConsts.Actions.REVIEW_SHARED_RECIPE) {
-
-            if (appStateManager.appData == null) {
-                progressDialog.show();
-                apisManager.getAppData();
-            } else {
-                onEvent(new OnAppDataEvent(true, null));
-            }
-
-            return;
-        }
-
         if (action != AppConsts.Actions.ADD_NEW_USER_RECIPE) {
             mRecipeId = prevIntent.getStringExtra(AppConsts.Extras.RECIPE_ID);
         }
+
+        AppHelper.hideTheKeyboard(this);
 
         if (savedInstanceState == null) {
             // only add fragments if the state is null!
@@ -296,45 +277,52 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
 //-------------------------------------------------------------------------------------------------
 
-    public void onRecipeWasSaved(Boolean isNewRecipe, UserRecipe recipe) {
+    public void onExitWithoutSavingClick(int action) {
+        if (action == AppConsts.Actions.EDIT_USER_RECIPE) {
+            // Settings are the same as after saving
+            onRecipeWasSaved(null);
+        } else {
+            finish();
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    public void onRecipeWasSaved(Boolean isNewRecipe) {
         // Settings after editing an existing recipe, or adding a new one to "My Own" list
 
-        if (recipe != null) {
+        AppHelper.hideKeyboardFrom(this, getCurrentFocus());
 
-            AppHelper.hideKeyboardFrom(this, getCurrentFocus());
-
-            if (isNewRecipe != null) {
-                if (isNewRecipe) {
-                    AppHelper.showSnackBar(mainView, R.string.added_to_my_own, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
-                } else {
-                    AppHelper.showSnackBar(mainView, R.string.saved_successfully, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
-                }
-            }
-
-            mRecipeId = recipe._id;
-            action = AppConsts.Actions.REVIEW_USER_RECIPE;
-
-            FragmentManager fm = getSupportFragmentManager();
-            FragmentTransaction ft = fm.beginTransaction();
-            Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(action, mRecipeId);
-
-            ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left);
-
-            ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
-            ft.commit();
-
-            ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
-            toolbarButtonsList.add(AppConsts.ToolbarButtons.SHARE);
-            toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
-
-            if (appStateManager.isRecipeFavourite(mRecipeId)) {
-                toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
+        if (isNewRecipe != null) {
+            if (isNewRecipe) {
+                AppHelper.showSnackBar(mainView, R.string.added_to_my_own, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
             } else {
-                toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
+                AppHelper.showSnackBar(mainView, R.string.saved_successfully, ContextCompat.getColor(this, R.color.colorSnackbarGreen));
             }
-
-            setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
         }
+
+        action = AppConsts.Actions.REVIEW_USER_RECIPE;
+
+        FragmentManager fm = getSupportFragmentManager();
+        FragmentTransaction ft = fm.beginTransaction();
+        Fragment recipeReviewFragment = RecipeReviewFragment2.newInstance(action, mRecipeId);
+
+        ft.setCustomAnimations(R.anim.slide_in_left, R.anim.slide_out_left);
+
+        ft.replace(R.id.layout_container, recipeReviewFragment, AppConsts.Fragments.RECIPE_REVIEW);
+        ft.commit();
+
+        ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
+        toolbarButtonsList.add(AppConsts.ToolbarButtons.SHARE);
+        toolbarButtonsList.add(AppConsts.ToolbarButtons.EDIT);
+
+        if (appStateManager.isRecipeFavourite(mRecipeId)) {
+            toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
+        } else {
+            toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_FAVOURITES);
+        }
+
+        setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
     }
 
 //-------------------------------------------------------------------------------------------------
@@ -487,50 +475,34 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
             case R.id.action_addToList:
                 // Saving after adding a new recipe to "my own" list
-                // or saving shared recipe
 
-                progressDialog.show();
-
-                if (action == AppConsts.Actions.ADD_NEW_USER_RECIPE) {
-                    boolean isPremium = appStateManager.user.isPremium;
-
-                    if (!isPremium) {
-
-                        // TODO:
-                        //                    appStateManager.user.onlineDownloadsCount++ jkjhkjh;
-
-                        //                    int createdRecipesCount = sp.getInt(AppConsts.SharedPrefs.CREATED_COUNTER, 0);
-                        //                    createdRecipesCount++;
-                        //                    SharedPreferences.Editor editor = sp.edit();
-                        //
-                        //                    editor.putInt(AppConsts.SharedPrefs.CREATED_COUNTER, createdRecipesCount);
-                        //                    editor.apply();
-                    }
-
-
-                    userRecipe = editRecipeFragment.onSaveUserRecipeClicked();
-                    apisManager.addUserRecipe(userRecipe);
-
-                } else if (action == AppConsts.Actions.REVIEW_SHARED_USER_RECIPE) {
-                    ArrayList<String> userRecipesIds = new ArrayList<>();
-                    userRecipesIds.add(appStateManager.sharedUserRecipe._id);
-
-                    apisManager.updateUserRecipes(userRecipesIds, null, BusConsts.ACTION_ADD_NEW);
-                } else if (action == AppConsts.Actions.REVIEW_SHARED_YUMMLY_RECIPE) {
-                    ArrayList<String> yummlyRecipesIds = new ArrayList<>();
-                    yummlyRecipesIds.add(appStateManager.sharedYummlyRecipe._id);
-
-                    apisManager.updateUserRecipes(null, yummlyRecipesIds, BusConsts.ACTION_ADD_NEW);
+                UserRecipe userRecipeToAdd = editRecipeFragment.onSaveUserRecipeClicked();
+                if (userRecipeToAdd == null) {
+                    // No changes made
+                    onExitWithoutSavingClick(AppConsts.Actions.EDIT_USER_RECIPE);
+                } else if (userRecipeToAdd.recipeTitle.isEmpty()) {
+                    // No recipe title
+                    AppHelper.showSnackBar(mainView, R.string.recipe_title_is_empty, Color.RED);
+                } else {
+                    progressDialog.show();
+                    apisManager.addUserRecipe(userRecipeToAdd);
                 }
                 break;
 
             case R.id.action_save:
                 // Saving a recipe after finishing editing a recipe
 
-                progressDialog.show();
-
-                userRecipe = editRecipeFragment.onSaveUserRecipeClicked();
-                apisManager.updateUserRecipe(userRecipe);
+                UserRecipe userRecipeToSave = editRecipeFragment.onSaveUserRecipeClicked();
+                if (userRecipeToSave == null) {
+                    // No changes made
+                    onExitWithoutSavingClick(AppConsts.Actions.EDIT_USER_RECIPE);
+                } else if (userRecipeToSave.recipeTitle.isEmpty()) {
+                    // No recipe title
+                    AppHelper.showSnackBar(mainView, R.string.recipe_title_is_empty, Color.RED);
+                } else {
+                    progressDialog.show();
+                    apisManager.updateUserRecipe(userRecipeToSave);
+                }
                 break;
 
             case R.id.action_addServing:
@@ -539,7 +511,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
                 Bundle extras = new Bundle();
                 extras.putString(AppConsts.Extras.RECIPE_ID, mRecipeId);
-                extras.putBoolean(AppConsts.Extras.EXTRA_IS_USER_RECIPE, appStateManager.user.isUserRecipe(mRecipeId));
+                extras.putBoolean(AppConsts.Extras.IS_USER_RECIPE, appStateManager.user.isUserRecipe(mRecipeId));
                 resultIntent.putExtras(extras);
 
                 setResult(Activity.RESULT_OK, resultIntent);
@@ -570,7 +542,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
                 break;
 
             case R.id.action_share:
-                showShareRecipeDialog();
+                AppHelper.showShareRecipeDialog(this, progressDialog, mRecipeId);
                 break;
 
             default:
@@ -611,141 +583,6 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 //-------------------------------------------------------------------------------------------------
 
     @Subscribe
-    public void onEvent(OnUserRecipeDownloadedEvent event) {
-        // After downloading a SHARED user-recipe from Great Recipe API.
-
-        onSharedRecipeDownloadedEvent(event.isSuccess, event.t);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
-    public void onEvent(OnYummlyRecipeDownloadedEvent event) {
-        // After downloading a SHARED Yummly-recipe from Great Recipe API.
-
-        if (event.action != AppConsts.Actions.DOWNLOAD_SHARED_YUMMLY_RECIPE) {
-            return;
-        }
-
-        onSharedRecipeDownloadedEvent(event.isSuccess, event.t);
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private void onSharedRecipeDownloadedEvent(boolean isSuccess, Throwable t) {
-        progressDialog.dismiss();
-        if (loginDialog != null) {
-            loginDialog.dismiss();
-        }
-
-        if (isSuccess) {
-            FragmentManager fm = getSupportFragmentManager();
-            FragmentTransaction ft = fm.beginTransaction();
-
-            Fragment fragment = RecipeReviewFragment2.newInstance(action, mRecipeId);
-            ft.add(R.id.layout_container, fragment, AppConsts.Fragments.RECIPE_REVIEW);
-            ft.commit();
-
-            ArrayList<Integer> toolbarButtonsList = new ArrayList<>();
-            toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_LIST);
-            setToolbarAttr(toolbarButtonsList, AppConsts.ToolbarColor.ACCENT, null);
-        } else {
-            AppHelper.onApiErrorReceived(t, mainView);
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
-    public void onEvent(OnForgotPasswordEvent event) {
-        if (event.isSuccess) {
-            int action = AppConsts.Actions.ACTION_FORGOT_PASSWORD;
-            AppHelper.performMailSending(event.email, event.password, action);
-        } else {
-            progressDialog.dismiss();
-            AppHelper.onApiErrorReceived(event.t, mainView);
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
-    public void onEvent(OnMailWasSentEvent event) {
-        // After an eMail with the password was sent
-        if (action == AppConsts.Actions.ACTION_FORGOT_PASSWORD) {
-            progressDialog.dismiss();
-            showMailWasSentDialog(event.isSuccess, event.email);
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
-    public void onEvent(OnAppDataEvent event) {
-
-        if (event.isSuccess) {
-
-            if (appStateManager.user == null) {
-                SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-                String email = sp.getString(AppConsts.SharedPrefs.EMAIL, null);
-                String password = sp.getString(AppConsts.SharedPrefs.PASSWORD, null);
-
-                if (email == null || password == null) {
-                    progressDialog.dismiss();
-                    showLoginDialog();
-                } else {
-                    apisManager.login(this, email, password);
-                }
-
-            } else {
-                onEvent(new OnLoginEvent(true, null));
-            }
-        } else {
-            showGetAppDataErrorDialog();
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
-    public void onEvent(OnLoginEvent event) {
-
-        if (event.isSuccess) {
-
-            Preferences preferences = appStateManager.user.preferences;
-
-            SharedPreferences sp = PreferenceManager.getDefaultSharedPreferences(this);
-            SharedPreferences.Editor editor = sp.edit();
-
-            editor.putString(AppConsts.SharedPrefs.EMAIL, preferences.email);
-            editor.putString(AppConsts.SharedPrefs.USER_NAME, preferences.username);
-            editor.putString(AppConsts.SharedPrefs.PASSWORD, preferences.password);
-            editor.apply();
-
-            String category = AppConsts.Analytics.CATEGORY_LOGIN;
-            String action1 = "Login successfully on shared recipe";
-            String label = "eMail: " + preferences.email + " | Password: " + preferences.password;
-            AnalyticsHelper.sendEvent(RecipeDetailsActivity.this, category, action1, label);
-
-            Intent prevIntent = getIntent();
-            mRecipeId = prevIntent.getStringExtra("recipeId");
-            boolean isUserRecipe = Boolean.parseBoolean(prevIntent.getStringExtra("isUserRecipe"));
-            if (isUserRecipe) {
-                action = AppConsts.Actions.REVIEW_SHARED_USER_RECIPE;
-                apisManager.getUserRecipeFromGreatRecipesApi(mRecipeId);
-            } else {
-                action = AppConsts.Actions.REVIEW_SHARED_USER_RECIPE;
-                apisManager.getYummlyRecipeFromGreatRecipesApi(this, mRecipeId, AppConsts.Actions.DOWNLOAD_SHARED_YUMMLY_RECIPE);
-            }
-        } else {
-            progressDialog.dismiss();
-            AppHelper.onApiErrorReceived(event.t, mainView);
-        }
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    @Subscribe
     public void onEvent(OnToggleRecipeFavouriteEvent event) {
         // After toggling recipe favourite index
 
@@ -764,17 +601,36 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
     public void onEvent(OnUpdateUserRecipesEvent event) {
         // After saving a new or edited user-recipe
 
+        if (event.action == BusConsts.ACTION_ADD_SHARED_RECIPE) {
+            return;
+        }
+
         progressDialog.dismiss();
 
         if (event.isSuccess) {
             switch (event.action) {
                 case BusConsts.ACTION_ADD_NEW:
-                    onRecipeWasSaved(true, appStateManager.user.getLastUserRecipe());
-                    break;
+                    mRecipeId = appStateManager.lastAddedUserRecipe._id;
+                    // No break...
                 case BusConsts.ACTION_EDIT:
-                    onRecipeWasSaved(false, appStateManager.user.recipes.userRecipes.get(mRecipeId));
+                    onRecipeWasSaved(action == BusConsts.ACTION_ADD_NEW);
                     break;
             }
+        } else {
+            AppHelper.onApiErrorReceived(event.t, mainView);
+        }
+    }
+
+//-------------------------------------------------------------------------------------------------
+
+    @Subscribe
+    public void onEvent(OnShareRecipeEvent event) {
+
+        progressDialog.dismiss();
+
+        if (event.isSuccess) {
+            int color = ContextCompat.getColor(this, R.color.colorSnackbarGreen);
+            AppHelper.showSnackBar(mainView, R.string.recipe_was_sent, color);
         } else {
             AppHelper.onApiErrorReceived(event.t, mainView);
         }
@@ -818,8 +674,7 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
 
         if (toolbar_addServing.isVisible()
                 || toolbar_addToFavourites.isVisible()
-                || toolbar_removeFromFavourites.isVisible()
-                || action == AppConsts.Actions.REVIEW_SHARED_USER_RECIPE) {
+                || toolbar_removeFromFavourites.isVisible()) {
 
             finish();
             return;
@@ -835,9 +690,8 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
             if (action == AppConsts.Actions.ADD_SERVING_FROM_LISTS) {
                 // The user is choosing a serving
                 toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_SERVING);
-            } else if (action == AppConsts.Actions.REVIEW_SHARED_YUMMLY_RECIPE) {
-                toolbarButtonsList.add(AppConsts.ToolbarButtons.ADD_TO_LIST);
             } else {
+                toolbarButtonsList.add(AppConsts.ToolbarButtons.SHARE);
 
                 if (appStateManager.isRecipeFavourite(mRecipeId)) {
                     toolbarButtonsList.add(AppConsts.ToolbarButtons.REMOVE_FROM_FAVOURITES);
@@ -854,7 +708,14 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
         if (toolbar_save.isVisible() || toolbar_addToList.isVisible()) {
             // The user renounced editing an existing recipe, or adding a new one to "My Own" recipes
 
-            showExitWithoutSavingDialog(action);
+
+            int action = toolbar_save.isVisible()
+                    ? AppConsts.Actions.EDIT_USER_RECIPE
+                    : AppConsts.Actions.ADD_NEW_USER_RECIPE;
+
+            EditRecipeFragment2 editRecipeFragment = (EditRecipeFragment2) fm.findFragmentByTag(AppConsts.Fragments.EDIT_RECIPE);
+            editRecipeFragment.showExitWithoutSavingDialog(action);
+//            showExitWithoutSavingDialog(action);
 
             return;
         }
@@ -874,261 +735,4 @@ public class RecipeDetailsActivity extends AppCompatActivity implements
         }
     }
 
-//-------------------------------------------------------------------------------------------------
-
-    public void showExitWithoutSavingDialog(final int action) {
-
-        AppHelper.vibrate(this);
-
-        final Context context = RecipeDetailsActivity.this;
-        final Dialog dialog = new Dialog(this);
-
-        dialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        LayoutInflater inflater = LayoutInflater.from(context);
-
-        final View view = inflater.inflate(R.layout.dialog_warning, null, false);
-
-        dialog.setCancelable(false);
-
-        dialog.setContentView(view);
-
-        TextView textView_dialogTitle = (TextView) dialog.findViewById(R.id.textView_dialogTitle);
-        TextView textView_dialogContent = (TextView) dialog.findViewById(R.id.textView_dialogContent);
-
-        textView_dialogTitle.setText(R.string.exit_without_saving);
-        textView_dialogContent.setText(R.string.are_you_sure);
-
-        Button button_yes = (Button) dialog.findViewById(R.id.button_yes);
-        button_yes.setOnClickListener(v -> {
-
-            if (action == AppConsts.Actions.EDIT_USER_RECIPE) {
-                // Settings are the same as after saving
-                onRecipeWasSaved(null, appStateManager.user.recipes.userRecipes.get(mRecipeId));
-            } else {
-                finish();
-            }
-
-            dialog.dismiss();
-        });
-
-        Button btnCancel = (Button) dialog.findViewById(R.id.button_cancel);
-        btnCancel.setOnClickListener(v -> dialog.dismiss());
-
-        dialog.show();
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private void showLoginDialog() {
-
-        loginDialog = new Dialog(this);
-        loginDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        loginDialog.setCancelable(false);
-        loginDialog.setCanceledOnTouchOutside(false);
-
-        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View view = inflater.inflate(R.layout.dialog_login, null, false);
-        loginDialog.setContentView(view);
-
-        final EditText et_email = (EditText) loginDialog.findViewById(R.id.et_email);
-        final EditText et_password = (EditText) loginDialog.findViewById(R.id.et_password);
-        View til_password = loginDialog.findViewById(R.id.til_password);
-        View tv_mailWillBeSent = loginDialog.findViewById(R.id.tv_mailWithPasswordWillBeSent);
-        View l_forgotPassword = loginDialog.findViewById(R.id.l_forgotPassword);
-        View tv_forgotPasswordClick = l_forgotPassword.findViewById(R.id.tv_forgotPasswordClickHere);
-        Button button_login = (Button) loginDialog.findViewById(R.id.button_login);
-        Button button_cancel = (Button) loginDialog.findViewById(R.id.button_cancel);
-
-        if (BuildConfig.DEBUG) {
-            et_email.setText("han031@hanoch.test");
-            et_password.setText("123456");
-        }
-
-        button_login.setOnClickListener(v -> {
-            AppHelper.hideTheKeyboard(this);
-
-            String eMail = et_email.getText().toString().trim();
-
-            if (et_password.getVisibility() == View.VISIBLE) {
-                String password = et_password.getText().toString().trim();
-                if (areFieldsValidated(eMail, password)) {
-                    progressDialog.show();
-                    apisManager.login(RecipeDetailsActivity.this, eMail, password);
-                }
-            } else {
-                if (isEmailValidated(eMail)) {
-                    progressDialog.show();
-                    apisManager.forgotPassword(eMail);
-                }
-            }
-        });
-
-        button_cancel.setOnClickListener(v -> {
-            if (et_password.getVisibility() == View.VISIBLE) {
-                finish();
-            } else {
-                // Back to login
-                button_login.setText(R.string.login);
-                button_cancel.setText(R.string.cancel);
-                til_password.setVisibility(View.INVISIBLE);
-                tv_mailWillBeSent.setVisibility(View.GONE);
-                l_forgotPassword.setVisibility(View.VISIBLE);
-            }
-        });
-
-        tv_forgotPasswordClick.setOnClickListener(v -> {
-            button_login.setText(R.string.proceed);
-            button_cancel.setText(R.string.back);
-            til_password.setVisibility(View.INVISIBLE);
-            tv_mailWillBeSent.setVisibility(View.VISIBLE);
-            l_forgotPassword.setVisibility(View.INVISIBLE);
-        });
-
-        loginDialog.show();
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private void showMailWasSentDialog(boolean isSuccessful, String email) {
-        progressDialog.dismiss();
-
-        String category = AppConsts.Analytics.CATEGORY_FORGOT_PASSWORD;
-        String action = "Restore password mail";
-        if (isSuccessful) {
-            action += " has been sent";
-        } else {
-            action += " sending has FAILED";
-        }
-        AnalyticsHelper.sendEvent(RecipeDetailsActivity.this, category, action, email);
-
-        Dialog mailWasSentDialog = new Dialog(this);
-        mailWasSentDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        final View view = inflater.inflate(R.layout.dialog_sent_email, null, false);
-        mailWasSentDialog.setContentView(view);
-
-        final TextView tv_dialogTitle = (TextView) mailWasSentDialog.findViewById(R.id.tv_dialogTitle);
-        final TextView tv_bodyText = (TextView) mailWasSentDialog.findViewById(R.id.tv_dialogBodyText);
-
-        String title = getString(R.string.restore_password);
-        tv_dialogTitle.setText(title);
-
-        tv_bodyText.setText(R.string.restore_password_text);
-
-        if (!isSuccessful) {
-            title += getString(R.string.has_failed) + ".\n" + getString(R.string.mail_sending_error);
-            tv_bodyText.setText(title);
-        }
-
-        View button_ok = mailWasSentDialog.findViewById(R.id.button_ok);
-        button_ok.setOnClickListener(v -> {
-            mailWasSentDialog.dismiss();
-        });
-
-        mailWasSentDialog.show();
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private void showShareRecipeDialog() {
-
-        Dialog shareRecipeDialog = new Dialog(this);
-        shareRecipeDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-
-        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        final View view = inflater.inflate(R.layout.dialog_share_recipe, null, false);
-        shareRecipeDialog.setContentView(view);
-
-        final EditText et_recipientEmail = (EditText) shareRecipeDialog.findViewById(R.id.et_recipientEmail);
-        if (BuildConfig.DEBUG) {
-            et_recipientEmail.setText("han031@hanoch.test");
-        }
-        View button_proceed = shareRecipeDialog.findViewById(R.id.button_proceed);
-        button_proceed.setOnClickListener(v -> {
-            String recipientEmail = et_recipientEmail.getText().toString().trim();
-            if (isEmailValidated(recipientEmail)) {
-                apisManager.shareRecipe(recipientEmail, mRecipeId);
-
-                String category = AppConsts.Analytics.CATEGORY_REGISTER;
-                String text = "Share recipe";
-                String label = "from " + appStateManager.user.preferences.email + " to " + recipientEmail;
-                AnalyticsHelper.sendEvent(RecipeDetailsActivity.this, category, text, label);
-
-                shareRecipeDialog.dismiss();
-            }
-        });
-
-        shareRecipeDialog.show();
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private void showGetAppDataErrorDialog() {
-
-        progressDialog.dismiss();
-
-        Dialog errorDialog = new Dialog(this);
-        errorDialog.requestWindowFeature(Window.FEATURE_NO_TITLE);
-        errorDialog.setCancelable(false);
-        errorDialog.setCanceledOnTouchOutside(false);
-
-        LayoutInflater inflater = (LayoutInflater) getSystemService(Context.LAYOUT_INFLATER_SERVICE);
-        View view = inflater.inflate(R.layout.dialog_splash_error, null, false);
-        errorDialog.setContentView(view);
-
-        TextView tv_dialogBodyText = (TextView) errorDialog.findViewById(R.id.tv_dialogBodyText);
-        View button_retry = errorDialog.findViewById(R.id.button_retry);
-        Button button_leave = (Button) errorDialog.findViewById(R.id.button_leave);
-
-        tv_dialogBodyText.setText(R.string.error_getting_app_data);
-
-        button_retry.setOnClickListener(v -> {
-            apisManager.getAppData();
-            errorDialog.dismiss();
-        });
-
-        button_leave.setOnClickListener(v -> finish());
-
-        errorDialog.show();
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private boolean areFieldsValidated(String eMail, String password) {
-
-        if (!isEmailValidated(eMail)) {
-            return false;
-        }
-
-        char[] chars = password.toCharArray();
-        for (char aChar : chars) {
-            String sChar = String.valueOf(aChar);
-            if (!AppConsts.Regex.PASSWORD_PATTERN.contains(sChar)) {
-                AppHelper.showSnackBar(mainView, R.string.invalid_password, Color.RED);
-                return false;
-            }
-        }
-        int trimmedLength = password.trim().length();
-        if (trimmedLength < 6 || trimmedLength > 10) {
-            AppHelper.showSnackBar(mainView, R.string.password_should_contain_6_to_10_chars, Color.RED);
-            return false;
-        }
-
-        return true;
-    }
-
-//-------------------------------------------------------------------------------------------------
-
-    private boolean isEmailValidated(String eMail) {
-
-        Pattern emailPattern = Pattern.compile(AppConsts.Regex.EMAIL_PATTERN);
-        Matcher emailMatcher = emailPattern.matcher(eMail);
-        if (!emailMatcher.matches()) {
-            AppHelper.showSnackBar(mainView, R.string.invalid_email, Color.RED);
-            return false;
-        }
-
-        return true;
-    }
 }

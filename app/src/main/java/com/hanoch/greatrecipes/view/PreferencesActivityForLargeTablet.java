@@ -206,6 +206,11 @@ public class PreferencesActivityForLargeTablet extends AppCompatPreferenceActivi
 
     @Subscribe
     public void onEvent(OnUpdateUserRecipesEvent event) {
+
+        if (event.action == BusConsts.ACTION_ADD_SHARED_RECIPE) {
+            return;
+        }
+
         View mainView = findViewById(android.R.id.content);
         progressDialog.dismiss();
 
